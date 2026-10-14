@@ -148,6 +148,7 @@ export type Mutation = (entity: Entity, method: 'POST' | 'PATCH' | 'DELETE', pay
 export interface TaskCreationOptions { kind?: Task['kind']; listId?: string | null; phase?: string; }
 export interface ViewProps {
   data: AppData; project: Project; mutate: Mutation;
+  preferenceScope?: string;
   openTask: (task: Task) => void; createTask: (options?: TaskCreationOptions, projectId?: string) => void;
   openProject: (project: Project) => void; notify: (message: string) => void;
   editProject?: (project: Project) => void;

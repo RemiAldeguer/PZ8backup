@@ -152,7 +152,7 @@ function WorkspaceApp({ user, onSessionExpired, signOut, onPasswordChanged }: Au
   const zoneId = data.zones.some(z => z.id === route.zoneId) ? route.zoneId! : null;
   const dialogZone = data.zones.find(item => item.id === dialog?.id);
   const locked = project.status === 'paused' || project.status === 'closed';
-  const viewProps: ViewProps = { data, project, mutate, openTask, openProject, openResource, notify,
+  const viewProps: ViewProps = { data, project, mutate, openTask, openProject, openResource, notify, preferenceScope: user.id,
     editProject: canProject(data, project.id, 'details') ? item => setDialog({ type: 'project', id: item.id }) : undefined,
     createTask: (taskDefaults, targetProjectId) => setDialog({ type: 'task', id: null, projectId: targetProjectId ?? project.id, taskDefaults }),
     createReport: canProject(data, project.id, 'report') ? () => setDialog({ type: 'report', id: null, projectId: project.id }) : undefined,
