@@ -1,0 +1,257 @@
+{
+  "schemaVersion": 1,
+  "recordedOn": "2026-10-14",
+  "checkpoint": "project-lifecycle-contract",
+  "status": "partially-qualified-pinned-excerpts-received-awaiting-checkpoint",
+  "base": {
+    "branch": "refactor/java-pz7-foundation",
+    "commit": "2a6d39f6b17da981cc462ee891f70b65d6ce94d5"
+  },
+  "deliveryBranch": "parallel/pz7-project-lifecycle",
+  "sourceEvidence": "Five numbered private excerpts received from coordinator authenticated GitLab reads at pinned commits; static reading only; originals not published; file-level source hashes not supplied",
+  "rawSourceReads": [
+    {
+      "projectId": 24472884,
+      "commit": "a8684583e9b47826bc3061d0e089a1eee706933e",
+      "path": "core/src/main/java/com/planzone/common/domain/Project.java",
+      "transport": "GitLab raw API from cloud environment",
+      "httpStatus": 404,
+      "retrieved": false
+    },
+    {
+      "projectId": 34159200,
+      "commit": "71d1c4153657f2e994191d390adb76a38a76a26c",
+      "path": "src/dto/project.ts",
+      "transport": "GitLab raw API from cloud environment",
+      "httpStatus": 404,
+      "retrieved": false
+    }
+  ],
+  "missing": [
+    "Project repository-event handlers, ProjectRepository, backend ProjectDto and actual PATCH client: HTTP null/omission, validation order, authorization and transaction boundaries",
+    "ProjectValidator, TrimStringType, DateUtils comparison, ProjectStatus/ProjectWeather and Instantiable: precise validation, equal-date behavior, weather value and inherited metadata",
+    "saveProject caller/form plus formatDate and concrete HttpClient timezone injection: full parameterized workflow and supplementary writes",
+    "Budget split editing, per-key attributes/data validation and configured tool behavior",
+    "ResourceService creator membership and super-admin mapping; ProjectMemberService status-event preparation",
+    "Delete handlers/client, reached expense/attachment/log methods and child mappings: times, reports, logDiscussion, external files and full rollback scope",
+    "Parameterized template/duplication implementations and clients; complete movement refusal/collision/group variants and coordinator decision on atomic batch correction"
+  ],
+  "transverseReviewRequired": [
+    "project editable-field catalog and scope contract additions",
+    "PlanzoneUnitOfWork lock protocol if an extension is needed",
+    "movement/deletion commands across memberships and other modules",
+    "frontend entries/proxy and transport integration"
+  ],
+  "checksExecuted": [
+    "base commit matched coordinator handoff",
+    "isolated worktree created without main/work merge",
+    "received instructions and scope/project references read",
+    "current Java project projection, JDBC transaction entrypoints and migration 006 inspected",
+    "two bounded GitLab raw source requests returned 404",
+    "document links and JSON checked; diff checked",
+    "host callable and ALL_TOOLS checked: no GitLab or tool-search",
+    "received source rules at scope:44–47 reconciled; no independent source reading claimed",
+    "five numbered pinned excerpts received and read; no raw HTTP retry",
+    "entity getters/defaults and callback effects reconciled with actual frontend POST body",
+    "reached dependencies and provisional command surface documented; no DTO or migration finalized"
+  ],
+  "backendCodeChanged": false,
+  "javaTestsExecuted": false,
+  "runtimePz7Compared": false,
+  "foundationMergedToMain": false,
+  "foundationDeployed": false,
+  "prototypeExcluded": true,
+  "sourceAvailability": {
+    "coordinatorAuthenticatedConnectorVerified": true,
+    "hostGitlabTools": [],
+    "hostToolSearchAvailable": false,
+    "hostRequestedCallable": "mcp__codex_apps__gitlab_get_repository_file_raw",
+    "hostCallableType": "undefined",
+    "hostToolCount": 45,
+    "readsReceivedHere": 5,
+    "raw404IsNotGlobalSourceInaccessibility": true,
+    "rawSourceRetransmissionNeeded": false
+  },
+  "receivedRulesAdded": [
+    {
+      "rule": "creator becomes pr_manager project member and zone member unless UAA/CAS super-admin",
+      "source": "2026-10-14-scope-pz7-evidence.md:44",
+      "references": [
+        "ProjectService.java:307",
+        "ResourceService.java:135"
+      ]
+    },
+    {
+      "rule": "project move adds members to destination zone and retains source membership; missing projects ignored in inspected loop; no batch atomicity established",
+      "source": "2026-10-14-scope-pz7-evidence.md:47",
+      "references": [
+        "ProjectService.java:891",
+        "ProjectController.java:199",
+        "src/services/core/moveProjects.ts:4"
+      ]
+    }
+  ],
+  "receivedPinnedExcerpts": [
+    {
+      "projectId": 24472884,
+      "ref": "a8684583e9b47826bc3061d0e089a1eee706933e",
+      "path": "core/src/main/java/com/planzone/common/domain/Project.java",
+      "receivedLineRanges": [
+        [
+          1,
+          248
+        ]
+      ],
+      "completeFileInPacket": true
+    },
+    {
+      "projectId": 24472884,
+      "ref": "a8684583e9b47826bc3061d0e089a1eee706933e",
+      "path": "core/src/main/java/com/planzone/api/service/ProjectService.java",
+      "receivedLineRanges": [
+        [
+          145,
+          400
+        ],
+        [
+          891,
+          933
+        ]
+      ],
+      "completeFileInPacket": false
+    },
+    {
+      "projectId": 24472884,
+      "ref": "a8684583e9b47826bc3061d0e089a1eee706933e",
+      "path": "core/src/main/java/com/planzone/api/controller/ProjectController.java",
+      "receivedLineRanges": [
+        [
+          118,
+          220
+        ]
+      ],
+      "completeFileInPacket": false
+    },
+    {
+      "projectId": 34159200,
+      "ref": "71d1c4153657f2e994191d390adb76a38a76a26c",
+      "path": "src/dto/project.ts",
+      "receivedLineRanges": [
+        [
+          1,
+          77
+        ]
+      ],
+      "completeFileInPacket": true
+    },
+    {
+      "projectId": 34159200,
+      "ref": "71d1c4153657f2e994191d390adb76a38a76a26c",
+      "path": "src/services/core/saveProject.ts",
+      "receivedLineRanges": [
+        [
+          1,
+          83
+        ]
+      ],
+      "completeFileInPacket": true
+    }
+  ],
+  "privateSourceHandling": {
+    "rawSourcesCommitted": false,
+    "transport": "private coordinator delegation explicitly authorized by user",
+    "originalFileHashesSupplied": false
+  },
+  "checkpointAcceptedByCoordinator": false,
+  "establishedFromReceivedExcerpts": [
+    {
+      "rule": "name non-empty max256 with converter; color max19, wiki max256, description TEXT default empty",
+      "sources": [
+        "Project.java:52-67"
+      ]
+    },
+    {
+      "rule": "allocatedBudget getter sums resource and expense budgets; stored allocatedBudget is not the read oracle",
+      "sources": [
+        "Project.java:79-86,247"
+      ]
+    },
+    {
+      "rule": "ZonedDateTime metadata and ZoneId; activity root owns dates and is created with project metadata, no parent and rank0",
+      "sources": [
+        "Project.java:69-101",
+        "ProjectService.java:145-150,271-292"
+      ]
+    },
+    {
+      "rule": "non-template sunny weather and absent-status pz_open lookup; template skips these defaults",
+      "sources": [
+        "ProjectService.java:151-156,294-305"
+      ]
+    },
+    {
+      "rule": "creator membership except super-admin and log discussion are creation effects, including template in this callback",
+      "sources": [
+        "ProjectService.java:307-323"
+      ]
+    },
+    {
+      "rule": "actual create POST uses relation URIs, tag names, attributes and fixed externalLinks data; root date headers conditional; no budget fields sent in this use case",
+      "sources": [
+        "saveProject.ts:36-79"
+      ]
+    },
+    {
+      "rule": "template create resolves first savingTemplates zone in current Planzone; absence rejection may not propagate through outer Promise, runtime behavior unverified",
+      "sources": [
+        "saveProject.ts:12-42,77-79"
+      ]
+    },
+    {
+      "rule": "root required; tags deduplicated; non-null date updates root; rename updates root name; no general HTTP null semantics inferred",
+      "sources": [
+        "ProjectService.java:168-270"
+      ]
+    },
+    {
+      "rule": "status change event and logs run after save with targeted exception catches; delivery/whole-command atomicity not established",
+      "sources": [
+        "ProjectService.java:325-386",
+        "Project.java:232-245"
+      ]
+    },
+    {
+      "rule": "move reassigns zone and adds destination membership, source retained; same-destination no-op and missing projects ignored",
+      "sources": [
+        "ProjectController.java:199-208",
+        "ProjectService.java:891-933"
+      ]
+    },
+    {
+      "rule": "physical repository deletion with expense/attachment/log unlink hooks and ORM cascades; ProjectReport and logDiscussion have no declared cascade ALL in these associations",
+      "sources": [
+        "ProjectService.java:388-400",
+        "Project.java:99-149,160-228"
+      ]
+    },
+    {
+      "rule": "template save, creation from template and duplication are distinct controller endpoints using timezone header and templateService",
+      "sources": [
+        "ProjectController.java:118-151"
+      ]
+    }
+  ],
+  "proposedCommandSurface": [
+    "CreateProject",
+    "EditProject",
+    "MoveProjects",
+    "DeleteProject",
+    "Distinct template and duplication commands"
+  ],
+  "proposedSafetyDifferencesAwaitingReception": [
+    "atomic movement rejects missing/foreign project instead of silent partial result",
+    "visible no-template-zone refusal rather than potential unhandled outer Promise",
+    "exact decimal budget representation per validated PZ8 guideline; scale/rounding still unqualified",
+    "required effects use existing atomic receipt/audit/outbox protocol; PZ7 callback catches do not prove runtime equivalence"
+  ]
+}

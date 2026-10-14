@@ -108,9 +108,3 @@ Wrangler **4.147.0** prend en charge le protocole d’assets et l’envoi multip
 Le dépôt passe par Wrangler pour cette étape, ce qui évite de maintenir les détails du hash, des JWT et du multipart dans le script de publication.
 
 Sources : [limites Workers](https://developers.cloudflare.com/workers/platform/limits/), [limites D1](https://developers.cloudflare.com/d1/platform/limits/), [tarifs D1](https://developers.cloudflare.com/d1/platform/pricing/), [API Cloudflare](https://developers.cloudflare.com/api/), [source Wrangler](https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler). Le code distribué de Wrangler 4.147.0 et du SDK Cloudflare 5.2.0 a servi à vérifier les contrats REST.
-
-## Chiffrement des espaces métier
-
-Le déploiement configure automatiquement `PLANZONE_DATA_KEYS` comme secret du Worker, à partir de la copie privée `.cloudflare/data-encryption-keys.json`. Il vérifie et sauvegarde sous forme chiffrée tous les espaces, migre les anciennes lignes avec comparaison de révision, puis désactive la transition `PLANZONE_MIGRATE_PLAINTEXT`. Conserver la clé dans une sauvegarde privée ; elle ne figure ni dans Git ni dans l’archive de l’application. Un redéploiement réutilise cette clé et conserve les mots de passe existants. Voir [Stockage et accès aux données](backend-storage.md).
-
-Pour le développement D1, renseigner un trousseau local distinct dans `.dev.vars` ; les tests D1 le font automatiquement dans un dossier temporaire. Un secret manquant entraîne un refus des accès métier, sans retour à un stockage en clair.

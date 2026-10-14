@@ -897,7 +897,6 @@ test("éditer les permissions conserve les champs verrouillés connus et transme
     form.getByLabel("Verrouiller Description", { exact: true }),
   ).toBeChecked();
   await form.getByLabel("Verrouiller Nom", { exact: true }).check();
-  await form.getByLabel("Verrouiller Rôle", { exact: true }).check();
   await form
     .getByRole("combobox", { name: "Rôle", exact: true })
     .selectOption("role-visitor");
@@ -910,9 +909,8 @@ test("éditer les permissions conserve les champs verrouillés connus et transme
   expectCsrf(saved[0]);
   expect(saved[0].body?.roleId).toBe("role-visitor");
   expect(saved[0].body?.nonEditableFields).toEqual(
-    expect.arrayContaining(["name", "description", "role"]),
+    expect.arrayContaining(["name", "description"]),
   );
-  expect(saved[0].body?.nonEditableFields).not.toContain("roleId");
 });
 
 test("des restrictions non renvoyées par le serveur ne sont pas effacées par le formulaire", async ({

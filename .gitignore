@@ -10,5 +10,7 @@ test-results/
 .DS_Store
 .wrangler/
 .cloudflare/
-.dev.vars
-.dev.vars.*
+backend/.gradle/
+backend/**/build/
+backend/gradle/cache/
+.access-acceptance.json

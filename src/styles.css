@@ -862,7 +862,7 @@ dialog.modal::backdrop { background: #1c2c3a79; backdrop-filter: blur(3px); }
 .task-check { width: 14px; height: 14px; border: 1px solid #d9e1e7; border-radius: 4px; flex-shrink: 0; }
 .task-check.late { border-color: #e4b5b1; background: #fff8f6; }
 .workspace-info { text-align: center; padding: 25px; }
-.workspace-info-logo { width: 53px; height: 53px; display: block; object-fit: contain; margin: 0 auto 15px; }
+.workspace-info-logo { width: 53px; height: 53px; display: grid; place-items: center; border-radius: 12px; background: #e7eff4; color: #8ea9ba; margin: 0 auto 15px; font-size: 22px; font-weight: 600; }
 .workspace-info h3 { font-size: 19px; color: #8198a6; margin-bottom: 7px; }
 .workspace-info > p { color: #a8b8c3; font-size: 10px; line-height: 1.8; }
 .workspace-info-profile { display: flex; align-items: center; gap: 11px; padding: 18px; border: 1px solid var(--border); border-radius: 8px; background: #fafcfd; margin: 21px 0; text-align: left; }
@@ -878,7 +878,7 @@ dialog.modal::backdrop { background: #1c2c3a79; backdrop-filter: blur(3px); }
 .help-content > p.muted { font-size: 10px; color: #b0bec9; }
 .loading-screen { flex-direction: column; background: #fafcfd; }
 .loading-screen::before { display: none; }
-.loading-brand-logo { width: 53px; height: 53px; object-fit: contain; margin-bottom: 6px; }
+.loading-screen > .brand-symbol { margin-bottom: 6px; color: #fff; }
 .loading-screen h1 { font-size: 25px; color: #8ca0b0; }
 .loading-screen h1 span { color: #c19472; }
 .loading-screen p { font-size: 11px; color: #b3c1cb; }

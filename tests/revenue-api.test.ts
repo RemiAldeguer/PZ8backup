@@ -1,5 +1,3 @@
-import { TEST_DATA_KEYS, TEST_KEYS, plaintextRow } from './storage-fixture.ts';
-import { encryptWorkspace } from '../server/workspace-crypto.ts';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { once } from 'node:events';
@@ -231,7 +229,7 @@ test('actual Worker/D1 preserves a legacy snapshot on read and persists revenue 
   const runtime = () => new Miniflare(convertV4MiniflareOptions({
     modules: true, script: bundled.outputFiles[0].text, compatibilityDate: '2026-10-06',
     host: '127.0.0.1', port: 0, cf: false, log: new Log(LogLevel.ERROR),
-    resourcePersistencePath: directory, d1Databases: { DB: databaseId }, bindings: { DEMO_TODAY: '2026-10-12', PLANZONE_DATA_KEYS: TEST_DATA_KEYS },
+    resourcePersistencePath: directory, d1Databases: { DB: databaseId }, bindings: { DEMO_TODAY: '2026-10-12' },
     serviceBindings: { ASSETS: () => new MiniflareResponse('Revenue fixture') },
   }));
   let instance = runtime();
@@ -255,7 +253,7 @@ test('actual Worker/D1 preserves a legacy snapshot on read and persists revenue 
     const value = await (await db()).prepare('SELECT data, revision FROM demo_workspaces WHERE id = ?')
       .bind(workspaceId).first<{ data: string; revision: number }>();
     assert.ok(value);
-    return plaintextRow(value, workspaceId);
+    return value;
   };
   const initial = await row();
   const legacy = JSON.parse(initial.data) as CompatibleWorkspaceSnapshot;
@@ -263,7 +261,7 @@ test('actual Worker/D1 preserves a legacy snapshot on read and persists revenue 
   legacy.projects[0].description = 'Description existante personnalisée';
   legacy.tasks[0].description = 'Tâche existante personnalisée';
   const legacyData = JSON.stringify(legacy);
-  await (await db()).prepare('UPDATE demo_workspaces SET data = ? WHERE id = ?').bind(await encryptWorkspace(legacyData, workspaceId, TEST_KEYS), workspaceId).run();
+  await (await db()).prepare('UPDATE demo_workspaces SET data = ? WHERE id = ?').bind(legacyData, workspaceId).run();
   const oldRow = await row();
   const displayedResponse = await request('GET', '/api/state', undefined, cookie);
   assert.equal(displayedResponse.status, 200);

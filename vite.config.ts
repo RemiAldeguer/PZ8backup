@@ -6,6 +6,9 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: true,
-    proxy: { '/api': 'http://127.0.0.1:3001' },
+    proxy: {
+      '/api/v1': process.env.PZ8_JAVA_API_URL || 'http://127.0.0.1:8080',
+      '/api': 'http://127.0.0.1:3001',
+    },
   },
 });

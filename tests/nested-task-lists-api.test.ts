@@ -1,5 +1,3 @@
-import { TEST_DATA_KEYS, TEST_KEYS, plaintextRow } from './storage-fixture.ts';
-import { encryptWorkspace } from '../server/workspace-crypto.ts';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { once } from 'node:events';
@@ -209,7 +207,7 @@ test('SQLite adds task lists and nullable task references without rewriting nine
   } finally { store.close(); }
 });
 
-test('SQLite HTTP authenticates task-list writes, enforces origins and body bounds, and includes all workspace collections', async t => {
+test('SQLite HTTP authenticates task-list writes, enforces origins and body bounds, and includes twenty-one collections', async t => {
   const instance = createApp({ dbPath: ':memory:', today: '2026-10-12', admin }); await instance.ready;
   const server = instance.app.listen(0, '127.0.0.1'); await once(server, 'listening');
   t.after(async () => { await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve())); instance.close(); });
@@ -221,22 +219,22 @@ test('SQLite HTTP authenticates task-list writes, enforces origins and body boun
   assert.equal((await request('POST', '/api/task-lists', { ...listPayload, name: 'x'.repeat(110000) }, cookie)).status, 413);
   const create = await request('POST', '/api/task-lists', listPayload, cookie); assert.equal(create.status, 201);
   const state = await (await request('GET', '/api/state', undefined, cookie)).json() as AppData;
-  for (const table of TABLES) assert.ok(Array.isArray(state[table])); assert.equal(state.taskLists!.length, 1);
+  assert.equal(TABLES.length, 21); for (const table of TABLES) assert.ok(Array.isArray(state[table])); assert.equal(state.taskLists!.length, 1);
 });
 
 test('actual Worker/D1 reads absent task lists without revision changes and atomically preserves nineteen collections through conversion and restart', async t => {
   const directory = await mkdtemp(join(tmpdir(), 'planzone8-task-lists-d1-'));
   const bundled = await build({ entryPoints: [resolve('cloudflare/worker.ts')], write: false, bundle: true, format: 'esm', platform: 'browser', target: 'es2022', logLevel: 'silent' });
   const databaseId = randomUUID(), workspaceId = randomUUID();
-  const runtime = () => new Miniflare(convertV4MiniflareOptions({ modules: true, script: bundled.outputFiles[0].text, compatibilityDate: '2026-10-06', host: '127.0.0.1', port: 0, cf: false, log: new Log(LogLevel.ERROR), resourcePersistencePath: directory, d1Databases: { DB: databaseId }, bindings: { DEMO_TODAY: '2026-10-12', PLANZONE_DATA_KEYS: TEST_DATA_KEYS }, serviceBindings: { ASSETS: () => new MiniflareResponse('Task lists fixture') } }));
+  const runtime = () => new Miniflare(convertV4MiniflareOptions({ modules: true, script: bundled.outputFiles[0].text, compatibilityDate: '2026-10-06', host: '127.0.0.1', port: 0, cf: false, log: new Log(LogLevel.ERROR), resourcePersistencePath: directory, d1Databases: { DB: databaseId }, bindings: { DEMO_TODAY: '2026-10-12' }, serviceBindings: { ASSETS: () => new MiniflareResponse('Task lists fixture') } }));
   let instance = runtime(); await instance.ready; t.after(async () => { await instance.dispose(); await rm(directory, { recursive: true, force: true }); });
   const db = () => instance.getD1Database('DB'); await new AuthManager(new D1AuthDatabase(await db() as unknown as D1Database)).createAdmin({ ...admin, workspaceId });
   const request = (method: string, path: string, body?: unknown, cookie?: string, extraHeaders?: Record<string, string>) => instance.dispatchFetch(`https://planzone8.test${path}`, { method, headers: { ...(body === undefined ? {} : { 'Content-Type': 'application/json' }), ...(cookie ? { Cookie: cookie } : {}), ...extraHeaders }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
   for (const method of ['POST', 'PATCH', 'DELETE']) assert.equal((await request(method, `/api/task-lists${method === 'POST' ? '' : '/missing'}`, method === 'POST' ? listPayload : method === 'PATCH' ? { name: 'Other' } : undefined)).status, 401);
   const login = await request('POST', '/api/auth/login', { username: admin.username, password: admin.password }); assert.equal(login.status, 200); const cookie = login.headers.get('set-cookie')!.split(';', 1)[0]; await request('GET', '/api/state', undefined, cookie);
   const initial = new MemoryStore(); seed(initial); const { taskLists: _lists, ...legacy } = initial.snapshot(); legacy.projects[0].description = 'Donnée conservée';
-  await (await db()).prepare('UPDATE demo_workspaces SET data = ? WHERE id = ?').bind(await encryptWorkspace(JSON.stringify(legacy), workspaceId, TEST_KEYS), workspaceId).run();
-  const row = async () => { const value = await (await db()).prepare('SELECT data,revision FROM demo_workspaces WHERE id = ?').bind(workspaceId).first<{ data: string; revision: number }>(); assert.ok(value); return plaintextRow(value, workspaceId); };
+  await (await db()).prepare('UPDATE demo_workspaces SET data = ? WHERE id = ?').bind(JSON.stringify(legacy), workspaceId).run();
+  const row = async () => { const value = await (await db()).prepare('SELECT data,revision FROM demo_workspaces WHERE id = ?').bind(workspaceId).first<{ data: string; revision: number }>(); assert.ok(value); return value; };
   const before = await row(); const state = await (await request('GET', '/api/state', undefined, cookie)).json() as AppData; assert.deepEqual(state.taskLists, []); assert.deepEqual(await row(), before);
   assert.equal((await request('POST', '/api/task-lists', listPayload, cookie, { Origin: 'https://other.test' })).status, 403);
   assert.equal((await request('POST', '/api/task-lists', { ...listPayload, id: 'forged' }, cookie)).status, 400); assert.deepEqual(await row(), before);

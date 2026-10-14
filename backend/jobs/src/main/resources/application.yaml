@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: pz8-jobs
+  main:
+    web-application-type: none
+pz8:
+  invitation-mail:
+    enabled: ${PZ8_INVITATION_MAIL_ENABLED:false}
+    dispatch-delay-ms: ${PZ8_INVITATION_MAIL_DISPATCH_DELAY_MS:2000}
+  access:
+    jdbc-url: ${PZ8_JDBC_URL:}
+    jdbc-username: ${PZ8_JDBC_USERNAME:}
+    jdbc-password: ${PZ8_JDBC_PASSWORD:}
+    invitation-encryption-key: ${PZ8_INVITATION_ENCRYPTION_KEY:}
+    frontend-url: ${PZ8_FRONTEND_URL:}
+    allow-local-http: ${PZ8_ALLOW_LOCAL_HTTP:false}
+    mail-from: ${PZ8_MAIL_FROM:}
+    smtp-host: ${PZ8_SMTP_HOST:}
+    smtp-port: ${PZ8_SMTP_PORT:587}
+    smtp-username: ${PZ8_SMTP_USERNAME:}
+    smtp-password: ${PZ8_SMTP_PASSWORD:}
+    smtp-starttls: ${PZ8_SMTP_STARTTLS:true}

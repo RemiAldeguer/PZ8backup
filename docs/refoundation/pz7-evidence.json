@@ -1,0 +1,293 @@
+{
+  "schemaVersion": 1,
+  "status": "evidence-for-design",
+  "recordedOn": "2026-10-13",
+  "scope": {
+    "userConfirmed": "Planzone 8 reprend les fonctions et la structure métier PZ7 1 pour 1, en améliorant sécurité, performance et maintenabilité. Supprimer le microservice utilisateur métier et unifier utilisateurs/ressources. Démarrage indépendant, pour de nombreuses organisations clientes isolées : un client possède une Planzone, contenant des zones puis projets. Java conservé ; hébergement portable à choisir ensuite ; migration des données PZ7 étudiée plus tard.",
+    "method": "Lecture statique ciblée via GitLab, trois analyses indépendantes et vérification de sources par l’agent principal.",
+    "productionStateVerified": false
+  },
+  "repositories": [
+    {
+      "name": "pz7-web",
+      "projectId": 34159172,
+      "url": "https://gitlab.com/augeo-software/planzone/planzone-7/planzone-web",
+      "branch": "develop",
+      "commit": "090c94b75513bfb66cef9cca72449e17c6be34f0"
+    },
+    {
+      "name": "pz7-frontend-core",
+      "projectId": 34159200,
+      "url": "https://gitlab.com/augeo-software/planzone/planzone-7/planzone-core",
+      "branch": "develop",
+      "commit": "16c42f53756726cd6c1055a39bd63cd149671499",
+      "webPinnedCommit": "71d1c4153657f2e994191d390adb76a38a76a26c",
+      "pinnedFilesVerified": [
+        "src/dto/planzone.ts",
+        "src/dto/account.ts",
+        "src/core/planzone/useCases/changePlanzone/index.ts"
+      ]
+    },
+    {
+      "name": "pz7-backend",
+      "projectId": 24472884,
+      "url": "https://gitlab.com/augeo-software/planzone/components/core",
+      "branch": "develop",
+      "commit": "a8684583e9b47826bc3061d0e089a1eee706933e"
+    },
+    {
+      "name": "pz7-cas",
+      "projectId": 26936725,
+      "url": "https://gitlab.com/augeo-software/planzone/components/cas",
+      "branch": "develop",
+      "commit": "de4f17b87b46b79742018a68ad70f1eda4cd11c6",
+      "inspection": "metadata-tree-and-targeted-login-communication-mfa-source; deployed-configuration-not-verified"
+    },
+    {
+      "name": "pz7-uaa",
+      "projectId": 26702939,
+      "url": "https://gitlab.com/augeo-software/planzone/components/uaa",
+      "commit": null,
+      "inspection": "metadata-accessible; repository-tree-HTTP-403; implementation-not-read; caller-contracts-read-in-backend"
+    }
+  ],
+  "claims": [
+    {
+      "id": "distinct-organization-and-workspace",
+      "status": "verified",
+      "claim": "Une Planzone référence une organisation externe et possède ses zones et membres ; organisation commerciale, espace Planzone et unité organisationnelle sont des concepts distincts.",
+      "sources": [
+        {
+          "repository": "pz7-backend",
+          "commit": "a8684583e9b47826bc3061d0e089a1eee706933e",
+          "path": "core/src/main/java/com/planzone/common/domain/Planzone.java",
+          "line": 133,
+          "url": "https://gitlab.com/augeo-software/planzone/components/core/-/blob/a8684583e9b47826bc3061d0e089a1eee706933e/core/src/main/java/com/planzone/common/domain/Planzone.java#L133"
+        },
+        {
+          "repository": "pz7-backend",
+          "commit": "a8684583e9b47826bc3061d0e089a1eee706933e",
+          "path": "core/src/main/java/com/planzone/api/client/uaa/model/Organization.java",
+          "line": 12,
+          "url": "https://gitlab.com/augeo-software/planzone/components/core/-/blob/a8684583e9b47826bc3061d0e089a1eee706933e/core/src/main/java/com/planzone/api/client/uaa/model/Organization.java#L12"
+        }
+      ],
+      "confidenceDriver": "Modèle serveur, modèle client UAA et DTO frontend au commit du sous-module concordants.",
+      "decisionImpact": "Distinguer les concepts commerciaux et métier. La cible est tranchée par l’utilisateur : un client possède une Planzone, avec plusieurs zones et leurs projets ; conserver des appartenances explicites."
+    },
+    {
+      "id": "identity-context-and-resource",
+      "status": "verified",
+      "claim": "UserContext associe userUuid à une Planzone courante ; une ressource possède sa Planzone, son rôle et un lien au contexte d’identité.",
+      "sources": [
+        {
+          "repository": "pz7-backend",
+          "commit": "a8684583e9b47826bc3061d0e089a1eee706933e",
+          "path": "core/src/main/java/com/planzone/common/domain/UserContext.java",
+          "line": 38,
+          "url": "https://gitlab.com/augeo-software/planzone/components/core/-/blob/a8684583e9b47826bc3061d0e089a1eee706933e/core/src/main/java/com/planzone/common/domain/UserContext.java#L38"
+        },
+        {
+          "repository": "pz7-backend",
+          "commit": "a8684583e9b47826bc3061d0e089a1eee706933e",
+          "path": "core/src/main/java/com/planzone/common/domain/Resource.java",
+          "line": 113,
+          "url": "https://gitlab.com/augeo-software/planzone/components/core/-/blob/a8684583e9b47826bc3061d0e089a1eee706933e/core/src/main/java/com/planzone/common/domain/Resource.java#L113"
+        }
+      ],
+      "decisionImpact": "Réunir leur gestion dans un module people interne, avec une autorité d’écriture unique ; préserver les distinctions entre connexion, profil ressource local et appartenance autorisée, sans microservice utilisateur métier."
+    },
+    {
+      "id": "authorized-workspace-switch",
+      "status": "verified",
+      "claim": "Le service de changement de Planzone vérifie son appartenance aux Planzones accessibles par les ressources de l’utilisateur puis persiste la sélection.",
+      "sources": [
+        {
+          "repository": "pz7-backend",
+          "commit": "a8684583e9b47826bc3061d0e089a1eee706933e",
+          "path": "core/src/main/java/com/planzone/api/service/PlanzoneService.java",
+          "line": 315,
+          "url": "https://gitlab.com/augeo-software/planzone/components/core/-/blob/a8684583e9b47826bc3061d0e089a1eee706933e/core/src/main/java/com/planzone/api/service/PlanzoneService.java#L315"
+        }
+      ],
+      "decisionImpact": "Une préférence d’espace courant ne doit pas remplacer un contexte de périmètre vérifié par requête ; protéger les onglets concurrents."
+    },
+    {
+      "id": "project-membership-and-field-permissions",
+      "status": "verified-by-independent-readers",
+      "claim": "Les appartenances projet ont un rôle et une désactivation propres ; les politiques PZ7 peuvent limiter les champs éditables et combiner privilèges projet et ressource.",
+      "sources": [
+        {
+          "repository": "pz7-backend",
+          "commit": "a8684583e9b47826bc3061d0e089a1eee706933e",
+          "path": "core/src/main/java/com/planzone/common/domain/ProjectMember.java",
+          "line": 48,
+          "url": "https://gitlab.com/augeo-software/planzone/components/core/-/blob/a8684583e9b47826bc3061d0e089a1eee706933e/core/src/main/java/com/planzone/common/domain/ProjectMember.java#L48"
+        },
+        {
+          "repository": "pz7-backend",
+          "commit": "a8684583e9b47826bc3061d0e089a1eee706933e",
+          "path": "core/src/main/java/com/planzone/common/domain/permissions/Role.java",
+          "line": 40,
+          "url": "https://gitlab.com/augeo-software/planzone/components/core/-/blob/a8684583e9b47826bc3061d0e089a1eee706933e/core/src/main/java/com/planzone/common/domain/permissions/Role.java#L40"
+        },
+        {
+          "repository": "pz7-backend",
+          "commit": "a8684583e9b47826bc3061d0e089a1eee706933e",
+          "path": "core/src/main/java/com/planzone/api/service/permission/PermissionServiceImpl.java",
+          "line": 45,
+          "url": "https://gitlab.com/augeo-software/planzone/components/core/-/blob/a8684583e9b47826bc3061d0e089a1eee706933e/core/src/main/java/com/planzone/api/service/permission/PermissionServiceImpl.java#L45"
+        }
+      ],
+      "decisionImpact": "La parité fonctionnelle exige dès maintenant le mapping des privilèges, champs et appartenances ; les seuls noms de rôles ne suffisent pas."
+    },
+    {
+      "id": "relational-backend",
+      "status": "verified-by-independent-reader",
+      "claim": "Le backend du commit inspecté dépend de Java 21, Spring Boot, MySQL, Liquibase et AMQP ; les repositories combinent pagination et listes complètes.",
+      "sources": [
+        {
+          "repository": "pz7-backend",
+          "commit": "a8684583e9b47826bc3061d0e089a1eee706933e",
+          "path": "core/build.gradle.kts",
+          "line": 51,
+          "url": "https://gitlab.com/augeo-software/planzone/components/core/-/blob/a8684583e9b47826bc3061d0e089a1eee706933e/core/build.gradle.kts#L51"
+        },
+        {
+          "repository": "pz7-backend",
+          "commit": "a8684583e9b47826bc3061d0e089a1eee706933e",
+          "path": "core/src/main/java/com/planzone/api/repository/ProjectRepository.java",
+          "line": 33,
+          "url": "https://gitlab.com/augeo-software/planzone/components/core/-/blob/a8684583e9b47826bc3061d0e089a1eee706933e/core/src/main/java/com/planzone/api/repository/ProjectRepository.java#L33"
+        }
+      ],
+      "decisionImpact": "Ne pas traiter le core frontend TypeScript comme le backend ; inventorier transactions, intégrations et migrations avant toute réimplémentation."
+    },
+    {
+      "id": "isolation-layers",
+      "status": "verified-by-independent-reader-with-explicit-limit",
+      "claim": "PZ7 combine authentification, contexte courant, filtres ORM, requêtes configurées et permissions métier.",
+      "sources": [
+        {
+          "repository": "pz7-backend",
+          "commit": "a8684583e9b47826bc3061d0e089a1eee706933e",
+          "path": "core/src/main/java/com/planzone/api/config/PzSecurityConfiguration.java",
+          "line": 28,
+          "url": "https://gitlab.com/augeo-software/planzone/components/core/-/blob/a8684583e9b47826bc3061d0e089a1eee706933e/core/src/main/java/com/planzone/api/config/PzSecurityConfiguration.java#L28"
+        },
+        {
+          "repository": "pz7-backend",
+          "commit": "a8684583e9b47826bc3061d0e089a1eee706933e",
+          "path": "core/src/main/java/com/planzone/api/security/impl/PzRowLevelSecurityInterceptorConfig.java",
+          "line": 20,
+          "url": "https://gitlab.com/augeo-software/planzone/components/core/-/blob/a8684583e9b47826bc3061d0e089a1eee706933e/core/src/main/java/com/planzone/api/security/impl/PzRowLevelSecurityInterceptorConfig.java#L20"
+        },
+        {
+          "repository": "pz7-backend",
+          "commit": "a8684583e9b47826bc3061d0e089a1eee706933e",
+          "path": "core/src/main/java/com/planzone/api/service/SecurityQueryService.java",
+          "line": 27,
+          "url": "https://gitlab.com/augeo-software/planzone/components/core/-/blob/a8684583e9b47826bc3061d0e089a1eee706933e/core/src/main/java/com/planzone/api/service/SecurityQueryService.java#L27"
+        }
+      ],
+      "limit": "Le framework commun, les requêtes runtime et la version déployée n’ont pas été examinés ; aucune garantie globale d’isolation démontrée.",
+      "decisionImpact": "Rendre le périmètre obligatoire dans les commandes, repositories, exports et jobs, avec tests entre organisations."
+    },
+    {
+      "id": "background-delivery-semantics",
+      "status": "verified-by-independent-reader",
+      "claim": "Le consommateur de rapports acquitte après génération et publication ; son fichier ne démontre pas des tentatives bornées ni une déduplication des effets.",
+      "sources": [
+        {
+          "repository": "pz7-backend",
+          "commit": "a8684583e9b47826bc3061d0e089a1eee706933e",
+          "path": "core/src/main/java/com/planzone/api/consumer/ReportGenerationConsumer.java",
+          "line": 35,
+          "url": "https://gitlab.com/augeo-software/planzone/components/core/-/blob/a8684583e9b47826bc3061d0e089a1eee706933e/core/src/main/java/com/planzone/api/consumer/ReportGenerationConsumer.java#L35"
+        },
+        {
+          "repository": "pz7-backend",
+          "commit": "a8684583e9b47826bc3061d0e089a1eee706933e",
+          "path": "core/src/main/java/com/planzone/api/consumer/ReportGenerationConsumer.java",
+          "line": 113,
+          "url": "https://gitlab.com/augeo-software/planzone/components/core/-/blob/a8684583e9b47826bc3061d0e089a1eee706933e/core/src/main/java/com/planzone/api/consumer/ReportGenerationConsumer.java#L113"
+        }
+      ],
+      "decisionImpact": "Définir idempotence, publication durable, politique de reprise et états observables pour les traitements différés."
+    }
+  ],
+  "securityObservations": [
+    {
+      "status": "static-observation-reported-by-reader",
+      "source": {
+        "repository": "pz7-backend",
+        "commit": "a8684583e9b47826bc3061d0e089a1eee706933e",
+        "path": "core/build.gradle.kts",
+        "line": 30,
+        "url": "https://gitlab.com/augeo-software/planzone/components/core/-/blob/a8684583e9b47826bc3061d0e089a1eee706933e/core/build.gradle.kts#L30"
+      },
+      "observation": "Valeur d’authentification Maven codée en dur.",
+      "credentialValueIncluded": false,
+      "credentialUsed": false,
+      "validityVerified": false,
+      "actionDuringThisPass": "Aucune modification du dépôt PZ7 ni du compte concerné ; ne pas reproduire cette pratique dans PZ8."
+    }
+  ],
+  "proposedConstraints": {
+    "status": "draft-not-a-final-specification",
+    "items": [
+      "Un cœur métier modulaire, avec adaptateurs HTTP, identité, persistance, documents, recherche et tâches différées à sa périphérie.",
+      "Contexte d’identité et de Planzone vérifié et obligatoire pour toute opération cliente ; zone et projet précisés selon le cas d’usage ; règles de rôles et champs côté serveur.",
+      "Références entre entités, requêtes, caches, exports et jobs toujours limitées au périmètre autorisé.",
+      "Lectures ciblées avec filtre, tri stable et pagination bornée ; résultats de commandes séparés de leur rafraîchissement.",
+      "Transaction et mécanisme de concurrence définis par cas d’usage ; aucune généralisation d’une transaction asynchrone sans validation de l’adaptateur.",
+      "Une seule autorité d’écriture par domaine pendant la migration ; aucune double écriture improvisée.",
+      "Historique des temps, tarifs, validations, appartenances, désactivations et rapports conservé et testé.",
+      "Publication durable et idempotence des opérations produisant des effets différés ; contexte système limité et traçable.",
+      "Isolation persistée résistant à un oubli applicatif : clés, références et unicités dans le bon périmètre ; contexte de connexion réinitialisé si utilisé.",
+      "Autorité plateforme séparée de l’administration cliente ; interventions de support attribuées et explicitement limitées.",
+      "Effets externes enregistrés durablement avec la commande ; contrôle des droits lors de la production et de la remise des exports.",
+      "Suspension, suppression et restauration sélective définies par cliente ; une restauration ne réactive pas implicitement des accès révoqués."
+    ]
+  },
+  "unresolved": [
+    "Versions de code et schéma effectivement déployées pour PZ7, configurations de filtrage et d’authentification runtime.",
+    "Mapping complet des privilèges, champs et restrictions PZ7 requis dès maintenant pour la parité fonctionnelle ; cardinalité client → Planzone → zones → projets confirmée.",
+    "Code UAA inaccessible (HTTP 403), bibliothèques privées, variantes client, intégrations et domaines non encore qualifiés ; voir le registre de parité.",
+    "Volumes, concurrence, taille des fichiers, objectifs de latence, disponibilité et restauration.",
+    "Choix de l’hébergeur, du fournisseur d’identité et paramètres d’exploitation ; Java/Spring retenu pour PZ8, PostgreSQL proposé dans la spécification technique."
+  ],
+  "parityReview": {
+    "date": "2026-10-13",
+    "document": "2026-10-13-pz7-parity-baseline.md",
+    "mode": "fusion",
+    "status": "partial-static-review; not-an-exhaustive-spec-or-execution-proof",
+    "independentLenses": ["functional-coverage", "people-security-and-silent-failures", "structure-operations-performance"],
+    "reference": "PZ7; prototype PZ8 is supplemental only",
+    "confirmedCorrections": [
+      "Task supports multiple resource allocations; uniqueness is task/resource, not task alone.",
+      "Planning constraints are multiple and typed, with start/end points, offsets and hour/day units.",
+      "Duplication paths preserve members/groups/allocations; prototype assumption of no assignment is invalid.",
+      "Resource has one organization unit and separately multiple responsibility relations.",
+      "TimeRecord uniqueness is resource/task/date; costs are computed from dated profile history, not a demonstrated per-entry immutable snapshot.",
+      "Time integration has configurable paths; no single universal inclusive threshold can be assumed.",
+      "Permission mapping must cover privileges, field restrictions and memberships including zones.",
+      "Invitation, login-enabled, resource-deactivated and project-member-deactivated are distinct states."
+    ],
+    "performanceMeasured": false,
+    "pz7TestsExecuted": false,
+    "productionStateVerified": false
+  },
+  "pz8Baseline": {
+    "commit": "570673d",
+    "localBranch": "refactor/foundation",
+    "build": "passed",
+    "typecheck": "passed",
+    "tests": {
+      "passed": 355,
+      "failed": 0
+    },
+    "localChange": "tests/nested-task-lists-api.test.ts : suppression du nombre fixe de collections ; vérification que la liste restituée est identique à la liste créée.",
+    "scopeLimit": "Baseline historique du prototype. Le lot Java initial a depuis été livré et testé localement (2026-10-13-foundation-validation.md), sans parité PZ7 démontrée. Les modifications non commitées du chat cloud restent à réconcilier."
+  }
+}

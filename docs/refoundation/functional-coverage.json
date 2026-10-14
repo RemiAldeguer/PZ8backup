@@ -1,0 +1,666 @@
+{
+  "schemaVersion": 1,
+  "updatedOn": "2026-10-14",
+  "reference": "PZ7",
+  "catalog": "2026-10-13-pz7-parity-baseline.md",
+  "semantics": "A family is not complete when only some scenarios pass. Test counts are not coverage percentages. Static PZ7 evidence and executed PZ8 tests are distinct from differential runtime comparison.",
+  "validation": "2026-10-14-scope-access-validation.md",
+  "families": [
+    {
+      "id": "P01",
+      "name": "Personnel et timesheets",
+      "status": "catalogued"
+    },
+    {
+      "id": "P02",
+      "name": "Zones",
+      "status": "partially_implemented",
+      "contract": "2026-10-14-scope-access-contract.md",
+      "remaining": [
+        "complete zone configuration and CRUD UI",
+        "groups and organizational restrictions",
+        "runtime PZ7 comparison"
+      ]
+    },
+    {
+      "id": "P03",
+      "name": "Projets et outils",
+      "status": "partially_implemented",
+      "contract": "2026-10-14-scope-access-contract.md",
+      "remaining": [
+        "complete parameterized project creation, editing, movement and deletion",
+        "project domain commands using qualified privileges",
+        "task, time and tool workflows",
+        "runtime PZ7 comparison"
+      ]
+    },
+    {
+      "id": "P04",
+      "name": "Allocations",
+      "status": "catalogued"
+    },
+    {
+      "id": "P05",
+      "name": "Contraintes de planning",
+      "status": "catalogued"
+    },
+    {
+      "id": "P06",
+      "name": "Ordre et déplacements",
+      "status": "catalogued"
+    },
+    {
+      "id": "P07",
+      "name": "Duplication et modèles",
+      "status": "catalogued"
+    },
+    {
+      "id": "P08",
+      "name": "Ressources et organisation",
+      "status": "partially_implemented",
+      "contract": "2026-10-14-access-contract.md",
+      "remaining": [
+        "group permissions and project permissions on remaining domain commands",
+        "resource activation and project membership effects",
+        "costs, affiliation and profession",
+        "groups, tags, managers and organization units",
+        "transfers and deletion"
+      ]
+    },
+    {
+      "id": "P09",
+      "name": "Capacité, charge et occupation",
+      "status": "catalogued"
+    },
+    {
+      "id": "P10",
+      "name": "Calendriers",
+      "status": "catalogued"
+    },
+    {
+      "id": "P11",
+      "name": "Saisie et consultation du temps",
+      "status": "catalogued"
+    },
+    {
+      "id": "P12",
+      "name": "Validation et intégration du temps",
+      "status": "catalogued"
+    },
+    {
+      "id": "P13",
+      "name": "Coûts et budgets",
+      "status": "catalogued"
+    },
+    {
+      "id": "P14",
+      "name": "Rapports et exports",
+      "status": "catalogued"
+    },
+    {
+      "id": "P15",
+      "name": "Documents et discussions",
+      "status": "catalogued"
+    },
+    {
+      "id": "P16",
+      "name": "Portefeuilles et personnalisation",
+      "status": "catalogued"
+    },
+    {
+      "id": "P17",
+      "name": "Comptes, invitations et connexion",
+      "status": "partially_implemented",
+      "contract": "2026-10-14-access-contract.md",
+      "remaining": [
+        "first organization and administrator product provisioning",
+        "complete UAA account lifecycle, recovery, SSO and MFA qualification",
+        "production identity provider acceptance",
+        "runtime differential comparison with PZ7"
+      ]
+    },
+    {
+      "id": "P18",
+      "name": "Recherche, notifications, assistant et journaux",
+      "status": "catalogued"
+    },
+    {
+      "id": "P19",
+      "name": "Intégrations et exploitation",
+      "status": "partially_implemented",
+      "remaining": [
+        "other integrations and notification consumers",
+        "hosting and production SMTP acceptance",
+        "key rotation, load, backup and restoration"
+      ]
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "P08.R01",
+      "behavior": "Créer virtuelle/matérielle sans connexion ; noms identiques permis",
+      "status": "implemented_and_tested_for_slice",
+      "test": {
+        "path": "backend/core/src/integrationTest/java/com/planzone/pz8/platform/jdbc/PeopleIntegrationTest.java",
+        "method": "accountlessResourcesAndIndependentLocalHumanProfilesPreservePz7Semantics"
+      },
+      "verification": {
+        "postgresql": "passed",
+        "http": "passed_for_slice",
+        "browser": "passed_with_http_fixture",
+        "pz7RuntimeComparison": "not_run",
+        "browserAgainstJava": "passed_for_named_acceptance_path"
+      }
+    },
+    {
+      "id": "P08.R02",
+      "behavior": "Lire un profil et parcourir par curseur, préfixe littéral, type et activité",
+      "status": "implemented_and_tested_for_slice",
+      "test": {
+        "path": "backend/core/src/integrationTest/java/com/planzone/pz8/platform/jdbc/PeopleIntegrationTest.java",
+        "method": "boundedPaginationKeepsDuplicateNamesAndCombinesLiteralPrefixAndStateFilters"
+      },
+      "verification": {
+        "postgresql": "passed",
+        "http": "passed_for_slice",
+        "browser": "passed_with_http_fixture",
+        "pz7RuntimeComparison": "not_run",
+        "browserAgainstJava": "passed_for_named_acceptance_path"
+      }
+    },
+    {
+      "id": "P08.R03",
+      "behavior": "Renommer avec version attendue, sans écraser une modification concurrente",
+      "status": "implemented_and_tested_for_slice",
+      "test": {
+        "path": "backend/core/src/integrationTest/java/com/planzone/pz8/platform/jdbc/PeopleIntegrationTest.java",
+        "method": "concurrentRenamesRejectTheStaleVersionWithoutLosingTheWinnerOrDuplicatingAudit"
+      },
+      "verification": {
+        "postgresql": "passed",
+        "http": "passed_for_slice",
+        "browser": "passed_with_http_fixture",
+        "pz7RuntimeComparison": "not_run",
+        "browserAgainstJava": "passed_for_named_acceptance_path"
+      }
+    },
+    {
+      "id": "P08.R04",
+      "behavior": "Profil humain local pour membre déjà actif, unique par identité/Planzone",
+      "status": "backend_implemented_and_tested",
+      "test": {
+        "path": "backend/core/src/integrationTest/java/com/planzone/pz8/platform/jdbc/PeopleIntegrationTest.java",
+        "method": "concurrentRegistrationsAllowOnlyOneHumanResourceForTheLocalIdentity"
+      },
+      "verification": {
+        "postgresql": "passed",
+        "http": "not_implemented",
+        "browser": "not_implemented",
+        "pz7RuntimeComparison": "not_run",
+        "browserAgainstJava": "not_exercised_in_acceptance_path"
+      }
+    },
+    {
+      "id": "P08.G01",
+      "behavior": "Rejeu concurrent de création, clé scoped, résultat courant",
+      "status": "implemented_and_tested_for_slice",
+      "test": {
+        "path": "backend/core/src/integrationTest/java/com/planzone/pz8/platform/jdbc/PeopleIntegrationTest.java",
+        "method": "concurrentReplayProducesOneProfileAndAuditAndReturnsTheCurrentProfile"
+      },
+      "verification": {
+        "postgresql": "passed",
+        "http": "passed_for_slice",
+        "browser": "passed_with_http_fixture",
+        "pz7RuntimeComparison": "not_run",
+        "browserAgainstJava": "not_exercised_in_acceptance_path"
+      }
+    },
+    {
+      "id": "P08.G02",
+      "behavior": "Échec d’audit : profil, reçu et audit annulés ensemble",
+      "status": "backend_implemented_and_tested",
+      "test": {
+        "path": "backend/core/src/integrationTest/java/com/planzone/pz8/platform/jdbc/PeopleIntegrationTest.java",
+        "method": "auditFailureRollsBackProfileReceiptAndRenameAndLeavesTheOperationRetryable"
+      },
+      "verification": {
+        "postgresql": "passed",
+        "http": "not_implemented",
+        "browser": "not_implemented",
+        "pz7RuntimeComparison": "not_run",
+        "browserAgainstJava": "not_exercised_in_acceptance_path"
+      }
+    },
+    {
+      "id": "P08.A01",
+      "behavior": "Conserver les rôles PZ7 ; séparer création, consultation écran et restrictions de champ",
+      "status": "implemented_and_tested_for_slice",
+      "tests": [
+        {
+          "path": "backend/core/src/integrationTest/java/com/planzone/pz8/platform/jdbc/AccessIntegrationTest.java",
+          "method": "defaultsKeepResourceCreationSeparateFromScreenAccessAndInvitationManagement"
+        },
+        {
+          "path": "backend/api/src/integrationTest/java/com/planzone/pz8/api/AccessHttpIntegrationTest.java",
+          "method": "currentPermissionsDenyRenameAndRoleEscalationAndDisabledIdentityLosesItsSession"
+        },
+        {
+          "path": "tests/browser/pz7-access.spec.ts",
+          "behavior": "Création sans lecture et champs non éditables"
+        }
+      ],
+      "verification": {
+        "postgresql": "passed",
+        "http": "passed_for_slice",
+        "browser": "passed_with_http_fixture",
+        "pz7RuntimeComparison": "not_run",
+        "browserAgainstJava": "not_exercised_in_acceptance_path"
+      }
+    },
+    {
+      "id": "P08.A02",
+      "behavior": "Modifier rôle et restrictions locales atomiquement ; refuser cible/rôle étranger et nom verrouillé",
+      "status": "implemented_and_tested_for_slice",
+      "tests": [
+        {
+          "path": "backend/core/src/integrationTest/java/com/planzone/pz8/platform/jdbc/AccessIntegrationTest.java",
+          "method": "foreignRolesForeignProfilesAndUnknownFieldsCannotPartiallyChangeAccess"
+        },
+        {
+          "path": "backend/core/src/integrationTest/java/com/planzone/pz8/platform/jdbc/AccessIntegrationTest.java",
+          "method": "aLockedTargetProfileRejectsAdministratorRenameAndCanBeExplicitlyUnlocked"
+        },
+        {
+          "path": "backend/api/src/integrationTest/java/com/planzone/pz8/api/AccessHttpIntegrationTest.java",
+          "method": "revokedInvitationCannotGrantAccessAndTenantAuthorityCannotCrossClientBoundaries"
+        },
+        {
+          "path": "tests/browser/pz7-access.spec.ts",
+          "behavior": "Restrictions conservées et refus sans effacement implicite"
+        }
+      ],
+      "verification": {
+        "postgresql": "passed",
+        "http": "passed_for_slice",
+        "browser": "passed_with_http_fixture",
+        "pz7RuntimeComparison": "not_run",
+        "browserAgainstJava": "passed_for_named_acceptance_path"
+      }
+    },
+    {
+      "id": "P17.A01",
+      "behavior": "Se connecter par OIDC vérifié ; session partagée et uniquement les Planzones autorisées",
+      "status": "implemented_and_tested_for_slice",
+      "tests": [
+        {
+          "path": "backend/api/src/integrationTest/java/com/planzone/pz8/api/AccessHttpIntegrationTest.java",
+          "method": "signedLoginRotatesCookieAndSharedSessionsExposeOnlyActiveMemberships"
+        },
+        {
+          "path": "backend/api/src/integrationTest/java/com/planzone/pz8/api/AccessHttpIntegrationTest.java",
+          "method": "callbackRejectsTamperedStateAndSignedTokensWithWrongNonceIssuerOrAudience"
+        },
+        {
+          "path": "tests/browser/pz7-access.spec.ts",
+          "behavior": "Session absente ou expirée, redirection fournisseur"
+        }
+      ],
+      "verification": {
+        "postgresql": "passed",
+        "http": "passed_for_slice",
+        "browser": "passed_with_http_fixture",
+        "pz7RuntimeComparison": "not_run",
+        "browserAgainstJava": "passed_for_named_acceptance_path"
+      }
+    },
+    {
+      "id": "P17.S01",
+      "behavior": "Révoquer une session globalement et protéger mutations/déconnexion par CSRF",
+      "status": "implemented_and_tested_for_slice",
+      "tests": [
+        {
+          "path": "backend/core/src/integrationTest/java/com/planzone/pz8/platform/jdbc/PlanzoneIsolationTest.java",
+          "behavior": "Version de session révoquée refusée dans la transaction"
+        },
+        {
+          "path": "backend/core/src/integrationTest/java/com/planzone/pz8/platform/jdbc/InvitationIntegrationTest.java",
+          "method": "revokedSessionVersionCannotAcceptAnInvitationEvenWhileTheIdentityRemainsActive"
+        },
+        {
+          "path": "backend/api/src/integrationTest/java/com/planzone/pz8/api/AccessHttpIntegrationTest.java",
+          "method": "csrfProtectsWritesAndResourceRetriesAndVersionsHaveObservableOutcomes"
+        },
+        {
+          "path": "tests/browser/pz7-access.spec.ts",
+          "behavior": "Déconnexion retire les données et expiration sans boucle"
+        }
+      ],
+      "verification": {
+        "postgresql": "passed",
+        "http": "passed_for_slice",
+        "browser": "passed_with_http_fixture",
+        "pz7RuntimeComparison": "not_run",
+        "browserAgainstJava": "passed_for_named_acceptance_path"
+      }
+    },
+    {
+      "id": "P17.I01",
+      "behavior": "Préparer profil humain sans adhésion, reçu, audit et mail chiffré dans une seule transaction",
+      "status": "implemented_and_tested_for_slice",
+      "tests": [
+        {
+          "path": "backend/core/src/integrationTest/java/com/planzone/pz8/platform/jdbc/InvitationIntegrationTest.java",
+          "method": "pendingProfileReceiptAndEncryptedMailAreAtomicAndReplayNeverChangesTheSecret"
+        },
+        {
+          "path": "backend/core/src/integrationTest/java/com/planzone/pz8/platform/jdbc/InvitationIntegrationTest.java",
+          "method": "simultaneousCreationReplayPersistsOneProfileOneInvitationAndOneMail"
+        },
+        {
+          "path": "backend/api/src/integrationTest/java/com/planzone/pz8/api/AccessHttpIntegrationTest.java",
+          "method": "invitationRequiresMatchingVerifiedOidcAccountAndAcceptanceReplayKeepsOneMembership"
+        },
+        {
+          "path": "tests/browser/pz7-access.spec.ts",
+          "behavior": "Création et rejeu explicite avec operationId"
+        }
+      ],
+      "verification": {
+        "postgresql": "passed",
+        "http": "passed_for_slice",
+        "browser": "passed_with_http_fixture",
+        "pz7RuntimeComparison": "not_run",
+        "browserAgainstJava": "passed_for_named_acceptance_path"
+      }
+    },
+    {
+      "id": "P17.I02",
+      "behavior": "Accepter seulement avec adresse exacte vérifiée ; conserver rôle courant, profil local et unicité concurrente",
+      "status": "implemented_and_tested_for_slice",
+      "tests": [
+        {
+          "path": "backend/core/src/integrationTest/java/com/planzone/pz8/platform/jdbc/InvitationIntegrationTest.java",
+          "method": "emailVerificationAndExactAddressAreRequiredBeforeAnyAuthorityIsGranted"
+        },
+        {
+          "path": "backend/core/src/integrationTest/java/com/planzone/pz8/platform/jdbc/InvitationIntegrationTest.java",
+          "method": "concurrentAcceptanceIsIdempotentAndRevokedMembershipCannotBeResurrected"
+        },
+        {
+          "path": "backend/core/src/integrationTest/java/com/planzone/pz8/platform/jdbc/InvitationIntegrationTest.java",
+          "method": "oneGlobalIdentityHasIndependentProfilesAndRolesInTwoClients"
+        },
+        {
+          "path": "backend/core/src/integrationTest/java/com/planzone/pz8/platform/jdbc/InvitationIntegrationTest.java",
+          "method": "acceptingPreservesTheAdministratorsCurrentPendingProfileRoleAndFieldRestrictions"
+        },
+        {
+          "path": "backend/api/src/integrationTest/java/com/planzone/pz8/api/AccessHttpIntegrationTest.java",
+          "method": "invitationRequiresMatchingVerifiedOidcAccountAndAcceptanceReplayKeepsOneMembership"
+        },
+        {
+          "path": "tests/browser/pz7-access.spec.ts",
+          "behavior": "Acceptation, compte différent et nouvelle Planzone"
+        }
+      ],
+      "verification": {
+        "postgresql": "passed",
+        "http": "passed_for_slice",
+        "browser": "passed_with_http_fixture",
+        "pz7RuntimeComparison": "not_run",
+        "browserAgainstJava": "passed_for_named_acceptance_path"
+      }
+    },
+    {
+      "id": "P17.I03",
+      "behavior": "Révoquer ou expirer un lien sans adhésion ni résurrection de droits",
+      "status": "implemented_and_tested_for_slice",
+      "tests": [
+        {
+          "path": "backend/core/src/integrationTest/java/com/planzone/pz8/platform/jdbc/InvitationIntegrationTest.java",
+          "method": "unknownExpiredAndRevokedTokensCannotExposeEmailOrGrantMembership"
+        },
+        {
+          "path": "backend/api/src/integrationTest/java/com/planzone/pz8/api/AccessHttpIntegrationTest.java",
+          "method": "revokedInvitationCannotGrantAccessAndTenantAuthorityCannotCrossClientBoundaries"
+        },
+        {
+          "path": "tests/browser/pz7-access.spec.ts",
+          "behavior": "Révocation confirmée et invitation indisponible"
+        }
+      ],
+      "verification": {
+        "postgresql": "passed",
+        "http": "passed_for_slice",
+        "browser": "passed_with_http_fixture",
+        "pz7RuntimeComparison": "not_run",
+        "browserAgainstJava": "not_exercised_in_acceptance_path"
+      }
+    },
+    {
+      "id": "P19.M01",
+      "behavior": "File mail réservée au worker ; reprises bornées, confirmation du bon bail et dialogue SMTP réel",
+      "status": "implemented_and_tested_for_slice",
+      "tests": [
+        {
+          "path": "backend/core/src/integrationTest/java/com/planzone/pz8/platform/jdbc/InvitationIntegrationTest.java",
+          "method": "apiCannotReadOrAcknowledgeGlobalMailAndMailerCannotAccessBusinessCatalogues"
+        },
+        {
+          "path": "backend/core/src/integrationTest/java/com/planzone/pz8/platform/jdbc/InvitationIntegrationTest.java",
+          "method": "failedDeliveryCanRetryAndStaleAcknowledgementCannotLoseANewLease"
+        },
+        {
+          "path": "backend/jobs/src/test/java/com/planzone/pz8/jobs/InvitationMailDispatcherTest.java",
+          "behavior": "SMTP français/anglais, refus et confirmation incertaine"
+        }
+      ],
+      "verification": {
+        "postgresql": "passed",
+        "http": "not_applicable",
+        "browser": "not_applicable",
+        "pz7RuntimeComparison": "not_run",
+        "browserAgainstJava": "not_exercised_in_acceptance_path"
+      }
+    },
+    {
+      "id": "P02.A01",
+      "behavior": "Visibilité zones par membre, admin/sous-admin et modèles ; aucun accès implicite aux projets",
+      "status": "integrated_and_tested_for_slice",
+      "tests": [
+        {
+          "path": "backend/core/src/integrationTest/java/com/planzone/pz8/platform/jdbc/ScopeAccessIntegrationTest.java",
+          "method": "visibilityUsesLocalMembershipAndTemplatesAndKeepsUnderAdministratorWorkerRestrictions"
+        },
+        {
+          "path": "backend/api/src/integrationTest/java/com/planzone/pz8/api/ScopeHttpIntegrationTest.java",
+          "method": "managerCanAssociateAccountlessResourcesOnlyInHisProjectAndLosesAuthorityWhenDeactivated"
+        },
+        {
+          "path": "tests/browser/pz7-scope.spec.ts",
+          "behavior": "Object permissions, paging, role selection, refusal/conflict without replay, removal confirmation and tenant change"
+        },
+        {
+          "path": "tests/browser/pz7-scope-java.spec.ts",
+          "behavior": "Actual UI/API: accountless project association, zone membership, manager deactivation and zone removal cascade"
+        }
+      ],
+      "verification": {
+        "postgresql": "passed",
+        "http": "passed_for_slice",
+        "browser": "passed_for_object_permissions",
+        "browserAgainstJava": "passed_for_slice",
+        "pz7RuntimeComparison": "not_run"
+      }
+    },
+    {
+      "id": "P02.A02",
+      "behavior": "Ajout de zone selon privilège, retrait de zone supprimant ses appartenances projet et préservant les autres zones",
+      "status": "integrated_and_tested_for_slice",
+      "tests": [
+        {
+          "path": "backend/core/src/integrationTest/java/com/planzone/pz8/platform/jdbc/ScopeAccessIntegrationTest.java",
+          "method": "teamChangesValidateScopeRolesVersionsAndPreserveTheZoneProjectRemovalRules"
+        },
+        {
+          "path": "tests/browser/pz7-scope.spec.ts",
+          "behavior": "Object permissions, paging, role selection, refusal/conflict without replay, removal confirmation and tenant change"
+        },
+        {
+          "path": "tests/browser/pz7-scope-java.spec.ts",
+          "behavior": "Actual UI/API: accountless project association, zone membership, manager deactivation and zone removal cascade"
+        }
+      ],
+      "verification": {
+        "postgresql": "passed",
+        "http": "not_exercised_in_http_scenario",
+        "browser": "passed_for_removal_confirmation",
+        "browserAgainstJava": "passed_for_zone_removal_cascade",
+        "pz7RuntimeComparison": "not_run"
+      }
+    },
+    {
+      "id": "P03.A01",
+      "behavior": "Union de privilèges PZ7, restrictions de rôle projet et rôle visiteur avec ses droits de discussion/document",
+      "status": "integrated_and_tested_for_slice",
+      "tests": [
+        {
+          "path": "backend/core/src/integrationTest/java/com/planzone/pz8/platform/jdbc/ScopeAccessIntegrationTest.java",
+          "method": "visibilityUsesLocalMembershipAndTemplatesAndKeepsUnderAdministratorWorkerRestrictions"
+        },
+        {
+          "path": "backend/api/src/integrationTest/java/com/planzone/pz8/api/ScopeHttpIntegrationTest.java",
+          "method": "managerCanAssociateAccountlessResourcesOnlyInHisProjectAndLosesAuthorityWhenDeactivated"
+        },
+        {
+          "path": "tests/browser/pz7-scope.spec.ts",
+          "behavior": "Object permissions, paging, role selection, refusal/conflict without replay, removal confirmation and tenant change"
+        },
+        {
+          "path": "tests/browser/pz7-scope-java.spec.ts",
+          "behavior": "Actual UI/API: accountless project association, zone membership, manager deactivation and zone removal cascade"
+        }
+      ],
+      "verification": {
+        "postgresql": "passed",
+        "http": "passed_for_slice",
+        "browser": "passed_for_action_controls",
+        "browserAgainstJava": "passed_for_manager_permissions",
+        "pz7RuntimeComparison": "not_run"
+      }
+    },
+    {
+      "id": "P03.A02",
+      "behavior": "Équipe : candidats sans droit écran ressources, V/M sans compte, rôles scoped, états et versions",
+      "status": "integrated_and_tested_for_slice",
+      "tests": [
+        {
+          "path": "backend/core/src/integrationTest/java/com/planzone/pz8/platform/jdbc/ScopeAccessIntegrationTest.java",
+          "method": "teamChangesValidateScopeRolesVersionsAndPreserveTheZoneProjectRemovalRules"
+        },
+        {
+          "path": "backend/api/src/integrationTest/java/com/planzone/pz8/api/ScopeHttpIntegrationTest.java",
+          "method": "managerCanAssociateAccountlessResourcesOnlyInHisProjectAndLosesAuthorityWhenDeactivated"
+        },
+        {
+          "path": "tests/browser/pz7-scope.spec.ts",
+          "behavior": "Object permissions, paging, role selection, refusal/conflict without replay, removal confirmation and tenant change"
+        },
+        {
+          "path": "tests/browser/pz7-scope-java.spec.ts",
+          "behavior": "Actual UI/API: accountless project association, zone membership, manager deactivation and zone removal cascade"
+        }
+      ],
+      "verification": {
+        "postgresql": "passed",
+        "http": "passed_for_slice",
+        "browser": "passed_for_slice",
+        "browserAgainstJava": "passed_for_slice",
+        "pz7RuntimeComparison": "not_run"
+      }
+    },
+    {
+      "id": "P03.A03",
+      "behavior": "Rétrogradation globale en visiteur normalise les rôles projet sans restauration implicite",
+      "status": "backend_implemented_and_tested",
+      "tests": [
+        {
+          "path": "backend/core/src/integrationTest/java/com/planzone/pz8/platform/jdbc/ScopeAccessIntegrationTest.java",
+          "method": "teamChangesValidateScopeRolesVersionsAndPreserveTheZoneProjectRemovalRules"
+        }
+      ],
+      "verification": {
+        "postgresql": "passed",
+        "http": "not_exercised_in_http_scenario",
+        "browser": "not_exercised",
+        "browserAgainstJava": "not_exercised",
+        "pz7RuntimeComparison": "not_run"
+      }
+    },
+    {
+      "id": "P03.G01",
+      "behavior": "Échec audit annule membre projet et appartenance zone induite ensemble",
+      "status": "backend_implemented_and_tested",
+      "tests": [
+        {
+          "path": "backend/core/src/integrationTest/java/com/planzone/pz8/platform/jdbc/ScopeAccessIntegrationTest.java",
+          "method": "anAuditFailureRollsBackBothTheProjectMemberAndInducedZoneMember"
+        }
+      ],
+      "verification": {
+        "postgresql": "passed",
+        "http": "not_exercised_in_http_scenario",
+        "browser": "not_applicable",
+        "browserAgainstJava": "not_applicable",
+        "pz7RuntimeComparison": "not_run"
+      }
+    },
+    {
+      "id": "P03.G02",
+      "behavior": "Commande après révocation concurrente recontrôle les droits actuels",
+      "status": "backend_and_http_implemented_and_tested",
+      "tests": [
+        {
+          "path": "backend/core/src/integrationTest/java/com/planzone/pz8/platform/jdbc/ScopeAccessIntegrationTest.java",
+          "method": "teamAuthorityIsRecheckedAfterAConcurrentProjectMembershipRevocation"
+        },
+        {
+          "path": "backend/api/src/integrationTest/java/com/planzone/pz8/api/ScopeHttpIntegrationTest.java",
+          "method": "managerCanAssociateAccountlessResourcesOnlyInHisProjectAndLosesAuthorityWhenDeactivated"
+        },
+        {
+          "path": "tests/browser/pz7-scope-java.spec.ts",
+          "behavior": "Actual UI/API: accountless project association, zone membership, manager deactivation and zone removal cascade"
+        }
+      ],
+      "verification": {
+        "postgresql": "passed",
+        "http": "passed_for_following_request_denial",
+        "browser": "not_exercised_concurrency",
+        "browserAgainstJava": "passed_for_following_request_denial",
+        "pz7RuntimeComparison": "not_run"
+      }
+    }
+  ],
+  "contracts": [
+    "2026-10-14-people-contract.md",
+    "2026-10-14-access-contract.md",
+    "2026-10-14-scope-access-contract.md"
+  ],
+  "acceptancePath": {
+    "test": "tests/browser/pz7-access-java.spec.ts",
+    "status": "passed",
+    "seconds": 14.1,
+    "scope": "Real application entry, OIDC code/PKCE, accountless resource, reload/rename, invitation preview/acceptance, role change, denied access and logout. SMTP is tested separately. No runtime PZ7 comparison."
+  },
+  "qualifications": [
+    "2026-10-14-scope-pz7-evidence.md"
+  ],
+  "scopeAcceptancePath": {
+    "test": "tests/browser/pz7-scope-java.spec.ts",
+    "status": "passed",
+    "seconds": 15.7,
+    "scope": "Real application entry, signed OIDC, scope visibility, no global resource catalogue read, accountless team association and persistence, induced zone membership, administrative deactivation and zone removal cascade. PostgreSQL tests prove rollback and concurrency separately. No runtime PZ7 comparison."
+  }
+}

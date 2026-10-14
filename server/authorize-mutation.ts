@@ -1,14 +1,10 @@
 import type { AppData, Entity, Project, Resource, Task } from '../shared/types.ts';
-import { canCreateProject, canCustomize, canEditTime, canProject, canReadProject, canSeeView, canValidateTime, globalRole, isAdmin, type ProjectAction } from '../shared/permissions.ts';
+import { canCreateProject, canCustomize, canEditTime, canProject, canReadProject, canValidateTime, globalRole, isAdmin, type ProjectAction } from '../shared/permissions.ts';
 import type { StoreLike, Table } from './contracts.ts';
 
 /** Called on each authenticated mutation, before any record is written. */
 export function authorizeMutation(store: StoreLike, data: AppData, entity: Entity, method: string, body: unknown, recordId: string | undefined,
   deny: (status: number, message: string) => never): void {
-  const view = { 'project-templates': 'project-templates', 'custom-field-definitions': 'custom-fields', 'report-templates': 'report-templates', 'project-status-definitions': 'project-statuses', 'strategic-axes': 'strategic-axes', 'profiles': 'profiles', 'organization-units': 'organization', 'project-reports': 'reports' } as const;
-  const requiredView = view[entity as keyof typeof view];
-  if (requiredView && !canSeeView(data, requiredView)) deny(403, 'Votre rôle ne donne pas accès à cette vue.');
-  if (['project-documents', 'document-folders'].includes(entity) && (!canSeeView(data, 'documents') || !canSeeView(data, 'document-edit'))) deny(403, 'Votre rôle ne permet pas de créer ou modifier les documents.');
   if (isAdmin(data)) return;
   const input = body && typeof body === 'object' && !Array.isArray(body) ? body as Record<string, unknown> : {};
   const assert = (allowed: boolean) => { if (!allowed) deny(403, 'Votre rôle ne permet pas cette action dans ce périmètre.'); };
@@ -50,7 +46,6 @@ export function authorizeMutation(store: StoreLike, data: AppData, entity: Entit
     if (method !== 'DELETE' && Object.hasOwn(input, 'kind') && old && input.kind !== old.kind) check(projectId, `${input.kind === 'milestone' ? 'milestone' : 'task'}Edit`);
     if (method !== 'DELETE' && (input.assigneeId ?? null) !== (old?.assigneeId ?? null) && Object.hasOwn(input, 'assigneeId')) check(projectId, 'team');
     if (method !== 'DELETE' && Object.hasOwn(input, 'dependsOnId') && (input.dependsOnId ?? null) !== (old?.dependsOnId ?? null)) check(projectId, 'details');
-    if (method !== 'DELETE' && Object.hasOwn(input, 'dependencyConstraint') && JSON.stringify(input.dependencyConstraint ?? null) !== JSON.stringify(old?.dependencyConstraint ?? null)) check(projectId, 'details');
     if (Object.hasOwn(input, 'allocatedHours') && input.allocatedHours !== (old?.allocatedHours ?? 0)) check(projectId, 'ownAllocation', old); return;
   }
   if (entity === 'task-lists') { const projectId = previous('taskLists')?.projectId ?? input.projectId; check(projectId, `list${suffix}`); if (input.parentPhase || input.sourcePhase) check(projectId, 'listEdit'); return; }

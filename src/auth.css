@@ -2,7 +2,7 @@
 .auth-intro { position: relative; overflow: hidden; display: flex; flex-direction: column; min-height: 100dvh; padding: 52px 60px 35px; background: #233036; color: #fff; }
 .auth-intro::after { content: ''; position: absolute; width: 410px; height: 410px; right: -250px; bottom: 8%; border: 1px solid #536168; border-radius: 50%; box-shadow: 0 0 0 90px #42515823, 0 0 0 180px #42515816; pointer-events: none; }
 .auth-brand { display: flex; align-items: center; gap: 12px; color: #24343d; font-size: 31px; font-weight: 750; letter-spacing: -.065em; }
-.auth-brand img { width: 38px; height: 38px; object-fit: contain; flex-shrink: 0; }
+.auth-brand img { width: 38px; height: 38px; transform: rotate(-5deg); }
 .auth-brand-version { display: inline-block; margin-left: 7px; border: 1px solid #d9e0e4; border-radius: 6px; font-size: 13px; padding: 4px 6px; letter-spacing: 0; line-height: 1; vertical-align: middle; }
 .auth-intro .auth-brand { color: #fff; position: relative; z-index: 1; }
 .auth-intro .auth-brand-version { border-color: #5b6870; background: #39484e; }

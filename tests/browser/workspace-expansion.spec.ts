@@ -247,7 +247,7 @@ test('extension espace : documents liés et fichiers enregistrés dans leur proj
   let stored = await state(request);
   const file = stored.projectDocuments!.find(document => document.projectId === owner.id && document.kind === 'file')!;
   const link = stored.projectDocuments!.find(document => document.projectId === owner.id && document.kind === 'link')!;
-  expect(file).toMatchObject({ fileName: 'recette-espace.txt', mimeType: 'text/plain', contentBase64: null, sizeBytes: contents.length }); const contentResponse = await request.get(`/api/project-documents/${file.id}/content`); expect(contentResponse.ok()).toBeTruthy(); expect((await contentResponse.json()).contentBase64).toBe(contents.toString('base64'));
+  expect(file).toMatchObject({ fileName: 'recette-espace.txt', mimeType: 'text/plain', contentBase64: contents.toString('base64'), sizeBytes: contents.length });
   expect(file.authorId).toBe(stored.currentUser.id);
   expect(link.url).toBe('https://example.com/cadrage');
   await page.getByRole('button', { name: 'Modifier Extension lien du cadrage', exact: true }).click();

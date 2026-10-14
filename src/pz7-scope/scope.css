@@ -1,0 +1,35 @@
+.pz7-scope { --ps-ink: var(--ink, #233238); --ps-surface: var(--surface, #fff); --ps-border: var(--border, #c4cdd2); color: var(--ps-ink); background: var(--ps-surface); font: 14px/1.5 Inter, system-ui, sans-serif; }
+.pz7-scope *, .pz7-scope *::before, .pz7-scope *::after { box-sizing: border-box; }
+.pz7-scope h2, .pz7-scope h3, .pz7-scope p { margin: 0 0 12px; }
+.pz7-scope h2 { font-size: 22px; }
+.pz7-scope h3 { font-size: 17px; }
+.pz7-scope button, .pz7-scope input, .pz7-scope select { font: inherit; }
+.pz7-scope button { padding: 9px 12px; border: 1px solid var(--ps-border); border-radius: 5px; min-height: 40px; color: var(--ps-ink); background: var(--ps-surface); cursor: pointer; }
+.pz7-scope button:disabled { opacity: .55; cursor: not-allowed; }
+.pz7-scope button:focus-visible, .pz7-scope input:focus-visible, .pz7-scope select:focus-visible { outline: 3px solid #3985bf; outline-offset: 3px; }
+.pz7-scope label { display: grid; gap: 7px; margin: 12px 0; font-weight: 600; }
+.pz7-scope input:not([type=checkbox]), .pz7-scope select { width: 100%; min-height: 42px; padding: 9px 11px; border: 1px solid var(--ps-border); border-radius: 5px; color: var(--ps-ink); background: var(--ps-surface); }
+.pz7-scope fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.pz7-scope .ps-checkbox { display: flex; align-items: center; gap: 10px; }
+.pz7-scope .ps-checkbox input { width: 18px; height: 18px; }
+.ps-panels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; padding: 20px; }
+.ps-panel { min-width: 0; border: 1px solid var(--ps-border); border-radius: 7px; padding: 16px; }
+.pz7-scope header, .pz7-scope footer, .ps-pagination { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
+.pz7-scope header { justify-content: space-between; }
+.pz7-scope footer { justify-content: flex-end; margin: 20px 0 0; }
+.ps-pagination { margin: 14px 0; }
+.ps-scope-list { list-style: none; padding: 0; margin: 12px 0; }
+.ps-scope-list button { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; text-align: left; margin-bottom: 7px; overflow-wrap: anywhere; }
+.ps-scope-list button[aria-pressed=true] { border-color: #c3561a; box-shadow: inset 4px 0 #c3561a; font-weight: 700; }
+.ps-members { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--ps-border); }
+.ps-table-wrap { overflow-x: auto; margin-top: 12px; }
+.pz7-scope table { border-collapse: collapse; width: 100%; text-align: left; }
+.pz7-scope th, .pz7-scope td { padding: 10px; border-bottom: 1px solid var(--ps-border); vertical-align: top; overflow-wrap: anywhere; }
+.ps-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.ps-error { border: 1px solid #b93d44; border-radius: 5px; padding: 12px; margin: 12px 0; }
+.pz7-scope .ps-danger { background: #b32431; color: white; border-color: #b32431; }
+.ps-dialog { width: min(620px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); border: 0; border-radius: 8px; padding: 22px; box-shadow: 0 12px 44px #0005; overflow-y: auto; }
+.ps-dialog::backdrop { background: #101b27aa; }
+.ps-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (max-width: 900px) { .ps-panels { grid-template-columns: 1fr; padding: 12px; } }
+@media (max-width: 600px) { .pz7-scope input, .pz7-scope select { font-size: 16px; } }

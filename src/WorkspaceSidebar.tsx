@@ -2,17 +2,14 @@ import { useEffect, useState, type ReactNode } from 'react';
 import {
   CalendarDays, ChevronDown, ChevronRight, ChevronsLeft, ChevronsRight, CircleHelp,
   CircleUserRound, Coins, FileText, Files, Folder, FolderClock, FolderPlus,
-  Gauge, Network, Orbit, Plus, Users, Wrench, Target, ListPlus, PanelsTopLeft, UserRoundCheck, Settings2, ListOrdered,
+  Gauge, Network, Orbit, Plus, Users, Wrench, Target, ListPlus, PanelsTopLeft, UserRoundCheck,
 } from 'lucide-react';
-import type { AppData, Project, Zone } from '../shared/types';
-import { ZoneActions } from './ZoneActions';
+import type { AppData, Project } from '../shared/types';
 import { CUSTOMIZATION_PAGES, type CustomizationPage } from '../shared/customization';
 import './workspace-sidebar.css';
-import { canReadCapacityPlan } from '../shared/capaplan';
-import { canCreateProject, canProject, canSeeView, isAdmin } from '../shared/permissions';
-import { MANAGEMENT_VIEWS, CUSTOMIZATION_VIEWS } from '../shared/view-access';
+import { canCreateProject, canCustomize, canProject, canReadResources, isAdmin } from '../shared/permissions';
 
-type SidebarSection = 'overview' | 'personal' | 'discussions' | 'documents' | 'projects' | 'calendar' | 'resources' | 'time' | 'reports' | 'customization' | 'settings';
+type SidebarSection = 'overview' | 'personal' | 'discussions' | 'documents' | 'projects' | 'calendar' | 'resources' | 'time' | 'reports' | 'customization';
 export interface WorkspaceSidebarProps {
   data: AppData;
   section: string;
@@ -27,9 +24,6 @@ export interface WorkspaceSidebarProps {
   onProject: (project: Project) => void;
   onCreateProject: (zoneId?: string) => void;
   onCreateZone: () => void;
-  onOrderZones: () => void;
-  onEditZone: (zone: Zone) => void;
-  onDeleteZone: (zone: Zone) => void;
   onHelp: () => void;
   footer: ReactNode;
 }
@@ -52,7 +46,7 @@ function markerText(color: string): string {
 
 export function WorkspaceSidebar({
   data, section, resourcesSubview, customizationPage, projectId, zoneId, collapsed, onCollapse, onNavigate, onZone,
-  onProject, onCreateProject, onCreateZone, onOrderZones, onEditZone, onDeleteZone, onHelp, footer,
+  onProject, onCreateProject, onCreateZone, onHelp, footer,
 }: WorkspaceSidebarProps) {
   const currentProject = section === 'project' ? data.projects.find(project => project.id === projectId) : undefined;
   const [recentIds, setRecentIds] = useState(loadRecents);
@@ -94,7 +88,7 @@ export function WorkspaceSidebar({
 
   return <aside className={`sidebar pz-sidebar${collapsed ? ' pz-sidebar-is-collapsed' : ''}`} aria-label="Navigation principale">
     <div className="pz-sidebar-heading">
-      <button className="pz-sidebar-brand" onClick={() => onNavigate('overview')} aria-label="Planzone 8, accueil" title="Vue d’ensemble"><img src="/planzone-logo.png" alt="" width={32} height={32} /><span className="pz-sidebar-label">Démonstration</span></button>
+      <button className="pz-sidebar-brand" onClick={() => onNavigate('overview')} aria-label="Planzone 8, accueil" title="Vue d’ensemble"><span className="pz-sidebar-label">Démonstration</span><span className="pz-sidebar-compact-brand" aria-hidden="true">P8</span></button>
       <button className="pz-sidebar-collapse" onClick={onCollapse} aria-label={collapsed ? 'Développer la barre latérale' : 'Réduire la barre latérale'} aria-expanded={!collapsed} title={collapsed ? 'Développer la barre latérale' : 'Réduire la barre latérale'}>{collapsed ? <ChevronsRight size={23} /> : <ChevronsLeft size={23} />}</button>
     </div>
 
@@ -110,48 +104,44 @@ export function WorkspaceSidebar({
       </select>
       <ChevronDown size={14} aria-hidden="true" />
     </div>
-    <button disabled={!canSeeView(data, 'projects')} className="pz-sidebar-compact-recents" title="Tous les projets" aria-label="Projets récents et tous les projets" onClick={() => onZone(null)}><FolderClock size={22} /></button>
+    <button className="pz-sidebar-compact-recents" title="Tous les projets" aria-label="Projets récents et tous les projets" onClick={() => onZone(null)}><FolderClock size={22} /></button>
 
     <nav className="sidebar-nav pz-sidebar-nav" aria-label="Espace de travail">
-      {(['personal-summary', 'personal-time', 'personal-discussions'] as const).some(view => canSeeView(data, view)) && <button className={`pz-sidebar-nav-item${['personal', 'time', 'discussions'].includes(section) ? ' active' : ''}`} onClick={() => onNavigate(canSeeView(data, 'personal-summary') ? 'personal' : canSeeView(data, 'personal-time') ? 'time' : 'discussions')} aria-label="Mon espace" title="Mon espace : synthèse, suivi temporel et discussions" aria-current={['personal', 'time', 'discussions'].includes(section) ? 'page' : undefined}><CircleUserRound size={21} /><span className="pz-sidebar-label">Mon espace</span></button>}
-      {(isAdmin(data) || MANAGEMENT_VIEWS.some(view => canSeeView(data, view) && (view !== 'capaplan' || canReadCapacityPlan(data)))) && <><button className={`pz-sidebar-nav-item${section === 'resources' ? ' pz-sidebar-group-active' : ''}`} onClick={() => { if (collapsed) { onCollapse(); setManagementOpen(true); } else setManagementOpen(open => !open); }} aria-expanded={managementOpen} aria-controls="pz-sidebar-management" title="Gestion"><Users size={21} /><span className="pz-sidebar-label">Gestion</span><ChevronDown className={`pz-sidebar-disclosure${managementOpen ? ' is-open' : ''}`} size={14} /></button>
+      <button className={`pz-sidebar-nav-item${['personal', 'time', 'discussions'].includes(section) ? ' active' : ''}`} onClick={() => onNavigate('personal')} aria-label="Mon espace" title="Mon espace : synthèse, suivi temporel et discussions" aria-current={['personal', 'time', 'discussions'].includes(section) ? 'page' : undefined}><CircleUserRound size={21} /><span className="pz-sidebar-label">Mon espace</span></button>
+      {(isAdmin(data) || canReadResources(data)) && <><button className={`pz-sidebar-nav-item${section === 'resources' ? ' pz-sidebar-group-active' : ''}`} onClick={() => { if (collapsed) { onCollapse(); setManagementOpen(true); } else setManagementOpen(open => !open); }} aria-expanded={managementOpen} aria-controls="pz-sidebar-management" title="Gestion"><Users size={21} /><span className="pz-sidebar-label">Gestion</span><ChevronDown className={`pz-sidebar-disclosure${managementOpen ? ' is-open' : ''}`} size={14} /></button>
       <div id="pz-sidebar-management" className="pz-sidebar-subnav" hidden={!managementOpen}>
-        {canSeeView(data, 'resources') && <button className={section === 'resources' && resourcesSubview === 'directory' ? 'active' : ''} onClick={() => onNavigate('resources', 'directory')}><Users size={16} /><span>Ressources</span></button>}
-        {canSeeView(data, 'organization') && <button className={section === 'resources' && resourcesSubview === 'organization' ? 'org-sidebar-item active' : 'org-sidebar-item'} aria-current={section === 'resources' && resourcesSubview === 'organization' ? 'page' : undefined} aria-label="Ouvrir l’organigramme" onClick={() => onNavigate('resources', 'organization')}><Network size={16} /><span>Organigramme</span></button>}
-        {canSeeView(data, 'profiles') && <button className={section === 'resources' && resourcesSubview === 'profiles' ? 'active' : ''} aria-label="Ouvrir les profils de coûts" onClick={() => onNavigate('resources', 'profiles')}><Coins size={16} /><span>Profils de coûts</span></button>}
-        {canSeeView(data, 'capaplan') && canReadCapacityPlan(data) && <button className={section === 'resources' && resourcesSubview === 'capaplan' ? 'active' : ''} aria-label="Ouvrir CapaPlan" onClick={() => onNavigate('resources', 'capaplan')}><Gauge/><span>CapaPlan</span></button>}
-        {canSeeView(data, 'capacity') && <button className={section === 'resources' && resourcesSubview === 'capacity' ? 'active' : ''} aria-label="Ouvrir la capacité" onClick={() => onNavigate('resources', 'capacity')}><Users size={16} /><span>Capacité</span></button>}
-        {canSeeView(data, 'load') && <button className={section === 'resources' && resourcesSubview === 'load' ? 'active' : ''} aria-label="Ouvrir la charge prévisionnelle" onClick={() => onNavigate('resources', 'load')}><Gauge size={16} /><span>Charge prévisionnelle</span></button>}
-        {canSeeView(data, 'occupancy') && <button className={section === 'resources' && resourcesSubview === 'occupancy' ? 'active' : ''} aria-label="Ouvrir le taux d’occupation" onClick={() => onNavigate('resources', 'occupancy')}><UserRoundCheck size={16} /><span>Taux d’occupation</span></button>}
+        <button className={section === 'resources' && resourcesSubview === 'directory' ? 'active' : ''} onClick={() => onNavigate('resources', 'directory')}><Users size={16} /><span>Ressources</span></button>
+        <button className={section === 'resources' && resourcesSubview === 'organization' ? 'org-sidebar-item active' : 'org-sidebar-item'} aria-current={section === 'resources' && resourcesSubview === 'organization' ? 'page' : undefined} aria-label="Ouvrir l’organigramme" onClick={() => onNavigate('resources', 'organization')}><Network size={16} /><span>Organigramme</span></button>
+        {isAdmin(data) && <button className={section === 'resources' && resourcesSubview === 'profiles' ? 'active' : ''} aria-label="Ouvrir les profils de coûts" onClick={() => onNavigate('resources', 'profiles')}><Coins size={16} /><span>Profils de coûts</span></button>}
+        <button className={section === 'resources' && resourcesSubview === 'capacity' ? 'active' : ''} aria-label="Ouvrir la capacité" onClick={() => onNavigate('resources', 'capacity')}><Users size={16} /><span>Capacité</span></button>
+        <button className={section === 'resources' && resourcesSubview === 'load' ? 'active' : ''} aria-label="Ouvrir la charge prévisionnelle" onClick={() => onNavigate('resources', 'load')}><Gauge size={16} /><span>Charge prévisionnelle</span></button>
+        <button className={section === 'resources' && resourcesSubview === 'occupancy' ? 'active' : ''} aria-label="Ouvrir le taux d’occupation" onClick={() => onNavigate('resources', 'occupancy')}><UserRoundCheck size={16} /><span>Taux d’occupation</span></button>
         {isAdmin(data) && <button className={section === 'resources' && resourcesSubview === 'permissions' ? 'active' : ''} onClick={() => onNavigate('resources', 'permissions')}><UserRoundCheck size={16} /><span>Droits et rôles</span></button>}
-        {isAdmin(data) && <button className={section === 'settings' ? 'active' : ''} onClick={() => onNavigate('settings')}><Settings2 size={16} /><span>Paramètres de la Planzone</span></button>}
       </div></>}
-      {CUSTOMIZATION_VIEWS.some(view => canSeeView(data, view)) && <><button className={`pz-sidebar-nav-item${section === 'customization' ? ' pz-sidebar-group-active' : ''}`} onClick={() => { if (collapsed) { onCollapse(); setCustomizationOpen(true); } else setCustomizationOpen(open => !open); }} aria-expanded={customizationOpen} aria-controls="pz-sidebar-customization" title="Personnalisation"><Wrench size={21} /><span className="pz-sidebar-label">Personnalisation</span><ChevronDown className={`pz-sidebar-disclosure${customizationOpen ? ' is-open' : ''}`} size={14} /></button>
+      {canCustomize(data) && <><button className={`pz-sidebar-nav-item${section === 'customization' ? ' pz-sidebar-group-active' : ''}`} onClick={() => { if (collapsed) { onCollapse(); setCustomizationOpen(true); } else setCustomizationOpen(open => !open); }} aria-expanded={customizationOpen} aria-controls="pz-sidebar-customization" title="Personnalisation"><Wrench size={21} /><span className="pz-sidebar-label">Personnalisation</span><ChevronDown className={`pz-sidebar-disclosure${customizationOpen ? ' is-open' : ''}`} size={14} /></button>
       <div id="pz-sidebar-customization" className="pz-sidebar-subnav" hidden={!customizationOpen}>
         {CUSTOMIZATION_PAGES.map((page, index) => {
-          if (!canSeeView(data, page.id)) return null;
           const Icon = [PanelsTopLeft, ListPlus, FileText, Folder, Target][index];
           const active = section === 'customization' && customizationPage === page.id;
           return <button key={page.id} className={active ? 'active' : ''} aria-current={active ? 'page' : undefined} onClick={() => onNavigate('customization', page.id)}><Icon size={16} /><span>{page.label}</span></button>;
         })}
       </div></>}
-      {canSeeView(data, 'calendar') && <button className={`pz-sidebar-nav-item${section === 'calendar' ? ' active' : ''}`} onClick={() => onNavigate('calendar')} title="Calendrier" aria-current={section === 'calendar' ? 'page' : undefined}><CalendarDays size={21} /><span className="pz-sidebar-label">Calendrier</span></button>}
-      {canSeeView(data, 'documents') && <button className={`pz-sidebar-nav-item${section === 'documents' ? ' active' : ''}`} onClick={() => onNavigate('documents')} aria-label="Documents" title="Documents de tous les projets" aria-current={section === 'documents' ? 'page' : undefined}><Files size={21} /><span className="pz-sidebar-label">Documents</span></button>}
-      {canSeeView(data, 'reports') && (isAdmin(data) || data.projects.some(project => canProject(data, project.id, 'report'))) && <button className={`pz-sidebar-nav-item${section === 'reports' ? ' active' : ''}`} onClick={() => onNavigate('reports')} title="Rapports & exports" aria-current={section === 'reports' ? 'page' : undefined}><FileText size={21} /><span className="pz-sidebar-label">Rapports / Exports</span></button>}
+      <button className={`pz-sidebar-nav-item${section === 'calendar' ? ' active' : ''}`} onClick={() => onNavigate('calendar')} title="Calendrier" aria-current={section === 'calendar' ? 'page' : undefined}><CalendarDays size={21} /><span className="pz-sidebar-label">Calendrier</span></button>
+      <button className={`pz-sidebar-nav-item${section === 'documents' ? ' active' : ''}`} onClick={() => onNavigate('documents')} aria-label="Documents" title="Documents de tous les projets" aria-current={section === 'documents' ? 'page' : undefined}><Files size={21} /><span className="pz-sidebar-label">Documents</span></button>
+      {(isAdmin(data) || data.projects.some(project => canProject(data, project.id, 'report'))) && <button className={`pz-sidebar-nav-item${section === 'reports' ? ' active' : ''}`} onClick={() => onNavigate('reports')} title="Rapports & exports" aria-current={section === 'reports' ? 'page' : undefined}><FileText size={21} /><span className="pz-sidebar-label">Rapports / Exports</span></button>}
     </nav>
 
     <div className="sidebar-zones pz-sidebar-zones">
-      <div className="pz-sidebar-zone-tools"><button className="pz-sidebar-add-zone" disabled={!isAdmin(data)} onClick={onCreateZone} aria-label="Créer une zone" title="Créer une zone"><Plus size={14} /><span className="pz-sidebar-label">zone</span></button>{isAdmin(data) && <button type="button" className="pz-sidebar-order-zones" disabled={data.zones.length < 2} aria-label="Organiser les zones" title="Organiser les zones" onClick={onOrderZones}><ListOrdered size={17} /></button>}</div>
-      {canSeeView(data, 'projects') && <button className={`pz-sidebar-all${section === 'projects' && !zoneId ? ' active' : ''}`} onClick={() => onZone(null)} aria-label="Tous les projets, toutes les zones" title="Tous les projets, toutes les zones"><Orbit className="pz-sidebar-all-symbol" size={21} strokeWidth={1.4} aria-hidden="true" /><span className="pz-sidebar-label">Tout</span></button>}
+      <button className="pz-sidebar-add-zone" disabled={!isAdmin(data)} onClick={onCreateZone} aria-label="Créer une zone" title="Créer une zone"><Plus size={14} /><span className="pz-sidebar-label">zone</span></button>
+      <button className={`pz-sidebar-all${section === 'projects' && !zoneId ? ' active' : ''}`} onClick={() => onZone(null)} aria-label="Tous les projets, toutes les zones" title="Tous les projets, toutes les zones"><Orbit className="pz-sidebar-all-symbol" size={21} strokeWidth={1.4} aria-hidden="true" /><span className="pz-sidebar-label">Tout</span></button>
       {data.zones.map((zone, index) => {
         const projects = data.projects.filter(project => project.zoneId === zone.id);
         const expanded = expandedZones.has(zone.id);
         return <div className={`pz-sidebar-zone${activeZone === zone.id ? ' pz-sidebar-zone-active' : ''}`} key={zone.id} data-zone-id={zone.id}>
           <div className="pz-sidebar-zone-header">
-            <button disabled={!canSeeView(data, 'projects')} className="pz-sidebar-zone-link" onClick={() => onZone(zone.id)} title={zone.name} aria-current={section === 'projects' && zoneId === zone.id ? 'page' : undefined}><span className="pz-sidebar-zone-number" style={{ backgroundColor: zone.color, color: markerText(zone.color) }} aria-hidden="true">{index + 1}</span><span className="pz-sidebar-label pz-sidebar-zone-name">{index + 1}. {zone.name}</span><span className="pz-sidebar-zone-count" aria-label={`${projects.length} projets`}>{projects.length}</span></button>
+            <button className="pz-sidebar-zone-link" onClick={() => onZone(zone.id)} title={zone.name} aria-current={section === 'projects' && zoneId === zone.id ? 'page' : undefined}><span className="pz-sidebar-zone-number" style={{ backgroundColor: zone.color, color: markerText(zone.color) }} aria-hidden="true">{index + 1}</span><span className="pz-sidebar-label pz-sidebar-zone-name">{index + 1}. {zone.name}</span><span className="pz-sidebar-zone-count" aria-label={`${projects.length} projets`}>{projects.length}</span></button>
             <button className="pz-sidebar-zone-toggle" onClick={() => toggleZone(zone.id)} aria-label={`${expanded ? 'Réduire' : 'Développer'} les projets de ${zone.name}`} aria-expanded={expanded} aria-controls={`pz-sidebar-projects-${zone.id}`} title={expanded ? 'Réduire les projets' : 'Développer les projets'}>{expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}</button>
             <button className="pz-sidebar-zone-add" aria-label={`Créer un projet dans ${zone.name}`} title={`Créer un projet dans ${zone.name}`} disabled={!canCreateProject(data)} onClick={() => onCreateProject(zone.id)}><FolderPlus size={20} /></button>
-            {isAdmin(data) && <ZoneActions zone={zone} onEdit={onEditZone} onDelete={onDeleteZone} sidebar />}
           </div>
           <div id={`pz-sidebar-projects-${zone.id}`} className="pz-sidebar-zone-projects" hidden={!expanded}>
             {projects.map(project => <button key={project.id} className={`sidebar-project-item${currentProject?.id === project.id ? ' active' : ''}`} aria-label={project.name} aria-current={currentProject?.id === project.id ? 'page' : undefined} title={project.name} onClick={() => onProject(project)}><Folder size={16} aria-hidden="true" /><span>{project.name}</span><small className="pz-sidebar-task-count" title={`${taskCounts.get(project.id) ?? 0} tâches et jalons`} aria-hidden="true">{taskCounts.get(project.id) ?? 0}</small></button>)}

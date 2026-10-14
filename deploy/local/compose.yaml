@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: planzone8
+      POSTGRES_USER: pz8_dev_admin
+      POSTGRES_PASSWORD: ${PZ8_POSTGRES_PASSWORD:?Set PZ8_POSTGRES_PASSWORD before starting the local database}
+    ports:
+      - "127.0.0.1:${PZ8_POSTGRES_PORT:-55432}:5432"
+    volumes:
+      - pz8-postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pz8_dev_admin -d planzone8"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  pz8-postgres-data:
