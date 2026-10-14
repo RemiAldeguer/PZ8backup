@@ -15,8 +15,7 @@ import { MemoryStore } from '../server/memory-store.ts';
 import { seed } from '../server/seed.ts';
 import { ApiError, ApiService } from '../server/service.ts';
 import { Store } from '../server/store.ts';
-import { RESOURCE_ROLE_LABELS, type AppData, type Project, type Resource, type Zone } from '../shared/types.ts';
-import { TEST_DATA_KEYS } from './storage-fixture.ts';
+import type { AppData, Project, Zone } from '../shared/types.ts';
 
 const admin = { username: 'admin', password: 'Zone-test-administrator-2026!', name: 'Administrateur' };
 const projectInput = {
@@ -53,7 +52,7 @@ for (const backend of ['sqlite', 'memory'] as const) {
       assert.equal(project.zoneId, zone.id);
       const finalState = api.readState('2026-10-12');
       assert.deepEqual(finalState.projects.slice(0, before.projects.length), before.projects);
-      rejectsStatus(409, () => api.mutate('zones', 'DELETE', undefined, zone.id));
+      rejectsStatus(405, () => api.mutate('zones', 'DELETE', undefined, zone.id));
       assert.deepEqual(api.readState('2026-10-12'), finalState);
       if (store instanceof MemoryStore) {
         assert.deepEqual(new ApiService(new MemoryStore(store.snapshot())).readState('2026-10-12'), finalState);
@@ -77,27 +76,9 @@ for (const backend of ['sqlite', 'memory'] as const) {
         rejectsStatus(400, () => api.mutate('zones', 'PATCH', body, zone.id));
       }
       rejectsStatus(404, () => api.mutate('zones', 'PATCH', { name: 'Absente' }, 'missing'));
-      rejectsStatus(404, () => api.mutate('zones', 'DELETE', undefined, 'missing'));
+      rejectsStatus(405, () => api.mutate('zones', 'DELETE', undefined, zone.id));
+      rejectsStatus(405, () => api.mutate('zones', 'DELETE', undefined, 'missing'));
       assert.deepEqual(api.readState('2026-10-12'), after);
-    } finally { close(); }
-  });
-
-  test(`${backend}: only administrators delete empty zones, removing memberships but preserving other data`, () => {
-    const { store, api, close } = fixture();
-    try {
-      const zone = api.mutate('zones', 'POST', { name: 'Zone vide à supprimer' }).value as Zone;
-      const resource = api.mutate('resources', 'POST', { name: 'Membre de la zone', role: 'user', zoneIds: [zone.id, 'zone-transformation'], projectIds: ['project-nova'] }).value as Resource;
-      api.mutate('resources', 'POST', { name: 'Ancien membre', active: false, zoneIds: [zone.id] });
-      const before = api.readState('2026-10-12');
-      const memberApi = new ApiService(store, { id: resource.id, name: resource.name, role: RESOURCE_ROLE_LABELS.user });
-      rejectsStatus(403, () => memberApi.mutate('zones', 'PATCH', { name: 'Interdit' }, zone.id));
-      rejectsStatus(403, () => memberApi.mutate('zones', 'DELETE', undefined, zone.id));
-      assert.deepEqual(api.readState('2026-10-12'), before);
-      assert.equal(api.mutate('zones', 'DELETE', undefined, zone.id).status, 204);
-      const expected = { ...before, zones: before.zones.filter(item => item.id !== zone.id), resources: before.resources.map(item => item.zoneIds?.includes(zone.id) ? { ...item, zoneIds: item.zoneIds.filter(id => id !== zone.id) } : item) };
-      assert.deepEqual(api.readState('2026-10-12'), expected);
-      rejectsStatus(404, () => api.mutate('zones', 'DELETE', undefined, zone.id));
-      if (store instanceof MemoryStore) assert.deepEqual(new ApiService(new MemoryStore(store.snapshot())).readState('2026-10-12'), expected);
     } finally { close(); }
   });
 }
@@ -141,6 +122,7 @@ test('SQLite HTTP zone mutations require a session and allowed origin, and survi
   assert.equal(createdResponse.status, 201);
   const zone = await createdResponse.json() as Zone;
   assert.equal((await request('PATCH', `/api/zones/${zone.id}`, { name: 'Zone HTTP renommée' }, headers)).status, 200);
+  assert.equal((await request('DELETE', `/api/zones/${zone.id}`, undefined, headers)).status, 405);
   await stop();
   instance = createApp({ dbPath, today: '2026-10-12' });
   await instance.ready;
@@ -151,14 +133,6 @@ test('SQLite HTTP zone mutations require a session and allowed origin, and survi
   assert.deepEqual(await stateResponse.json(), {
     ...before, zones: [...before.zones, { ...zone, name: 'Zone HTTP renommée' }],
   });
-  const projectResponse = await request('POST', '/api/projects', { ...projectInput, zoneId: zone.id }, headers);
-  assert.equal(projectResponse.status, 201);
-  const project = await projectResponse.json() as Project;
-  const confirmation = { deleteProjects: true, expectedProjectIds: [project.id] };
-  assert.equal((await request('DELETE', `/api/zones/${zone.id}`, undefined, { ...headers, Origin: 'https://untrusted.example' })).status, 403);
-  assert.equal((await request('DELETE', `/api/zones/${zone.id}`, { ...confirmation, expectedProjectIds: [] }, headers)).status, 409);
-  assert.equal((await request('DELETE', `/api/zones/${zone.id}`, confirmation, headers)).status, 204);
-  assert.deepEqual(await (await request('GET', '/api/state', undefined, headers)).json(), before);
 });
 
 test('the actual Worker persists zone mutations in D1 and leaves rejected writes and unrelated data untouched', async t => {
@@ -172,7 +146,7 @@ test('the actual Worker persists zone mutations in D1 and leaves rejected writes
   const runtime = () => new Miniflare(convertV4MiniflareOptions({
     modules: true, script: bundled.outputFiles[0].text, compatibilityDate: '2026-10-06',
     host: '127.0.0.1', port: 0, cf: false, log: new Log(LogLevel.ERROR),
-    resourcePersistencePath: directory, d1Databases: { DB: databaseId }, bindings: { DEMO_TODAY: '2026-10-12', PLANZONE_DATA_KEYS: TEST_DATA_KEYS },
+    resourcePersistencePath: directory, d1Databases: { DB: databaseId }, bindings: { DEMO_TODAY: '2026-10-12' },
     serviceBindings: { ASSETS: () => new MiniflareResponse('Zone fixture') },
   }));
   let instance = runtime();
@@ -212,6 +186,7 @@ test('the actual Worker persists zone mutations in D1 and leaves rejected writes
   const renamed = await renamedResponse.json() as Zone;
   const savedRow = await row();
   assert.equal(savedRow.revision, initialRow.revision + 2);
+  assert.equal((await request('DELETE', `/api/zones/${zone.id}`, undefined, cookie)).status, 405);
   assert.equal((await request('PATCH', `/api/zones/${zone.id}`, { id: 'changed' }, cookie)).status, 400);
   assert.deepEqual(await row(), savedRow);
   await instance.dispose();
@@ -225,17 +200,4 @@ test('the actual Worker persists zone mutations in D1 and leaves rejected writes
   assert.equal(projectResponse.status, 201);
   const project = await projectResponse.json() as Project;
   assert.equal(project.zoneId, zone.id);
-  const occupiedRow = await row();
-  assert.equal((await request('DELETE', `/api/zones/${zone.id}`, undefined, cookie)).status, 409);
-  assert.deepEqual(await row(), occupiedRow);
-  assert.equal((await request('DELETE', `/api/zones/${zone.id}`, { deleteProjects: true, expectedProjectIds: [] }, cookie)).status, 409);
-  assert.deepEqual(await row(), occupiedRow);
-  assert.equal((await request('DELETE', `/api/zones/${zone.id}`, { deleteProjects: true, expectedProjectIds: [project.id] }, cookie)).status, 204);
-  assert.equal((await row()).revision, occupiedRow.revision + 1);
-  assert.deepEqual(await (await request('GET', '/api/state', undefined, cookie)).json(), before);
-  const zoneIds = before.zones.map(item => item.id).reverse();
-  const preOrderRow = await row();
-  assert.equal((await request('POST', '/api/zone-order', { zoneIds }, cookie)).status, 204);
-  assert.equal((await row()).revision, preOrderRow.revision + 1);
-  assert.deepEqual((await (await request('GET', '/api/state', undefined, cookie)).json() as AppData).zones, zoneIds.map((id, position) => ({ ...before.zones.find(zone => zone.id === id), position })));
 });

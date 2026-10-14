@@ -128,7 +128,7 @@
 .pzg-date-handle:hover, .pzg-date-handle:focus-visible { background: #ffead4; color: #df6920; outline: 1px solid #ee8d3e; }
 .pzg-date-start { left: 1px; }
 .pzg-date-end { right: 1px; }
-.pzg-date-move { width: 18px; left: 0; top: 20px; height: 12px; color: #2c6a87; }
+.pzg-date-move { width: 100%; left: 0; color: #2c6a87; }
 .pzg-bar-project .pzg-date-handle { color: white; }
 .pzg-bar[data-date-draggable] { cursor: grab; touch-action: none; }
 .pzg-bar.pzg-link-selectable { cursor: crosshair; touch-action: none; outline: 1px dashed #e9933c; }

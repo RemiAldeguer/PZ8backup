@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { CalendarDays, Check, CheckCircle2, AlertCircle, ArrowRight, Search, ChevronLeft, ChevronRight, Clock3, Flag, Folder, LayoutDashboard, Link2, LockKeyhole, MessageSquare, Umbrella } from 'lucide-react';
+import { CalendarDays, Check, ChevronLeft, ChevronRight, Clock3, Flag, Folder, LayoutDashboard, Link2, LockKeyhole, MessageSquare, Umbrella } from 'lucide-react';
 import { STATUS_LABELS, type Resource, type Task, type ViewProps } from '../shared/types';
 import { formatDate, isLate } from '../shared/domain';
 import { addCalendarDays, weekDates } from '../shared/time-sheets';
@@ -9,7 +9,6 @@ import { TaskCheck } from './TaskCheck';
 import './personal-view.css';
 import { globalRole, isAdmin } from '../shared/permissions';
 import { PersonalNavigation } from './PersonalNavigation';
-import { PlanningWarnings } from './PlanningWarnings';
 
 const weekdays = ['lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.', 'dim.'];
 const dateObject = (date: string) => new Date(`${date}T12:00:00Z`);
@@ -32,7 +31,7 @@ function ResourceAvatar({ resource, initials }: { resource?: Resource; initials?
   return <span className="pd-avatar" style={{ background: resource?.color ?? '#65d6eb', color: textColor(resource?.color ?? '#65d6eb') }} aria-hidden="true">{resource?.initials ?? initials ?? '?'}</span>;
 }
 
-function TaskCard({ title, tasks, late, completed, props }: { title: string; tasks: Task[]; late?: boolean; completed?: boolean; props: ViewProps }) {
+function TaskCard({ title, tasks, late, props }: { title: string; tasks: Task[]; late?: boolean; props: ViewProps }) {
   const [sort, setSort] = useState<{ key: 'title' | 'status' | 'date'; ascending: boolean }>({ key: 'date', ascending: true });
   const sorted = [...tasks].sort((a, b) => {
     const left = sort.key === 'title' ? a.title : sort.key === 'status' ? STATUS_LABELS[a.status] : a.endDate ?? '9999-12-31';
@@ -44,7 +43,7 @@ function TaskCard({ title, tasks, late, completed, props }: { title: string; tas
     {label}<span aria-hidden="true">{sort.key === key ? sort.ascending ? '↑' : '↓' : '↕'}</span>
   </button>;
   return <section className={`pd-card pd-task-card${late ? ' pd-late-card' : ''}`} aria-label={title}>
-    <header className="pd-card-heading"><h2>{title}</h2><span className={`pd-count ${late ? 'pd-count-red' : completed ? 'pd-count-green' : 'pd-count-blue'}`}>{tasks.length}</span></header>
+    <header className="pd-card-heading"><h2>{title}</h2><span className={`pd-count ${late ? 'pd-count-red' : 'pd-count-blue'}`}>{tasks.length}</span></header>
     <div className="pd-task-table-scroll" tabIndex={0} aria-label={`Liste complète : ${title.toLocaleLowerCase('fr')}`}>
       <table className="pd-task-table"><thead><tr><th className="pd-check-heading"><Check size={15} aria-hidden="true" /><span className="sr-only">Validation</span></th>
         <th aria-sort={sort.key === 'title' ? sort.ascending ? 'ascending' : 'descending' : 'none'}>{sortLabel('title', 'Nom')}</th>
@@ -62,7 +61,7 @@ function TaskCard({ title, tasks, late, completed, props }: { title: string; tas
             <td className="pd-task-date">{task.endDate ? <time dateTime={task.endDate}>{new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' }).format(dateObject(task.endDate))}</time> : <span>Non planifié</span>}</td>
           </tr>;
         })}</tbody></table>
-      {!tasks.length && <p className="pd-empty">{late ? 'Aucune tâche en retard.' : completed ? 'Aucune tâche terminée dans ce filtre.' : 'Aucune tâche à venir ou ouverte dans ce filtre.'}</p>}
+      {!tasks.length && <p className="pd-empty">{late ? 'Aucune tâche en retard.' : 'Aucune tâche à venir ou ouverte.'}</p>}
     </div>
   </section>;
 }
@@ -148,36 +147,22 @@ function PersonalCalendar({ props, resourceId, includeBlocked }: { props: ViewPr
 export function PersonalView(props: ViewProps) {
   const [resourceId, setResourceId] = useState(props.data.currentUser.id);
   const [includeBlocked, setIncludeBlocked] = useState(true);
-  const [taskScope, setTaskScope] = useState<'all' | 'upcoming' | 'overdue' | 'completed'>('all');
-  const [search, setSearch] = useState('');
   const resource = props.data.resources.find(item => item.id === resourceId);
   const actualId = resource || resourceId === props.data.currentUser.id ? resourceId : props.data.currentUser.id;
   const groups = personalTaskGroups(props.data, actualId, includeBlocked);
-  const simplify = (value: string) => value.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLocaleLowerCase('fr');
-  const matching = (task: Task) => !search.trim() || simplify([task.title, ...task.tags, props.data.projects.find(project => project.id === task.projectId)?.name ?? ''].join(' ')).includes(simplify(search.trim()));
-  const upcoming = groups.upcoming.filter(matching), overdue = groups.overdue.filter(matching), completed = groups.completed.filter(matching);
-  const choose = (scope: typeof taskScope) => setTaskScope(previous => previous === scope ? 'all' : scope);
   const resources = [...props.data.resources].sort((a, b) => Number(b.id === props.data.currentUser.id) - Number(a.id === props.data.currentUser.id) || a.name.localeCompare(b.name, 'fr'));
-  if (globalRole(props.data) === 'visitor') return <div className="pd-personal-view"><PersonalNavigation active="summary" data={props.data} /><div className="card empty-state"><h1>Mon espace</h1><p>Vos projets, documents et discussions sont accessibles depuis la navigation.</p><button className="button button-secondary" onClick={() => props.openResource?.(props.data.resources.find(resource => resource.id === props.data.currentUser.id) ?? null)}>Ma capacité</button></div></div>;
+  if (globalRole(props.data) === 'visitor') return <div className="pd-personal-view"><PersonalNavigation active="summary" /><div className="card empty-state"><h1>Mon espace</h1><p>Vos projets, documents et discussions sont accessibles depuis la navigation.</p><button className="button button-secondary" onClick={() => props.openResource?.(props.data.resources.find(resource => resource.id === props.data.currentUser.id) ?? null)}>Ma capacité</button></div></div>;
   return <div className="pd-personal-view">
-    <PersonalNavigation active="summary" data={props.data} />
-    <header className="pd-summary-toolbar"><div className="pd-summary-title"><h1>{actualId === props.data.currentUser.id ? 'Ma synthèse' : `Synthèse de ${resource?.name ?? props.data.currentUser.name}`}</h1><p>Vos priorités et votre planning, au même endroit.</p></div><button className="button button-secondary" onClick={() => props.openResource?.(props.data.resources.find(resource => resource.id === actualId) ?? null)}>Ma capacité<ArrowRight size={15} /></button>
+    <PersonalNavigation active="summary" />
+    <header className="pd-summary-toolbar"><button className="button button-secondary" onClick={() => props.openResource?.(props.data.resources.find(resource => resource.id === props.data.currentUser.id) ?? null)}>Ma capacité</button><h1>Tâches terminées <span className="pd-count pd-count-green">{groups.completed.length}</span></h1>
       <div className="pd-summary-controls"><label className="pd-blocked-switch">Tâches bloquées<input type="checkbox" role="switch" checked={includeBlocked} onChange={event => setIncludeBlocked(event.target.checked)} aria-label="Afficher les tâches bloquées" /><span aria-hidden="true" /></label>
-        <label className="pd-resource-select"><strong>La synthèse de</strong><span className="pd-resource-picker"><ResourceAvatar resource={resource} initials={props.data.currentUser.name.slice(0, 1)} /><select disabled={!isAdmin(props.data)} aria-label="La synthèse de" value={actualId} onChange={event => setResourceId(event.target.value)}>
+        <label className="pd-resource-select"><strong>La synthèse de</strong><ResourceAvatar resource={resource} initials={props.data.currentUser.name.slice(0, 1)} /><select disabled={!isAdmin(props.data)} aria-label="La synthèse de" value={actualId} onChange={event => setResourceId(event.target.value)}>
           {!props.data.resources.some(item => item.id === props.data.currentUser.id) && <option value={props.data.currentUser.id}>{props.data.currentUser.name}</option>}
           {resources.map(item => <option key={item.id} value={item.id}>{item.name}{item.id === props.data.currentUser.id ? ' (Moi)' : ''}{!item.active ? ' (inactive)' : ''}</option>)}
-        </select></span></label></div>
+        </select></label></div>
     </header>
-    <div className="pd-summary-metrics" aria-label="Résumé des tâches">
-      <button type="button" className="pd-summary-metric" aria-pressed={taskScope === 'upcoming'} onClick={() => choose('upcoming')}><span className="pd-metric-icon"><Clock3 size={20} /></span><span><small>À venir et ouvertes</small><strong>{groups.upcoming.length}</strong></span></button>
-      <button type="button" className="pd-summary-metric pd-metric-late" aria-pressed={taskScope === 'overdue'} onClick={() => choose('overdue')}><span className="pd-metric-icon"><AlertCircle size={20} /></span><span><small>En retard</small><strong>{groups.overdue.length}</strong></span></button>
-      <button type="button" className="pd-summary-metric pd-metric-completed" aria-pressed={taskScope === 'completed'} onClick={() => choose('completed')}><span className="pd-metric-icon"><CheckCircle2 size={20} /></span><span><small>Tâches terminées</small><strong>{groups.completed.length}</strong></span></button>
-      <div className="pd-summary-metric"><span className="pd-metric-icon"><LockKeyhole size={20} /></span><span><small>Tâches bloquées</small><strong>{groups.blockedCount}</strong></span></div>
-    </div>
-    <div className="pd-task-filters"><label><Search size={16} aria-hidden="true" /><span className="sr-only">Rechercher dans mes tâches</span><input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Rechercher une tâche, un projet ou un tag…" /></label><span>{taskScope === 'completed' ? 'Tâches terminées' : taskScope === 'overdue' ? 'Tâches en retard' : taskScope === 'upcoming' ? 'Tâches à venir' : 'Toutes les tâches ouvertes'}</span>{(search || taskScope !== 'all') && <button type="button" className="time-text-action" onClick={() => { setSearch(''); setTaskScope('all'); }}>Réinitialiser les filtres</button>}</div>
-    <PlanningWarnings data={props.data} resourceId={actualId} startDate={props.data.today} endDate={addCalendarDays(props.data.today, 6)} />
     {!includeBlocked && groups.blockedCount > 0 && <p className="pd-filter-note">{groups.blockedCount} tâche{groups.blockedCount > 1 ? 's bloquées masquées' : ' bloquée masquée'}. Activez « Tâches bloquées » pour les afficher.</p>}
-    <div className="pd-dashboard-grid"><div className="pd-task-cards">{taskScope === 'completed' ? <TaskCard title="Tâches terminées" tasks={completed} completed props={props} /> : <>{taskScope !== 'overdue' && <TaskCard title="Tâches à venir et ouvertes" tasks={upcoming} props={props} />}{taskScope !== 'upcoming' && <TaskCard title="Tâches en retard" tasks={overdue} late props={props} />}</>}</div>
-      <PersonalCalendar key={actualId} props={props} resourceId={actualId} includeBlocked={includeBlocked} /></div>
+    <div className="pd-dashboard-grid"><div className="pd-task-cards"><TaskCard title="Tâches à venir et ouvertes" tasks={groups.upcoming} props={props} /><TaskCard title="Tâches en retard" tasks={groups.overdue} late props={props} /></div>
+      <PersonalCalendar props={props} resourceId={actualId} includeBlocked={includeBlocked} /></div>
   </div>;
 }

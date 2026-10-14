@@ -3,12 +3,11 @@ import { aggregateTaskListTasks, orderedTaskListItems, type ProjectTaskListTree,
 
 export interface ProjectGanttRow {
   id: string; kind: 'project' | 'list' | 'task'; name: string; depth: number;
-  task?: Task; node?: TaskListNode; projectId?: string; startDate: string | null; endDate: string | null;
+  task?: Task; node?: TaskListNode; startDate: string | null; endDate: string | null;
   allocatedHours: number; taskCount: number;
 }
 /** Same mixed sibling order and depths as NestedListView, including undated and empty items. */
-export const ganttListRowId = (projectId: string, listId: string, scoped = false) => scoped ? `project:${projectId}:list:${listId}` : `list:${listId}`;
-export function projectGanttRows(project: Project, tree: ProjectTaskListTree, collapsed: ReadonlySet<string>, manual = true, scoped = false): ProjectGanttRow[] {
+export function projectGanttRows(project: Project, tree: ProjectTaskListTree, collapsed: ReadonlySet<string>, manual = true): ProjectGanttRow[] {
   const aggregate = aggregateTaskListTasks(tree.tasks);
   const rows: ProjectGanttRow[] = [{ id: `project:${project.id}`, kind: 'project', name: project.name, depth: -1,
     startDate: project.startDate, endDate: project.endDate, allocatedHours: aggregate.allocatedHours, taskCount: aggregate.taskCount }];
@@ -18,14 +17,14 @@ export function projectGanttRows(project: Project, tree: ProjectTaskListTree, co
         rows.push({ id: `task:${item.task.id}`, kind: 'task', task: item.task, name: item.task.title, depth,
           startDate: item.task.startDate, endDate: item.task.endDate, allocatedHours: item.task.allocatedHours, taskCount: 1 });
       } else {
-        const node = item.node; rows.push({ id: ganttListRowId(project.id, node.id, scoped), kind: 'list', node, name: node.name, depth,
+        const node = item.node; rows.push({ id: `list:${node.id}`, kind: 'list', node, name: node.name, depth,
           startDate: node.aggregate.startDate, endDate: node.aggregate.endDate, allocatedHours: node.aggregate.allocatedHours, taskCount: node.aggregate.taskCount });
-        if (!collapsed.has(ganttListRowId(project.id, node.id, scoped))) visit(node.tasks, node.children, depth + 1);
+        if (!collapsed.has(`list:${node.id}`)) visit(node.tasks, node.children, depth + 1);
       }
     }
   }
   if (!collapsed.has(`project:${project.id}`)) visit(tree.rootTasks, tree.roots, 0);
-  return scoped ? rows.map(row => ({ ...row, projectId: project.id })) : rows;
+  return rows;
 }
 
 export const GANTT_DAY = 86_400_000;
@@ -34,8 +33,7 @@ export type GanttScale = 'project' | 'month' | 'quarter' | 'year';
 export interface GanttRange { start: number; end: number; }
 export function projectGanttRange(project: Project, tasks: Task[], scale: GanttScale, anchor: string, offset = 0): GanttRange {
   if (scale === 'project') {
-    const dates = [project.startDate, project.endDate, ...tasks.flatMap(task => [task.startDate, task.endDate])].filter((date): date is string => !!date).map(ganttStamp);
-    if (!dates.length) dates.push(ganttStamp(anchor));
+    const dates = [project.startDate, project.endDate, ...tasks.flatMap(task => [task.startDate, task.endDate].filter((date): date is string => !!date))].map(ganttStamp);
     const start = Math.min(...dates) - 7 * GANTT_DAY;
     const end = Math.max(...dates) + 8 * GANTT_DAY;
     return { start: start + offset * (end - start), end: end + offset * (end - start) };
@@ -77,7 +75,7 @@ export function ganttTicks(range: GanttRange, major: boolean): GanttTick[] {
   return result;
 }
 /** Validate a finish → start edge without changing dates or breaking the existing chain. */
-export function dependencyProblem(tasks: Task[], predecessorId: string, successorId: string, planning = false): string | null {
+export function dependencyProblem(tasks: Task[], predecessorId: string, successorId: string): string | null {
   const predecessor = tasks.find(task => task.id === predecessorId); const successor = tasks.find(task => task.id === successorId);
   if (!predecessor || !successor || predecessor.projectId !== successor.projectId) return 'Choisissez deux éléments du même projet.';
   if (predecessorId === successorId) return 'Une tâche ne peut pas dépendre d’elle-même.';
@@ -86,6 +84,6 @@ export function dependencyProblem(tasks: Task[], predecessorId: string, successo
     if (visited.has(current.id)) return 'Cette contrainte crée un cycle.';
     visited.add(current.id); current = tasks.find(task => task.id === current!.dependsOnId);
   }
-  if (!planning && (successor.status === 'done' || successor.status === 'in_progress' || successor.status === 'validation' || successor.progress > 0) && predecessor.status !== 'done') return 'Le prédécesseur doit être terminé car la tâche suivante a déjà démarré.';
+  if ((successor.status === 'done' || successor.status === 'in_progress' || successor.status === 'validation' || successor.progress > 0) && predecessor.status !== 'done') return 'Le prédécesseur doit être terminé car la tâche suivante a déjà démarré.';
   return null;
 }

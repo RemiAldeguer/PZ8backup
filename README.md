@@ -1,7 +1,5 @@
 # Planzone 8
 
-**Branche de travail conservée :** le module CapaPlan est en cours et n'est pas déployé. Voir son [état et les travaux restants](docs/capaplan-work-in-progress.md). Le cadrage du futur produit multi-organisation reste distinct de la démonstration existante.
-
 Première application fonctionnelle issue du cadrage et des références Planzone 7 fournis. Interface française, adaptée à l’ordinateur et au mobile, avec une API et des données persistantes : SQLite en local, Cloudflare D1 sur le web.
 
 **Tester l’application en ligne : [Planzone 8](https://planzone8-demo.aldeguer-remi.workers.dev).** Une connexion est requise ; chaque membre retrouve les projets et les actions autorisés par ses rôles.

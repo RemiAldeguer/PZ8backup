@@ -15,8 +15,6 @@ import { MemoryStore } from '../server/memory-store.ts';
 import { seed } from '../server/seed.ts';
 import { encryptWorkspace, isEncryptedWorkspace } from '../server/workspace-crypto.ts';
 import { TEST_DATA_KEYS, TEST_KEYS, plaintextRow } from './storage-fixture.ts';
-import { DEFAULT_PLANZONE_PREFERENCES } from '../shared/planzone-preferences.ts';
-import { DEFAULT_TASK_CONSTRAINT } from '../shared/task-constraints.ts';
 
 const ADMIN_PASSWORD = 'Worker-test-administrator-2026!';
 
@@ -127,54 +125,6 @@ async function fixture(t: TestContext) {
   }
   return { request, raw, state, db, row, restart, succeeds, auth, login, adminWorkspaceId };
 }
-
-test('Planzone preferences persist encrypted in D1 and reject stale or anonymous writes', async t => {
-  const api = await fixture(t);
-  const { id, version, ...options } = DEFAULT_PLANZONE_PREFERENCES;
-  const body = { ...options, expectedVersion: 0, allocationInDays: true, criticalDailyWorkHours: 9, viewRoles: { calendar: ['administrator'], profiles: ['administrator', 'user'] } };
-  assert.equal((await api.request('POST', '/api/planzone-preferences', body)).status, 401);
-  const current = await api.state();
-  await api.succeeds('POST', '/api/planzone-preferences', body, current.cookie);
-  const before = await (await api.db()).prepare('SELECT data, revision FROM demo_workspaces WHERE id = ?').bind(api.adminWorkspaceId).first<{ data: string; revision: number }>();
-  assert.ok(before && isEncryptedWorkspace(before.data)); assert.ok(!before.data.includes('criticalDailyWorkHours'));
-  assert.equal((await api.request('POST', '/api/planzone-preferences', body, current.cookie)).status, 409);
-  assert.deepEqual(await (await api.db()).prepare('SELECT data, revision FROM demo_workspaces WHERE id = ?').bind(api.adminWorkspaceId).first(), before);
-  await api.restart();
-  const restored = (await api.state(current.cookie)).data.planzonePreferences![0];
-  assert.equal(restored.version, 1); assert.equal(restored.allocationInDays, true); assert.equal(restored.criticalDailyWorkHours, 9);
-  assert.deepEqual(restored.viewRoles, body.viewRoles);
-});
-
-test('Automatic task constraints persist one atomic encrypted cascade in D1 and survive restart', async t => {
-  const api = await fixture(t), current = await api.state();
-  const projectId = current.data.projects[0].id;
-  const a = await (await api.succeeds('POST', '/api/tasks', { projectId, title: 'Source automatique', startDate: '2026-10-05', endDate: '2026-10-06' }, current.cookie)).json() as Task;
-  const b = await (await api.succeeds('POST', '/api/tasks', { projectId, title: 'Suite automatique', startDate: '2026-10-09', endDate: '2026-10-11', dependsOnId: a.id, dependencyConstraint: { ...DEFAULT_TASK_CONSTRAINT, offset: 2 } }, current.cookie)).json() as Task;
-  const stored = async () => (await api.db()).prepare('SELECT data, revision FROM demo_workspaces WHERE id = ?').bind(api.adminWorkspaceId).first<{ data: string; revision: number }>();
-  const before = await stored(); assert.ok(before);
-  await api.succeeds('PATCH', '/api/tasks/' + a.id, { endDate: '2026-10-08' }, current.cookie);
-  const after = await stored(); assert.ok(after && isEncryptedWorkspace(after.data)); assert.equal(after.revision, before.revision + 1);
-  assert.equal((await api.request('PATCH', '/api/tasks/' + a.id, { dependsOnId: b.id, dependencyConstraint: DEFAULT_TASK_CONSTRAINT }, current.cookie)).status, 409);
-  assert.deepEqual(await stored(), after);
-  await api.restart(); const restored = (await api.state(current.cookie)).data.tasks.find(task => task.id === b.id)!;
-  assert.equal(restored.startDate, '2026-10-11'); assert.equal(restored.endDate, '2026-10-13'); assert.equal(restored.dependencyConstraint?.offset, 2);
-});
-
-test('CapaPlan commands persist in encrypted D1 and reject anonymous mutations', async t => {
-  const api = await fixture(t);
-  const denied = await api.request('POST', '/api/capacity-plan', {action:'domain',value:{name:'Denied'}});
-  assert.equal(denied.status, 401);
-  const current = await api.state();
-  const created = await api.succeeds('POST','/api/capacity-plan',{action:'domain',value:{name:'D1 capacity',resourceIds:[current.data.currentUser.id]}},current.cookie);
-  const plan = await created.json() as import('../shared/capaplan.ts').CapacityPlan;
-  assert.equal(plan.domains[0].name,'D1 capacity');
-  assert.equal(plan.audit[0].actorId,current.data.currentUser.id);
-  const raw = await (await api.db()).prepare('SELECT data FROM demo_workspaces WHERE id = ?').bind(api.adminWorkspaceId).first<{data:string}>();
-  assert.ok(raw && isEncryptedWorkspace(raw.data));
-  assert.ok(!raw.data.includes('D1 capacity'));
-  await api.restart();
-  assert.equal((await api.state(current.cookie)).data.capacityPlans![0].domains[0].name,'D1 capacity');
-});
 
 test('the bundled Worker serves health and delegates non-API paths to assets without creating a workspace', async t => {
   const api = await fixture(t);
