@@ -34,8 +34,7 @@ export type GanttScale = 'project' | 'month' | 'quarter' | 'year';
 export interface GanttRange { start: number; end: number; }
 export function projectGanttRange(project: Project, tasks: Task[], scale: GanttScale, anchor: string, offset = 0): GanttRange {
   if (scale === 'project') {
-    const dates = [project.startDate, project.endDate, ...tasks.flatMap(task => [task.startDate, task.endDate])].filter((date): date is string => !!date).map(ganttStamp);
-    if (!dates.length) dates.push(ganttStamp(anchor));
+    const dates = [project.startDate, project.endDate, ...tasks.flatMap(task => [task.startDate, task.endDate].filter((date): date is string => !!date))].map(ganttStamp);
     const start = Math.min(...dates) - 7 * GANTT_DAY;
     const end = Math.max(...dates) + 8 * GANTT_DAY;
     return { start: start + offset * (end - start), end: end + offset * (end - start) };
@@ -77,7 +76,7 @@ export function ganttTicks(range: GanttRange, major: boolean): GanttTick[] {
   return result;
 }
 /** Validate a finish → start edge without changing dates or breaking the existing chain. */
-export function dependencyProblem(tasks: Task[], predecessorId: string, successorId: string, planning = false): string | null {
+export function dependencyProblem(tasks: Task[], predecessorId: string, successorId: string): string | null {
   const predecessor = tasks.find(task => task.id === predecessorId); const successor = tasks.find(task => task.id === successorId);
   if (!predecessor || !successor || predecessor.projectId !== successor.projectId) return 'Choisissez deux éléments du même projet.';
   if (predecessorId === successorId) return 'Une tâche ne peut pas dépendre d’elle-même.';
@@ -86,6 +85,6 @@ export function dependencyProblem(tasks: Task[], predecessorId: string, successo
     if (visited.has(current.id)) return 'Cette contrainte crée un cycle.';
     visited.add(current.id); current = tasks.find(task => task.id === current!.dependsOnId);
   }
-  if (!planning && (successor.status === 'done' || successor.status === 'in_progress' || successor.status === 'validation' || successor.progress > 0) && predecessor.status !== 'done') return 'Le prédécesseur doit être terminé car la tâche suivante a déjà démarré.';
+  if ((successor.status === 'done' || successor.status === 'in_progress' || successor.status === 'validation' || successor.progress > 0) && predecessor.status !== 'done') return 'Le prédécesseur doit être terminé car la tâche suivante a déjà démarré.';
   return null;
 }

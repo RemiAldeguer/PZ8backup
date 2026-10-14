@@ -12,7 +12,6 @@ import { capacityPlanRecord } from './capaplan-validation.ts';
 import { planzonePreferencesRecord } from './planzone-preferences-validation.ts';
 import { validateOrganizationTree, validateResourceManagers } from '../shared/organization.ts';
 import { isCivilDate } from '../shared/time-integration.ts';
-import { taskConstraintInput } from './task-constraint-validation.ts';
 
 /** One isolated workspace per request. The worker persists snapshot() using a revision CAS. */
 export class MemoryStore implements StoreLike {
@@ -44,10 +43,6 @@ export class MemoryStore implements StoreLike {
         || (table === 'projectDocuments' && !values.every(value => projectDocumentRecord.safeParse(value).success))
         || (table === 'documentFolders' && !values.every(value => documentFolderRecord.safeParse(value).success))
         || (table === 'taskLists' && !values.every(value => taskListRecord.safeParse(value).success))
-        || (table === 'tasks' && !values.every(value => {
-          const task = value as Records['tasks'];
-          return task.dependencyConstraint == null || !!task.dependsOnId && taskConstraintInput.safeParse(task.dependencyConstraint).success;
-        }))
         || (table === 'timeEntries' && !values.every(value => !Object.hasOwn(value, 'customValues') || customValuesInput.safeParse((value as Records['timeEntries']).customValues).success))
         || (table === 'comments' && !values.every(value => commentRecord.safeParse(value).success))
         || (Object.hasOwn(customizationRecordSchemas, table) && !values.every(value => {

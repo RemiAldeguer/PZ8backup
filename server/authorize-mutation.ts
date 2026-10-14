@@ -50,7 +50,6 @@ export function authorizeMutation(store: StoreLike, data: AppData, entity: Entit
     if (method !== 'DELETE' && Object.hasOwn(input, 'kind') && old && input.kind !== old.kind) check(projectId, `${input.kind === 'milestone' ? 'milestone' : 'task'}Edit`);
     if (method !== 'DELETE' && (input.assigneeId ?? null) !== (old?.assigneeId ?? null) && Object.hasOwn(input, 'assigneeId')) check(projectId, 'team');
     if (method !== 'DELETE' && Object.hasOwn(input, 'dependsOnId') && (input.dependsOnId ?? null) !== (old?.dependsOnId ?? null)) check(projectId, 'details');
-    if (method !== 'DELETE' && Object.hasOwn(input, 'dependencyConstraint') && JSON.stringify(input.dependencyConstraint ?? null) !== JSON.stringify(old?.dependencyConstraint ?? null)) check(projectId, 'details');
     if (Object.hasOwn(input, 'allocatedHours') && input.allocatedHours !== (old?.allocatedHours ?? 0)) check(projectId, 'ownAllocation', old); return;
   }
   if (entity === 'task-lists') { const projectId = previous('taskLists')?.projectId ?? input.projectId; check(projectId, `list${suffix}`); if (input.parentPhase || input.sourcePhase) check(projectId, 'listEdit'); return; }

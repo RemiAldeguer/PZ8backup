@@ -21,8 +21,7 @@ import { TimeView } from './TimeView';
 import { Modal, ProjectDialog, TaskDialog } from './Dialogs';
 import { ResourceDialog } from './ResourceDialog';
 import { WorkspaceSidebar } from './WorkspaceSidebar';
-import { ZoneDeleteDialog, ZoneDialog } from './ZoneDialog';
-import { ZoneOrderDialog } from './ZoneOrderDialog';
+import { ZoneDialog } from './ZoneDialog';
 import { CUSTOMIZATION_PAGES, projectStatusLabel, type CustomizationPage, type ProjectTemplate } from '../shared/customization';
 import { ProjectTemplatesView, CustomFieldsView } from './CustomizationCatalogViews';
 import { ProjectStatusesView, StrategicAxesView } from './CustomizationGovernanceViews';
@@ -51,7 +50,7 @@ const tabs: { id: Tab; label: string; icon: typeof List }[] = [
   { id: 'budget', label: 'Budget', icon: Coins }, { id: 'time', label: 'Suivi temporel', icon: Clock3 },
   { id: 'documents', label: 'Documents', icon: Files }, { id: 'discussions', label: 'Discussions', icon: MessageSquare },
 ];
-const initialRoute: Route = { section: 'personal', projectId: '', tab: 'summary' };
+const initialRoute: Route = { section: 'project', projectId: 'project-nova', tab: 'summary' };
 function readRoute(): Route {
   const parts = window.location.hash.replace(/^#\/?/, '').split('/');
   if (parts[0] === 'customization') return { ...initialRoute, section: 'customization', customizationPage: CUSTOMIZATION_PAGES.find(page => page.id === parts[1])?.id ?? 'project-templates' };
@@ -81,26 +80,20 @@ function WorkspaceApp({ user, onSessionExpired, signOut, onPasswordChanged }: Au
   const [signingOut, setSigningOut] = useState(false);
   const topAccountRef = useRef<HTMLDivElement>(null); const sidebarAccountRef = useRef<HTMLDivElement>(null);
   const accountTriggerRef = useRef<HTMLButtonElement | null>(null);
-  const [dialog, setDialog] = useState<{ type: 'task' | 'project' | 'resource' | 'zone' | 'zone-delete' | 'zone-order' | 'report' | 'flash'; id: string | null; projectId?: string; zoneId?: string; templateId?: string; reportDraft?: ReportDraft; taskDefaults?: TaskCreationOptions } | null>(null);
+  const [dialog, setDialog] = useState<{ type: 'task' | 'project' | 'resource' | 'zone' | 'report' | 'flash'; id: string | null; projectId?: string; zoneId?: string; templateId?: string; reportDraft?: ReportDraft; taskDefaults?: TaskCreationOptions } | null>(null);
   const [toast, setToast] = useState(''); const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const stateSequence = useRef(0);
   const [saving, setSaving] = useState(0);
   const notify = useCallback((message: string) => { setToast(message); clearTimeout(toastTimer.current); toastTimer.current = setTimeout(() => setToast(''), 6000); }, []);
   const refresh = useCallback(async () => {
     const sequence = ++stateSequence.current;
-    const response = await fetch('/api/state', { cache: 'no-store', signal: AbortSignal.timeout(20_000) });
+    const response = await fetch('/api/state', { cache: 'no-store' });
     if (response.status === 401) { onSessionExpired(); throw new Error('Votre session a expiré.'); }
     if (!response.ok) throw new Error('Impossible de charger votre espace. Réessayez dans un instant.');
     const next = await response.json() as AppData;
     if (sequence === stateSequence.current) setData(next);
   }, [onSessionExpired]);
   useEffect(() => { let active = true; setLoadError(''); refresh().catch(error => { if (active) setLoadError(error.message); }); return () => { active = false; }; }, [refresh, retry]);
-  useEffect(() => {
-    if (data || !loadError) return;
-    const resume = () => setRetry(value => value + 1);
-    window.addEventListener('online', resume); window.addEventListener('focus', resume);
-    return () => { window.removeEventListener('online', resume); window.removeEventListener('focus', resume); };
-  }, [data, loadError]);
   useEffect(() => { const changed = () => { setRoute(readRoute()); setMenuOpen(false); setNotifications(false); setAccountMenu(null); setSearch(''); }; window.addEventListener('hashchange', changed); return () => window.removeEventListener('hashchange', changed); }, []);
   useEffect(() => { const keydown = (event: KeyboardEvent) => { if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); searchRef.current?.focus(); } if (event.key === 'Escape') { setSearch(''); setSearchFocused(false); setNotifications(false); setMenuOpen(false); setAccountMenu(null); } }; document.addEventListener('keydown', keydown); return () => document.removeEventListener('keydown', keydown); }, []);
   useEffect(() => () => { clearTimeout(toastTimer.current); stateSequence.current += 1; }, []);
@@ -150,7 +143,6 @@ function WorkspaceApp({ user, onSessionExpired, signOut, onPasswordChanged }: Au
   const project: Project = requestedProject ?? data.projects[0] ?? { id: '', name: 'Aucun projet', description: '', zoneId: data.zones[0]?.id ?? '', startDate: data.today, endDate: data.today, status: 'open', weather: 0, budget: 0, color: '#ff6b24' };
   const zone = data.zones.find(z => z.id === project.zoneId);
   const zoneId = data.zones.some(z => z.id === route.zoneId) ? route.zoneId! : null;
-  const dialogZone = data.zones.find(item => item.id === dialog?.id);
   const locked = project.status === 'paused' || project.status === 'closed';
   const viewProps: ViewProps = { data, project, mutate, openTask, openProject, openResource, notify,
     editProject: canProject(data, project.id, 'details') ? item => setDialog({ type: 'project', id: item.id }) : undefined,
@@ -193,7 +185,7 @@ function WorkspaceApp({ user, onSessionExpired, signOut, onPasswordChanged }: Au
       const Component = { summary: SummaryView, list: ListView, board: BoardView, gantt: GanttView, calendar: CalendarView, team: TeamView, budget: BudgetView, discussions: DiscussionsView }[route.tab];
       view = <Component key={`${project.id}-${route.tab}`} {...viewProps} />;
     }
-  } else if (route.section === 'projects') view = <ZoneWorkspaceView key={`${zoneId ?? 'all-zones'}-${route.zoneView ?? 'projects'}`} {...viewProps} view={route.zoneView ?? 'projects'} createProject={() => { if (canCreateProject(data)) createProject(); else notify('Votre rôle ne permet pas de créer un projet.'); }} zoneId={zoneId} onEditZone={item => setDialog({ type: 'zone', id: item.id })} onDeleteZone={item => setDialog({ type: 'zone-delete', id: item.id })} onZoneChange={id => { window.location.hash = zoneViewHash(id, route.zoneView ?? 'projects'); setMenuOpen(false); }} editProject={item => setDialog({ type: 'project', id: item.id })} />;
+  } else if (route.section === 'projects') view = <ZoneWorkspaceView key={`${zoneId ?? 'all-zones'}-${route.zoneView ?? 'projects'}`} {...viewProps} view={route.zoneView ?? 'projects'} createProject={() => { if (canCreateProject(data)) createProject(); else notify('Votre rôle ne permet pas de créer un projet.'); }} zoneId={zoneId} onZoneChange={id => { window.location.hash = zoneViewHash(id, route.zoneView ?? 'projects'); setMenuOpen(false); }} editProject={item => setDialog({ type: 'project', id: item.id })} />;
   else if (route.section === 'resources') {
     const mode = route.projectId === 'capacity' || route.projectId === 'load' || route.projectId === 'occupancy' ? route.projectId : undefined;
     view = route.projectId === 'capaplan' ? <CapacityPlanView {...viewProps} /> : route.projectId === 'organization' ? <OrganizationView {...viewProps} /> : route.projectId === 'permissions' ? <PermissionsView data={data} mutate={mutate} notify={notify} /> : mode ? <ResourcePlanningView key={mode} {...viewProps} mode={mode} />
@@ -224,7 +216,7 @@ function WorkspaceApp({ user, onSessionExpired, signOut, onPasswordChanged }: Au
     {menuOpen && <button className="sidebar-scrim" aria-label="Fermer le menu" onClick={() => setMenuOpen(false)} />}
     <WorkspaceSidebar data={data} section={route.section} resourcesSubview={route.section === 'resources' ? ['profiles', 'organization', 'capacity', 'load', 'occupancy', 'permissions', 'capaplan'].includes(route.projectId) ? route.projectId : 'directory' : undefined} customizationPage={route.customizationPage} projectId={project.id} zoneId={zoneId} collapsed={sidebarCollapsed} onCollapse={toggleSidebar}
       onNavigate={(section, subview) => { if (section === 'customization') { window.location.hash = `customization/${subview ?? 'project-templates'}`; setMenuOpen(false); } else if (section === 'projects') navigateZone(null); else navigate(section, section === 'time' ? undefined : subview ?? project.id); }}
-      onZone={navigateZone} onProject={openProject} onCreateProject={createProjectInZone} onCreateZone={() => setDialog({ type: 'zone', id: null })} onOrderZones={() => setDialog({ type: 'zone-order', id: null })} onEditZone={item => setDialog({ type: 'zone', id: item.id })} onDeleteZone={item => setDialog({ type: 'zone-delete', id: item.id })}
+      onZone={navigateZone} onProject={openProject} onCreateProject={createProjectInZone} onCreateZone={() => setDialog({ type: 'zone', id: null })}
       onHelp={() => setHelp(true)}
       footer={<div className="auth-account-wrapper" ref={sidebarAccountRef}><button className="account" aria-label={`Ouvrir le menu du compte ${user.name}`} onClick={event => toggleAccount('sidebar', event.currentTarget)} aria-haspopup="menu" aria-expanded={accountMenu === 'sidebar'}><span className="avatar" style={{ backgroundColor: currentResource?.color }}>{accountInitials}</span><span><strong>{user.name}</strong><small>{data.currentUser.role}</small></span><MoreHorizontal size={18} /></button>{accountMenu === 'sidebar' && <AccountMenu {...accountOptions} sidebar />}</div>}
     />
@@ -237,16 +229,14 @@ function WorkspaceApp({ user, onSessionExpired, signOut, onPasswordChanged }: Au
         <div className="topbar-actions"><ThemeControl /><span className="topbar-date">{dateLabel}</span><div className="notification-wrapper"><button className={`icon-button ${notifications ? 'active' : ''}`} aria-label="Voir les points d’attention" aria-expanded={notifications} onClick={() => setNotifications(!notifications)}><Bell size={19} />{attention.length > 0 && <span className="notification-dot" />}</button>{notifications && <div className="notification-panel"><div><strong>Points d’attention</strong><span>{attention.length}</span></div>{attention.slice(0, 6).map(t => <button key={t.id} onClick={() => openTask(t)}><span className={`status-dot status-${t.status}`} /><span>{t.title}<small>{isLate(t, data.today) ? `Échéance dépassée · ${formatDate(t.endDate)}` : 'En attente de validation'}</small></span></button>)}{!attention.length && <p>Toutes vos échéances sont à jour.</p>}</div>}</div><div className="auth-account-wrapper" ref={topAccountRef}><button className="avatar avatar-button" onClick={event => toggleAccount('top', event.currentTarget)} aria-label="Votre espace et votre profil" aria-haspopup="menu" aria-expanded={accountMenu === 'top'} style={{ backgroundColor: currentResource?.color }}>{accountInitials}</button>{accountMenu === 'top' && <AccountMenu {...accountOptions} />}</div></div>
       </header>
       {saving > 0 && <div className="saving-indicator" aria-label="Enregistrement en cours" />}
-      {projectContext && <div className="project-header"><div className="project-heading"><span className="project-icon" style={{ backgroundColor: `${project.color}14`, color: project.color }}><Folder size={24} /></span><div className="project-name"><div className="project-title-meta"><span>PROJET</span><span>•</span><span>{formatDate(project.startDate)} — {formatDate(project.endDate)}</span></div><h2>{project.name}</h2></div></div><div className="header-actions"><span className={`project-status project-status-${project.status}`}><span className="status-dot" />{projectStatusLabel(project, data)}</span><span className="weather-pill" title="Météo déclarée du projet">{project.weather > 0 && <Sun size={18} />}{project.weather > 0 ? `${project.weather}/5` : '—'}</span><button className="icon-button" title="Paramètres du projet" aria-label="Paramètres du projet" disabled={!canProject(data, project.id, 'details')} onClick={() => setDialog({ type: 'project', id: project.id })}><Settings2 size={19} /></button></div></div>}
+      {projectContext && <div className="project-header"><div className="project-heading"><span className="project-icon" style={{ backgroundColor: `${project.color}14`, color: project.color }}><Folder size={24} /></span><div className="project-name"><div className="project-title-meta"><span>PROJET</span><span>•</span><span>{formatDate(project.startDate)} — {formatDate(project.endDate)}</span></div><h2>{project.name}</h2></div></div><div className="header-actions"><span className={`project-status project-status-${project.status}`}><span className="status-dot" />{projectStatusLabel(project, data)}</span><span className="weather-pill" title="Météo déclarée du projet"><Sun size={18} />{project.weather}/5</span><button className="icon-button" title="Paramètres du projet" aria-label="Paramètres du projet" disabled={!canProject(data, project.id, 'details')} onClick={() => setDialog({ type: 'project', id: project.id })}><Settings2 size={19} /></button></div></div>}
       {projectContext && <nav className="project-tabs" aria-label="Vues du projet">{tabs.filter(tab => !['team', 'documents', 'discussions', 'budget'].includes(tab.id) && projectViewEnabled(project, tab.id) && canUseProjectView(data, project, tab.id)).map(tab => <button key={tab.id} className={`tab ${route.tab === tab.id ? 'active' : ''}`} onClick={() => navigate('project', project.id, tab.id)}><tab.icon size={16} />{tab.label}{tab.id === 'list' && <span>{projectTasks.filter(t => t.kind === 'task').length}</span>}</button>)}</nav>}
       {projectContext ? <div className="project-workspace"><ProjectNavigation data={data} project={project} active={route.section === 'reports' ? 'reports' : route.tab} />{projectContent}</div> : projectContent}
       <footer className="app-footer"><span>Planzone 8</span><span>Données de démonstration · Groupe Nova</span></footer>
     </main>
     {toast && <div className="toast" role="status"><CircleHelp size={18} style={{ color: '#d4e3e8' }} /><span>{toast}</span><button className="icon-button" aria-label="Fermer la notification" onClick={() => setToast('')}><X size={15} /></button></div>}
     {dialog?.type === 'task' && <TaskDialog key={dialog.id ?? 'new-task'} task={data.tasks.find(t => t.id === dialog.id) ?? null} initial={dialog.taskDefaults} project={dialogProject} data={data} mutate={mutate} onClose={closeDialog} notify={notify} />}
-    {dialog?.type === 'zone' && isAdmin(data) && (!dialog.id || dialogZone) && <ZoneDialog key={dialog.id ?? 'new-zone'} zone={dialogZone} mutate={mutate} onClose={closeDialog} notify={notify} />}
-    {dialog?.type === 'zone-order' && isAdmin(data) && <ZoneOrderDialog zones={data.zones} mutate={mutate} onClose={closeDialog} notify={notify} />}
-    {dialog?.type === 'zone-delete' && isAdmin(data) && dialogZone && <ZoneDeleteDialog key={dialogZone.id} zone={dialogZone} projects={data.projects.filter(item => item.zoneId === dialogZone.id)} mutate={mutate} onClose={closeDialog} onDeleted={() => { closeDialog(); if (route.section === 'projects' && route.zoneId === dialogZone.id || route.section === 'project' && project.zoneId === dialogZone.id || route.section === 'reports' && project.zoneId === dialogZone.id) navigateZone(null); }} notify={notify} />}
+    {dialog?.type === 'zone' && <ZoneDialog mutate={mutate} onClose={closeDialog} notify={notify} />}
     {dialog?.type === 'project' && <ProjectDialog key={dialog.id ?? `new-project-${dialog.templateId ?? ''}`} project={data.projects.find(p => p.id === dialog.id) ?? null} data={data} initialZoneId={dialog.zoneId} initialTemplateId={dialog.templateId} mutate={mutate} onClose={closeDialog} notify={notify} />}
     {dialog?.type === 'resource' && <ResourceDialog key={dialog.id ?? 'new-resource'} resource={data.resources.find(r => r.id === dialog.id) ?? null} data={data} initialProjectId={dialog.projectId} mutate={mutate} onClose={closeDialog} notify={notify} openProject={openProject} onAccountCreated={refresh} />}
     {dialog?.type === 'report' && <ProjectReportDialog key={dialog.id ?? `new-report-${dialogProject.id}`} data={data} project={dialogProject} report={data.projectReports?.find(report => report.id === dialog.id) ?? null} initialDraft={dialog.reportDraft} mutate={mutate} notify={notify} onClose={closeDialog} />}

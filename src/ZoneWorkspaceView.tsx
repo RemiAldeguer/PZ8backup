@@ -1,8 +1,6 @@
 import { useMemo, useState } from 'react';
 import { CalendarDays, ChevronLeft, ChevronRight, ChevronsDown, ChevronsUp, Flag, Folder, FolderOpen, List, ListTree, Minus, Plus, Search } from 'lucide-react';
-import { STATUS_LABELS, TASK_STATUSES, type Project, type TaskStatus, type ViewProps, type Zone } from '../shared/types';
-import { isAdmin } from '../shared/permissions';
-import { ZoneActions } from './ZoneActions';
+import { STATUS_LABELS, TASK_STATUSES, type Project, type TaskStatus, type ViewProps } from '../shared/types';
 import { formatHours, isLate } from '../shared/domain';
 import { projectStatusLabel } from '../shared/customization';
 import { buildZoneElementTree, flattenZoneElements, type ZoneElementRow } from '../shared/zone-elements';
@@ -13,7 +11,7 @@ import { ProjectGanttView } from './ProjectGanttView';
 import './zone-workspace.css';
 
 export type ZoneView = 'projects' | 'list' | 'gantt';
-type Props = ViewProps & { zoneId: string | null; view: ZoneView; createProject: () => void; editProject: (project: Project) => void; onZoneChange: (id: string | null) => void; onEditZone: (zone: Zone) => void; onDeleteZone: (zone: Zone) => void };
+type Props = ViewProps & { zoneId: string | null; view: ZoneView; createProject: () => void; editProject: (project: Project) => void; onZoneChange: (id: string | null) => void };
 export function zoneViewHash(zoneId: string | null, view: ZoneView) { return zoneId ? `#zones/${encodeURIComponent(zoneId)}/${view}` : view === 'projects' ? '#projects' : `#projects/${view}`; }
 const DAY = 86_400_000;
 const stamp = (value: string | null) => value && isCivilDate(value) ? Date.parse(value + 'T00:00:00Z') : null;
@@ -22,10 +20,9 @@ const dateLabel = (value: string | null) => value ? value.split('-').reverse().j
 const tickLabel = (value: number) => new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: '2-digit', timeZone: 'UTC' }).format(new Date(value));
 
 export function ZoneWorkspaceView(props: Props) {
-  const zone = props.data.zones.find(item => item.id === props.zoneId);
   return <div className="zv-workspace"><nav className="zv-tabs" aria-label="Vues de la zone">{([
     ['projects', 'Projets', Folder], ['list', 'Liste', List], ['gantt', 'Gantt', CalendarDays],
-  ] as const).map(([id, label, Icon]) => <a key={id} href={zoneViewHash(props.zoneId, id)} aria-current={props.view === id ? 'page' : undefined}><Icon size={17} />{label}</a>)}{zone && isAdmin(props.data) && <div className="zv-zone-actions"><ZoneActions zone={zone} onEdit={props.onEditZone} onDelete={props.onDeleteZone} /></div>}</nav>
+  ] as const).map(([id, label, Icon]) => <a key={id} href={zoneViewHash(props.zoneId, id)} aria-current={props.view === id ? 'page' : undefined}><Icon size={17} />{label}</a>)}</nav>
     {props.view === 'projects' ? <ProjectsView {...props} /> : props.view === 'gantt' ? <ZoneGanttView {...props} /> : <ZoneElementsView {...props} />}
   </div>;
 }

@@ -30,7 +30,7 @@ const budgetColumns = [
   { key: 'earned', label: 'Acquis', metric: 'budget-earned', explanation: 'Valorisation des allocations selon l’avancement des tâches, hors dépenses.' },
 ] as const;
 const tagColors = ['#087b59', '#346c82', '#6545b2', '#922989', '#146e86', '#a65023'];
-function shortDate(date: string | null) { return date ? dateFormat.format(new Date(`${date}T12:00:00Z`)) : '—'; }
+function shortDate(date: string) { return date ? dateFormat.format(new Date(`${date}T12:00:00Z`)) : '—'; }
 function tagColor(tag: string) { return tagColors[Array.from(tag).reduce((sum, character) => sum + character.codePointAt(0)!, 0) % tagColors.length]; }
 function activityTitle(metrics: Metrics) {
   return metrics.activityBasis === 'allocated_hours'
@@ -40,7 +40,7 @@ function activityTitle(metrics: Metrics) {
       : 'Aucune tâche de travail : activité non définie.';
 }
 function Weather({ value, average = false }: { value: number | null; average?: boolean }) {
-  if (value === null || value === 0) return <span className="zp-no-value" aria-label="Météo non renseignée">—</span>;
+  if (value === null) return <span className="zp-no-value" aria-label="Météo non renseignée">—</span>;
   const Icon = [CloudLightning, CloudRain, Cloud, CloudSun, Sun][Math.max(0, Math.min(4, Math.round(value) - 1))];
   const label = `${average ? 'Météo moyenne des projets affichés' : 'Météo du projet'} : ${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 }).format(value)} / 5`;
   return <span className={`zp-weather zp-weather-${Math.round(value)}`} title={label} role="img" aria-label={label}><Icon size={30} strokeWidth={1.8} /></span>;
@@ -111,8 +111,8 @@ export function ProjectsView({ data, createProject, openProject, zoneId, onZoneC
     if (sort === 'default') return projects;
     return [...projects].sort((a, b) => {
       if (sort === 'name') return collator.compare(a.name, b.name);
-      if (sort === 'start') return (a.startDate ?? '9999-12-31').localeCompare(b.startDate ?? '9999-12-31') || collator.compare(a.name, b.name);
-      if (sort === 'end') return (a.endDate ?? '9999-12-31').localeCompare(b.endDate ?? '9999-12-31') || collator.compare(a.name, b.name);
+      if (sort === 'start') return a.startDate.localeCompare(b.startDate) || collator.compare(a.name, b.name);
+      if (sort === 'end') return a.endDate.localeCompare(b.endDate) || collator.compare(a.name, b.name);
       return metrics.get(a.id)!.remainingHours - metrics.get(b.id)!.remainingHours || collator.compare(a.name, b.name);
     });
   }

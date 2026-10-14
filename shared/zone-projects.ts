@@ -46,7 +46,7 @@ export function projectZoneMetrics(data: AppData, projects: Project[]): ZoneProj
     openPercent = Math.max(0, 100 - realizedPercent - latePercent);
   }
 
-  const weatherValues = [...scopedProjects.values()].map(project => project.weather).filter(weather => weather > 0);
+  const weatherValues = [...scopedProjects.values()].map(project => project.weather);
   return {
     allocatedHours: precise(metrics.allocatedHours),
     spentHours: precise(metrics.spentHours),

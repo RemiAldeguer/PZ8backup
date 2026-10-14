@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import type { CustomFieldDefinition, ProjectTemplate } from '../shared/customization.ts';
 import { customFieldImageSource, parseMultipleChoices, safeCustomFieldUrl } from '../shared/custom-field-values.ts';
-import { taskConstraintInput } from './task-constraint-validation.ts';
 
 const name = z.string().trim().min(1).max(200);
 const identifier = z.string().min(1).max(100).refine(value => !['__proto__', 'constructor', 'prototype'].includes(value));
@@ -13,7 +12,6 @@ const templateTaskInput = z.object({
   tags: z.array(z.string().trim().min(1).max(50)).max(20).default([]),
   startOffsetDays: z.number().int().min(-36500).max(36500).nullable().default(null),
   endOffsetDays: z.number().int().min(-36500).max(36500).nullable().default(null), dependsOnKey: identifier.nullable().default(null),
-  dependencyConstraint: taskConstraintInput.nullable().optional(),
   listKey: identifier.nullable().optional(),
   position: z.number().int().min(0).max(1_000_000_000).optional(),
 }).strict();
@@ -98,7 +96,6 @@ export function orderedTemplateTasks(template: ProjectTemplate): ProjectTemplate
     if (visiting.has(key)) throw new Error('Les dépendances du modèle créent un cycle.');
     const task = byKey.get(key);
     if (!task) throw new Error('Une dépendance du modèle est introuvable.');
-    if (task.dependencyConstraint && !task.dependsOnKey) throw new Error('Une contrainte du modèle doit avoir un prédécesseur.');
     if (task.listKey && !listKeys.has(task.listKey)) throw new Error('La liste d’une tâche du modèle est introuvable.');
     if (task.kind === 'milestone' && task.allocatedHours !== 0) throw new Error('Un jalon ne porte aucune charge allouée.');
     if (task.startOffsetDays !== null && task.endOffsetDays !== null && task.startOffsetDays > task.endOffsetDays) {

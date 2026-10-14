@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type FormEvent, type PointerEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ChevronsDown, ChevronsUp, Flag, Folder, Link2, List, Minus, Pencil, Plus, Search, Settings2, X } from 'lucide-react';
 import { STATUS_LABELS, TASK_STATUSES, type Project, type Task, type ViewProps } from '../shared/types';
@@ -7,9 +7,7 @@ import { canProject } from '../shared/permissions';
 import { buildProjectTaskListTree, type TaskListNode } from '../shared/task-lists';
 import { dependencyProblem, ganttListRowId, ganttBarRange, ganttStamp, ganttTicks, GANTT_DAY, projectGanttRange, projectGanttRows, type GanttScale, type ProjectGanttRow } from '../shared/project-gantt';
 import { CreateMenu, TaskListDialog, type ListEditorState, type MenuAction } from './NestedListView';
-import { ConstraintDialog, type ConstraintEditor } from './TaskConstraintDialog';
-import { DEFAULT_TASK_CONSTRAINT, planTaskConstraints } from '../shared/task-constraints';
-import { preferenceConstraintShift } from '../shared/planning-preferences';
+import { Modal } from './Dialogs';
 import { TaskCheck } from './TaskCheck';
 import { useGanttDates, GanttDatePreview } from './GanttDates';
 import { GanttColumnsDialog, GanttDetailValue } from './GanttColumns';
@@ -19,8 +17,37 @@ import './project-gantt.css';
 const ROW_HEIGHT = 44;
 const dateLabel = (date: string | null) => date ? formatDate(date) : '—';
 const errorMessage = (error: unknown) => error instanceof Error ? error.message : 'La contrainte n’a pas pu être enregistrée.';
+interface ConstraintEditor { successorId?: string; predecessorId?: string; projectId?: string; }
 export interface GanttScope { projects: Project[]; key: string; title: string; }
 type GanttProps = ViewProps & { scope?: GanttScope };
+
+function ConstraintDialog({ props, initial, onClose }: { props: ViewProps; initial: ConstraintEditor; onClose: () => void }) {
+  const tasks = props.data.tasks.filter(task => task.projectId === props.project.id);
+  const [successorId, setSuccessor] = useState(initial.successorId ?? '');
+  const [predecessorId, setPredecessor] = useState(initial.predecessorId ?? tasks.find(task => task.id === initial.successorId)?.dependsOnId ?? '');
+  const [error, setError] = useState(''); const [busy, setBusy] = useState(false); const pending = useRef(false);
+  const editable = !['paused', 'closed'].includes(props.project.status) && canProject(props.data, props.project.id, 'details');
+  const successor = tasks.find(task => task.id === successorId);
+  const previous = tasks.find(task => task.id === successor?.dependsOnId);
+  async function save(event: FormEvent, remove = false) {
+    event.preventDefault(); if (!editable || pending.current || !successor) return;
+    const problem = !remove ? dependencyProblem(tasks, predecessorId, successorId) : null;
+    if (problem) { setError(problem); return; }
+    pending.current = true; setBusy(true); setError('');
+    try { await props.mutate('tasks', 'PATCH', { dependsOnId: remove ? null : predecessorId }, successorId); props.notify(remove ? 'Contrainte supprimée.' : 'Contrainte enregistrée.'); onClose(); }
+    catch (error) { setError(errorMessage(error)); }
+    finally { pending.current = false; setBusy(false); }
+  }
+  return <Modal title="Contrainte entre les tâches" onClose={() => { if (!pending.current) onClose(); }}><form onSubmit={event => void save(event)}>
+    <div className="modal-body pzg-constraint-form"><p><strong>Fin → début</strong> : le prédécesseur doit être terminé avant de démarrer l’élément suivant. Les dates planifiées restent celles définies dans les tâches.</p>
+      <label className="form-field">Élément précédent<select className="form-input" aria-label="Élément précédent" disabled={!editable || busy} value={predecessorId} onChange={event => { setPredecessor(event.target.value); setError(''); }}><option value="">Choisir le prédécesseur</option>{tasks.filter(task => task.id !== successorId).map(task => <option key={task.id} value={task.id}>{task.title}</option>)}</select></label>
+      <label className="form-field">Élément suivant<select className="form-input" aria-label="Élément suivant" disabled={!editable || busy} value={successorId} onChange={event => { const task = tasks.find(task => task.id === event.target.value); setSuccessor(event.target.value); setPredecessor(task?.dependsOnId ?? predecessorId); setError(''); }}><option value="">Choisir la tâche ou le jalon suivant</option>{tasks.filter(task => task.id !== predecessorId || task.id === successorId).map(task => <option key={task.id} value={task.id}>{task.title}</option>)}</select></label>
+      {previous && <p className="pzg-constraint-current">Prédécesseur enregistré : <strong>{previous.title}</strong>{previous.id !== predecessorId && ' — ce lien sera remplacé à l’enregistrement.'}</p>}
+      {!editable && <p className="notice">Cette contrainte est consultable en lecture seule.</p>}
+      {error && <p role="alert" className="form-error">{error}</p>}
+    </div><div className="modal-footer pzg-constraint-footer">{previous && <button type="button" className="text-button text-danger" disabled={!editable || busy} onClick={event => void save(event, true)}>Supprimer la contrainte</button>}<div className="modal-footer-actions"><button className="button button-secondary" type="button" disabled={busy} onClick={onClose}>{editable ? 'Annuler' : 'Fermer'}</button>{editable && <button className="button button-primary" type="submit" disabled={busy || !predecessorId || !successorId}>{busy ? 'Enregistrement…' : 'Enregistrer la contrainte'}</button>}</div></div>
+  </form></Modal>;
+}
 
 interface Gesture { pointerId: number; source: string; x: number; y: number; moved: boolean; target?: string; }
 export function ProjectGanttView(props: GanttProps) {
@@ -33,7 +60,7 @@ function ProjectGanttCanvas(props: GanttProps) {
   const isEditable = (id: string) => { const item = data.projects.find(item => item.id === id); return !!item && !['paused', 'closed'].includes(item.status) && canProject(data, id, 'details'); };
   const [creationProjectId, setCreationProjectId] = useState(() => projects.find(item => isEditable(item.id))?.id ?? project.id);
   const creationProject = projects.find(item => item.id === creationProjectId) ?? projects.find(item => isEditable(item.id)) ?? projects[0] ?? project;
-  const rangeProject = { ...project, startDate: projects.map(item => item.startDate).filter((date): date is string => !!date).sort()[0] ?? data.today, endDate: projects.map(item => item.endDate).filter((date): date is string => !!date).sort().at(-1) ?? data.today };
+  const rangeProject = { ...project, startDate: projects.map(item => item.startDate).sort()[0] ?? data.today, endDate: projects.map(item => item.endDate).sort().at(-1) ?? data.today };
   const [query, setQuery] = useState(''); const [sort, setSort] = useState('none');
   const [resourceId, setResourceId] = useState('all'); const [status, setStatus] = useState('all'); const [kind, setKind] = useState('all');
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
@@ -73,16 +100,8 @@ function ProjectGanttCanvas(props: GanttProps) {
     if (scroll.current && zoomAnchor.current) scroll.current.scrollLeft = Math.max(0, zoomAnchor.current.fraction * baseTrackWidth - zoomAnchor.current.offset);
     zoomAnchor.current = null;
   }, [zoom, baseTrackWidth]);
-  let previewTasks = data.tasks;
-  if (dates.preview && dates.preview.record.kind !== 'project') {
-    const old = data.tasks.find(task => task.id === dates.preview!.record.id);
-    if (old) {
-      try { const plan = new Map(planTaskConstraints(data.tasks, { ...old, ...dates.preview.patch }, old, preferenceConstraintShift(data)).map(task => [task.id, task])); previewTasks = data.tasks.map(task => plan.get(task.id) ?? task); }
-      catch { previewTasks = data.tasks.map(task => task.id === old.id ? { ...task, ...dates.preview!.patch } : task); }
-    }
-  }
   const visualData = dates.preview?.record.kind === 'project' ? { ...data, projects: data.projects.map(item => item.id === dates.preview!.record.id ? { ...item, ...dates.preview!.patch, startDate: dates.preview!.patch.startDate!, endDate: dates.preview!.patch.endDate! } : item) }
-    : { ...data, tasks: previewTasks };
+    : dates.preview ? { ...data, tasks: data.tasks.map(task => task.id === dates.preview!.record.id ? { ...task, ...dates.preview!.patch } : task) } : data;
   const visualProjects = projects.map(item => visualData.projects.find(candidate => candidate.id === item.id)!);
   const tasks = visualData.tasks.filter(task => projectIds.has(task.projectId));
   const sortTasks = sort === 'title' ? (a: Task, b: Task) => a.title.localeCompare(b.title, 'fr', { numeric: true }) : sort === 'date' ? (a: Task, b: Task) => (a.endDate ?? '9999').localeCompare(b.endDate ?? '9999') : undefined;
@@ -111,7 +130,7 @@ function ProjectGanttCanvas(props: GanttProps) {
   useEffect(() => {
     if (!mobile) { mobileInitialized.current = false; return; }
     if (mobileInitialized.current || !scroll.current) return;
-    const focus = todayPosition >= 0 && todayPosition < 1 ? todayPosition : Math.max(0, (ganttStamp(tasks.find(task => task.startDate || task.endDate)?.startDate ?? tasks.find(task => task.startDate || task.endDate)?.endDate ?? project.startDate ?? data.today) - range.start) / (range.end - range.start));
+    const focus = todayPosition >= 0 && todayPosition < 1 ? todayPosition : Math.max(0, (ganttStamp(tasks.find(task => task.startDate || task.endDate)?.startDate ?? tasks.find(task => task.startDate || task.endDate)?.endDate ?? project.startDate) - range.start) / (range.end - range.start));
     scroll.current.scrollLeft = Math.max(0, focus * trackWidth - (scroll.current.clientWidth - labelWidth) / 2);
     mobileInitialized.current = true;
   }, [mobile, range.start, range.end, trackWidth, labelWidth, todayPosition, project.startDate]);
@@ -132,14 +151,14 @@ function ProjectGanttCanvas(props: GanttProps) {
   ].filter(item => !['paused', 'closed'].includes(target.status) && canProject(data, target.id, item.label === 'Tâche' ? 'taskCreate' : item.label === 'Jalon' ? 'milestoneCreate' : 'listCreate'));
   async function connect(predecessorId: string, successorId: string) {
     if (!editable || pending.current || dates.active || dates.busy) return;
-    const problem = dependencyProblem(tasks, predecessorId, successorId, true);
+    const problem = dependencyProblem(tasks, predecessorId, successorId);
     if (problem) { props.notify(problem); setSource(null); return; }
     const successor = tasks.find(task => task.id === successorId)!;
     if (!isEditable(successor.projectId)) { props.notify('Ce projet est consultable en lecture seule.'); setSource(null); return; }
     if (successor.dependsOnId === predecessorId) { props.notify('Cette contrainte existe déjà.'); setSource(null); return; }
     if (successor.dependsOnId) { setConstraint({ predecessorId, successorId, projectId: successor.projectId }); setSource(null); return; }
     pending.current = true; setSaving(true); setSource(null);
-    try { await props.mutate('tasks', 'PATCH', { dependsOnId: predecessorId, dependencyConstraint: { ...DEFAULT_TASK_CONSTRAINT, mode: 'not_before' } }, successorId); props.notify('Contrainte enregistrée.'); }
+    try { await props.mutate('tasks', 'PATCH', { dependsOnId: predecessorId }, successorId); props.notify('Contrainte enregistrée.'); }
     catch (error) { props.notify(errorMessage(error)); }
     finally { pending.current = false; setSaving(false); }
   }
@@ -168,11 +187,11 @@ function ProjectGanttCanvas(props: GanttProps) {
   function nameCell(row: ProjectGanttRow) {
     const task = row.task; const targetProject = rowProject(row); const rowLocked = ['paused', 'closed'].includes(targetProject.status); const resource = data.resources.find(resource => resource.id === task?.assigneeId);
     const predecessor = tasks.find(item => item.id === task?.dependsOnId);
-    const blocked = !task?.dependencyConstraint && !!predecessor && predecessor.status !== 'done';
+    const blocked = !!predecessor && predecessor.status !== 'done';
     return <div className={`pzg-name${blocked ? ' pzg-blocked' : ''}`} style={{ '--pzg-depth': Math.max(0, row.depth) } as CSSProperties}>
       <div className="pzg-name-primary"><div className="pzg-name-main">{task ? task.kind === 'milestone' ? <Flag size={18} className={isLate(task, data.today) ? 'text-danger' : ''} /> : <TaskCheck task={task} data={data} mutate={props.mutate} notify={props.notify} /> : <button type="button" className="pzg-fold" aria-label={`${collapsed.has(row.id) ? 'Déplier' : 'Replier'} ${row.kind === 'project' ? 'le projet' : 'la liste'} ${row.name}`} aria-expanded={!collapsed.has(row.id)} onClick={() => toggle(row.id)}>{collapsed.has(row.id) ? <Plus size={13} /> : <Minus size={13} />}</button>}
         {row.kind === 'project' && <Folder size={18} className="pzg-folder" />}<button type="button" className="pzg-name-button" title={row.name} onClick={() => task ? props.openTask(task) : toggle(row.id)}>{row.name}</button>{!task && <span className="pzg-count">{row.taskCount}</span>}
-      </div><div className="pzg-row-actions">{task ? <><button type="button" className={`pzg-constraint-badge${task.dependsOnId ? ' has-link' : ''}`} aria-label={`Contraintes de ${task.title}`} title={predecessor ? task?.dependencyConstraint ? `Contrainte fin → début avec ${predecessor.title}` : `Démarre après ${predecessor.title}` : 'Définir un prédécesseur'} onClick={() => setConstraint({ successorId: task.id, projectId: task.projectId })}><Link2 size={13} />{task.dependsOnId ? '1' : '+'}</button>{resource ? <span className="pzg-avatar" style={{ backgroundColor: resource.color }} title={resource.name} aria-label={resource.name}>{resource.initials}</span> : <span className="pzg-no-assignee">—</span>}</> : <><CreateMenu compact label={`Ajouter dans ${row.kind === 'project' ? 'le projet' : 'la liste'} ${row.name}`} actions={createActions(row.node, targetProject)} disabled={rowLocked || saving} />{row.node && <button className="pzg-list-edit" type="button" aria-label={`Modifier la liste ${row.name}`} disabled={rowLocked || !canProject(data, targetProject.id, 'listEdit')} onClick={() => setListEditor({ node: row.node, projectId: targetProject.id })}><Pencil size={13} /></button>}</>}</div>
+      </div><div className="pzg-row-actions">{task ? <><button type="button" className={`pzg-constraint-badge${task.dependsOnId ? ' has-link' : ''}`} aria-label={`Contraintes de ${task.title}`} title={predecessor ? `Démarre après ${predecessor.title}` : 'Définir un prédécesseur'} onClick={() => setConstraint({ successorId: task.id, projectId: task.projectId })}><Link2 size={13} />{task.dependsOnId ? '1' : '+'}</button>{resource ? <span className="pzg-avatar" style={{ backgroundColor: resource.color }} title={resource.name} aria-label={resource.name}>{resource.initials}</span> : <span className="pzg-no-assignee">—</span>}</> : <><CreateMenu compact label={`Ajouter dans ${row.kind === 'project' ? 'le projet' : 'la liste'} ${row.name}`} actions={createActions(row.node, targetProject)} disabled={rowLocked || saving} />{row.node && <button className="pzg-list-edit" type="button" aria-label={`Modifier la liste ${row.name}`} disabled={rowLocked || !canProject(data, targetProject.id, 'listEdit')} onClick={() => setListEditor({ node: row.node, projectId: targetProject.id })}><Pencil size={13} /></button>}</>}</div>
       </div>{details && <div className="pzg-details-viewport"><div className="pzg-details" style={{ width: visibleColumns.reduce((sum, column) => sum + column.width, 0), transform: `translateX(-${detailOffset}px)` }}>{visibleColumns.map(column => <GanttDetailValue key={column.id} column={column} row={row} data={visualData} />)}</div></div>}
     </div>;
   }
@@ -181,7 +200,7 @@ function ProjectGanttCanvas(props: GanttProps) {
     const activeDateRow = dates.preview && (task?.id === dates.preview.record.id || row.kind === 'project' && dates.preview.record.kind === 'project' && rowProject(row).id === dates.preview.record.id);
     const bar = ganttBarRange(row, range) ?? (activeDateRow ? { left: ganttStamp(row.endDate ?? row.startDate!) < range.start ? 0 : 1 - 16 / trackWidth, right: ganttStamp(row.endDate ?? row.startDate!) < range.start ? 16 / trackWidth : 1, milestone: task?.kind === 'milestone' } : null);
     const dragProps = dates.barProps(row, !linkMode && !sourceId && !saving);
-    const blocked = !task?.dependencyConstraint && tasks.some(predecessor => predecessor.id === task?.dependsOnId && predecessor.status !== 'done');
+    const blocked = tasks.some(predecessor => predecessor.id === task?.dependsOnId && predecessor.status !== 'done');
     return <div className={`pzg-track${task && (preview?.target === task.id || sourceId && task.id !== sourceId) ? ' pzg-connect-target' : ''}`} data-gantt-target={task?.id}>
       {minorTicks.map(tick => <span className="pzg-gridline" key={tick.date} style={{ left: `${tick.left * 100}%` }} />)}
       {todayPosition >= 0 && todayPosition < 1 && <span className="pzg-today-line" style={{ left: `${todayPosition * 100}%` }} />}
@@ -222,7 +241,7 @@ function ProjectGanttCanvas(props: GanttProps) {
     </div><div className="pzg-footer"><span>{visibleTaskCount} élément{visibleTaskCount > 1 ? 's' : ''} · Ordre et listes partagés avec la vue Liste</span><span>Zoom : {Math.round(zoom * 100)} %</span></div>
     {!visibleTaskCount && !hasLists && <div className="empty-state"><List size={26} /><p>{tasks.length ? 'Aucun élément ne correspond aux filtres.' : 'Créez une liste, une tâche ou un jalon pour préparer le planning.'}</p></div>}
     {dates.modal}
-    {dates.preview && createPortal(<GanttDatePreview preview={dates.preview} relatedCount={previewTasks.filter((task, index) => { const old = data.tasks[index]; return task.id !== dates.preview!.record.id && (task.startDate !== old?.startDate || task.endDate !== old?.endDate); }).length} />, document.body)}
+    {dates.preview && createPortal(<GanttDatePreview preview={dates.preview} />, document.body)}
     {columnEditor && <GanttColumnsDialog columns={columns} preferences={preferences} onClose={() => setColumnEditor(false)} onApply={next => { setSavedColumns(next); setColumnEditor(false); setDetailOffset(0); if (detailScroll.current) detailScroll.current.scrollLeft = 0; try { localStorage.setItem(columnKey, JSON.stringify(next)); } catch { props.notify('La configuration des colonnes est conservée pour cette visite.'); } }} />}
     {listEditor && <TaskListDialog props={{ ...props, project: data.projects.find(item => item.id === listEditor.projectId)! }} editor={listEditor} onClose={() => setListEditor(null)} />}
     {constraint && <ConstraintDialog key={`${constraint.successorId ?? ''}:${constraint.predecessorId ?? ''}`} props={{ ...props, project: data.projects.find(item => item.id === (constraint.projectId ?? creationProject.id))! }} initial={constraint} onClose={() => setConstraint(null)} />}
