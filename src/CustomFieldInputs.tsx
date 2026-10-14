@@ -36,11 +36,11 @@ export function CustomRichTextPreview({ value }: { value: string }) {
   return <div className="ci-rich-preview">{content}</div>;
 }
 
-export function RichTextInput({ id, label, value, onChange, onFormat, readOnly = false }: { id: string; label: string; value: string; onChange: (value: string) => void; onFormat?: () => void; readOnly?: boolean }) {
+export function RichTextInput({ id, label, value, onChange, onFormat }: { id: string; label: string; value: string; onChange: (value: string) => void; onFormat?: () => void }) {
   const textarea = useRef<HTMLTextAreaElement>(null);
   function format(kind: 'bold' | 'italic' | 'list') {
     const element = textarea.current;
-    if (!element || readOnly) return;
+    if (!element) return;
     const start = element.selectionStart; const end = element.selectionEnd;
     const selected = value.slice(start, end);
     const marker = kind === 'bold' ? '**' : '*';
@@ -52,10 +52,10 @@ export function RichTextInput({ id, label, value, onChange, onFormat, readOnly =
     requestAnimationFrame(() => { element.focus(); element.setSelectionRange(start, start + replacement.length); });
   }
   return <div className="ci-rich-editor"><div className="ci-rich-toolbar" aria-label={`Mise en forme : ${label}`}>
-    <button type="button" disabled={readOnly} aria-label={`Gras : ${label}`} title="Gras" onClick={() => format('bold')}><Bold size={15} /></button>
-    <button type="button" disabled={readOnly} aria-label={`Italique : ${label}`} title="Italique" onClick={() => format('italic')}><Italic size={15} /></button>
-    <button type="button" disabled={readOnly} aria-label={`Liste : ${label}`} title="Liste" onClick={() => format('list')}><List size={16} /></button>
-  </div><textarea className="form-input ci-input" ref={textarea} id={id} rows={5} maxLength={10000} readOnly={readOnly} value={value} onChange={event => onChange(event.target.value)} />
+    <button type="button" aria-label={`Gras : ${label}`} title="Gras" onClick={() => format('bold')}><Bold size={15} /></button>
+    <button type="button" aria-label={`Italique : ${label}`} title="Italique" onClick={() => format('italic')}><Italic size={15} /></button>
+    <button type="button" aria-label={`Liste : ${label}`} title="Liste" onClick={() => format('list')}><List size={16} /></button>
+  </div><textarea className="form-input ci-input" ref={textarea} id={id} rows={5} maxLength={10000} value={value} onChange={event => onChange(event.target.value)} />
     <small className="ci-note">Gras, italique et listes · Mise en forme avec **texte**, *texte* et - élément.</small>
     {value && <details className="ci-preview-details"><summary>Aperçu de {label}</summary><CustomRichTextPreview value={value} /></details>}
   </div>;

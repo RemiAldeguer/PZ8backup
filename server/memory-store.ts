@@ -8,11 +8,8 @@ import { taskListRecord, validateTaskListTree } from './task-list-validation.ts'
 import { permissionPolicyRecord } from './permission-validation.ts';
 import { projectMetadataInput } from './project-metadata-validation.ts';
 import { organizationUnitRecord } from './organization-validation.ts';
-import { capacityPlanRecord } from './capaplan-validation.ts';
-import { planzonePreferencesRecord } from './planzone-preferences-validation.ts';
 import { validateOrganizationTree, validateResourceManagers } from '../shared/organization.ts';
 import { isCivilDate } from '../shared/time-integration.ts';
-import { taskConstraintInput } from './task-constraint-validation.ts';
 
 /** One isolated workspace per request. The worker persists snapshot() using a revision CAS. */
 export class MemoryStore implements StoreLike {
@@ -34,8 +31,6 @@ export class MemoryStore implements StoreLike {
           const date = (value as Records['projects'] | Records['resources']).timeIntegrationDate;
           return date === undefined || date === null || isCivilDate(date);
         }))
-        || (table === 'capacityPlans' && (values.length > 1 || !values.every(value => capacityPlanRecord.safeParse(value).success)))
-        || (table === 'planzonePreferences' && (values.length > 1 || !values.every(value => planzonePreferencesRecord.safeParse(value).success)))
         || (table === 'organizationUnits' && !values.every(value => organizationUnitRecord.safeParse(value).success))
         || (table === 'permissionPolicies' && (values.length > 1 || !values.every(value => permissionPolicyRecord.safeParse(value).success)))
         || (table === 'projects' && !values.every(value => projectMetadataInput.safeParse(value).success))
@@ -44,10 +39,6 @@ export class MemoryStore implements StoreLike {
         || (table === 'projectDocuments' && !values.every(value => projectDocumentRecord.safeParse(value).success))
         || (table === 'documentFolders' && !values.every(value => documentFolderRecord.safeParse(value).success))
         || (table === 'taskLists' && !values.every(value => taskListRecord.safeParse(value).success))
-        || (table === 'tasks' && !values.every(value => {
-          const task = value as Records['tasks'];
-          return task.dependencyConstraint == null || !!task.dependsOnId && taskConstraintInput.safeParse(task.dependencyConstraint).success;
-        }))
         || (table === 'timeEntries' && !values.every(value => !Object.hasOwn(value, 'customValues') || customValuesInput.safeParse((value as Records['timeEntries']).customValues).success))
         || (table === 'comments' && !values.every(value => commentRecord.safeParse(value).success))
         || (Object.hasOwn(customizationRecordSchemas, table) && !values.every(value => {

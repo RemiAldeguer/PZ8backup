@@ -121,7 +121,7 @@ function safeMessage(value: string): string {
   return apiToken ? value.split(apiToken).join('[jeton masqué]') : value;
 }
 
-async function api<T>(operation: string, endpoint: string, method = 'GET', body?: unknown, attempt = 0): Promise<CloudflareEnvelope<T>> {
+async function api<T>(operation: string, endpoint: string, method = 'GET', body?: unknown): Promise<CloudflareEnvelope<T>> {
   let response: Response;
   try {
     response = await fetch(`${apiBase}${endpoint}`, {
@@ -141,17 +141,7 @@ async function api<T>(operation: string, endpoint: string, method = 'GET', body?
   try { envelope = await response.json() as CloudflareEnvelope<T>; }
   catch { throw new CloudflareError(operation, response.status, []); }
   if (!response.ok || envelope.success !== true) {
-    const codes = (envelope.errors ?? []).flatMap(error => typeof error.code === 'number' ? [error.code] : []);
-    // Explicit upstream authentication rejections perform no database/script write.
-    // Retry explicit auth rejections only, plus transient D1 failures in these
-    // idempotent schema/reads and revision-guarded migration queries.
-    const authRejected = [400, 401].includes(response.status) && codes.some(code => code === 9106 || code === 10000);
-    const transientD1 = response.status === 500 && codes.includes(7500) && endpoint.endsWith('/query');
-    if (attempt < 4 && (authRejected || transientD1)) {
-      await new Promise(resolve => setTimeout(resolve, 200 * (attempt + 1)));
-      return api<T>(operation, endpoint, method, body, attempt + 1);
-    }
-    throw new CloudflareError(operation, response.status, codes);
+    throw new CloudflareError(operation, response.status, (envelope.errors ?? []).flatMap(error => typeof error.code === 'number' ? [error.code] : []));
   }
   return envelope;
 }

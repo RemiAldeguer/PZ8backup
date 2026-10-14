@@ -1,29 +1,4 @@
-.pd-personal-view { min-width: 0; color: var(--ink); }
-.pd-personal-view .pd-summary-toolbar { align-items: flex-start; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; }
-.pd-summary-title { margin-right: auto; }
-.pd-personal-view .pd-summary-title h1 { font-size: 25px; line-height: 1.25; text-transform: none; letter-spacing: -.035em; }
-.pd-summary-title p { color: var(--muted); font-size: 13px; margin-top: 8px; }
-.pd-summary-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 15px; margin-bottom: 20px; }
-.pd-summary-metric { display: flex; align-items: center; gap: 15px; text-align: left; padding: 18px 20px; background: var(--surface); color: var(--ink); border: 0; border-radius: 12px; box-shadow: var(--card-shadow); min-width: 0; }
-button.pd-summary-metric { cursor: pointer; transition: transform .15s, background .15s; }
-button.pd-summary-metric:hover { transform: translateY(-2px); background: var(--surface-subtle); }
-.pd-summary-metric[aria-pressed=true] { box-shadow: inset 0 -3px var(--orange), var(--card-shadow); }
-.pd-summary-metric > span:last-child { min-width: 0; display: grid; gap: 8px; }
-.pd-summary-metric small { color: var(--muted); font-size: 12px; line-height: 1.45; }
-.pd-summary-metric strong { font-size: 27px; line-height: 1; font-weight: 750; }
-.pd-metric-icon { display: grid; place-items: center; width: 42px; height: 42px; flex-shrink: 0; border-radius: 13px; color: var(--blue); background: color-mix(in srgb, var(--blue) 12%, var(--surface)); }
-.pd-metric-late .pd-metric-icon { color: var(--red); background: color-mix(in srgb, var(--red) 12%, var(--surface)); }
-.pd-metric-completed .pd-metric-icon { color: var(--green); background: color-mix(in srgb, var(--green) 12%, var(--surface)); }
-.pd-task-filters { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 18px; color: var(--muted); font-size: 12px; }
-.pd-task-filters > label { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 240px; max-width: 440px; background: var(--surface); border-radius: 8px; padding: 11px 13px; }
-.pd-task-filters input { border: 0; background: transparent; color: var(--ink); min-width: 0; width: 100%; font: inherit; }
-.pd-task-filters label:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; }
-.pd-personal-view .pd-task-table-scroll { max-height: 430px; }
-.pd-personal-view .pd-task-open { font-size: 13px; line-height: 1.5; }
-.pd-personal-view .pd-task-table td { padding-top: 15px; padding-bottom: 15px; }
-.pd-personal-view .pd-status { border-color: transparent; background: var(--surface-subtle); font-size: 11px; padding: 7px 9px; }
-@media (max-width: 1050px) { .pd-summary-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 550px) { .pd-summary-metric { padding: 15px 12px; gap: 10px; } .pd-metric-icon { width: 32px; height: 32px; border-radius: 10px; } .pd-summary-metric strong { font-size: 23px; } .pd-task-filters > label { min-width: 0; max-width: none; flex-basis: 100%; } .pd-task-filters input { font-size: 16px; } }
+.pd-personal-view { min-width: 0; color: #2e383d; }
 .pd-personal-nav { display: flex; flex-wrap: wrap; margin: 0 0 25px; padding: 0 5px; border-bottom: 1px solid #e7e9eb; background: #fff; }
 .pd-personal-nav a { display: inline-flex; align-items: center; gap: 11px; padding: 20px 18px; color: #5e6a70; text-decoration: none; border-right: 1px solid #f1f2f3; font-size: 14px; }
 .pd-personal-nav a[aria-current="page"] { color: #ff6b2b; }
@@ -45,8 +20,7 @@ button.pd-summary-metric:hover { transform: translateY(-2px); background: var(--
 .pd-resource-select { position: relative; display: inline-flex; align-items: center; gap: 8px; font-size: 12px; min-width: 0; }
 .pd-resource-select strong { white-space: nowrap; font-weight: 650; margin-right: 3px; }
 .pd-resource-select select { font-size: 12px; padding: 10px 30px 10px 36px; border: 1px solid #dfe3e5; border-radius: 5px; width: 225px; max-width: 100%; }
-.pd-resource-picker { position: relative; display: inline-flex; align-items: center; min-width: 0; }
-.pd-resource-select .pd-avatar { position: absolute; left: 10px; }
+.pd-resource-select .pd-avatar { position: absolute; right: 192px; }
 .pd-avatar { width: 23px; height: 23px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 800; flex-shrink: 0; }
 .pd-filter-note { font-size: 12px; color: #66757f; margin: -12px 0 17px; }
 .pd-dashboard-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 18px; }
@@ -163,8 +137,8 @@ button.pd-summary-metric:hover { transform: translateY(-2px); background: var(--
   .pd-summary-toolbar h1 { font-size: 14px; }
   .pd-summary-controls { gap: 14px; }
   .pd-resource-select { width: 100%; }
-  .pd-resource-picker { flex: 1; }
-  .pd-resource-select select { flex: 1; width: 100%; }
+  .pd-resource-select select { flex: 1; width: auto; }
+  .pd-resource-select .pd-avatar { right: auto; left: 97px; }
   .pd-resource-select strong { min-width: 81px; }
   .pd-task-cards { grid-template-columns: minmax(0, 1fr); }
   .pd-card-heading { padding: 12px; }

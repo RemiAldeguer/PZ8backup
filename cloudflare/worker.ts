@@ -25,7 +25,7 @@ export interface Env {
 interface WorkspaceRow { data: string; revision: number; }
 const MAX_BODY_BYTES = 100 * 1024;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const ENTITIES = new Set<Entity>(['zones', 'projects', 'tasks', 'resources', 'profiles', 'time-entries', 'comments', 'expenses', 'revenues', 'calendar-events', 'unavailabilities', 'project-templates', 'custom-field-definitions', 'report-templates', 'project-status-definitions', 'strategic-axes', 'project-reports', 'project-documents', 'document-folders', 'task-lists', 'project-item-moves', 'time-integrations', 'permission-policies', 'organization-units', 'capacity-plan', 'planzone-preferences', 'task-self-assignment', 'zone-order']);
+const ENTITIES = new Set<Entity>(['zones', 'projects', 'tasks', 'resources', 'profiles', 'time-entries', 'comments', 'expenses', 'revenues', 'calendar-events', 'unavailabilities', 'project-templates', 'custom-field-definitions', 'report-templates', 'project-status-definitions', 'strategic-axes', 'project-reports', 'project-documents', 'document-folders', 'task-lists', 'project-item-moves', 'time-integrations', 'permission-policies', 'organization-units']);
 const SCHEMA = `CREATE TABLE IF NOT EXISTS demo_workspaces (
   id TEXT PRIMARY KEY,
   data TEXT NOT NULL CHECK (json_valid(data)),
@@ -208,7 +208,7 @@ async function api(request: Request, env: Env): Promise<Response> {
   let body: unknown;
   if (mutation || memberCreate) {
     assertSameOrigin(request, url);
-    if (method !== 'DELETE' || entity === 'zones' && request.body !== null) {
+    if (method !== 'DELETE') {
       const customFields = ['projects', 'tasks', 'resources', 'time-entries'].includes(entity);
       body = await readBody(request, entity === 'project-documents' && method === 'POST' ? MAX_DOCUMENT_BODY_BYTES : customFields ? MAX_CUSTOM_FIELDS_BODY_BYTES : MAX_BODY_BYTES, customFields);
     }
