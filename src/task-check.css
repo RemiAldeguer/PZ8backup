@@ -1,0 +1,11 @@
+.task-completion { display: inline-grid; place-items: center; width: 24px; height: 24px; flex: 0 0 24px; padding: 3px; border: 0; border-radius: 4px; background: transparent; line-height: 1; }
+.task-completion-box { display: flex; align-items: center; justify-content: center; width: 17px; height: 17px; border: 1.5px solid #d8dcdf; border-radius: 2px; color: #566d7a; background: #fff; }
+.task-completion-ready { border-color: #9a93a4; }
+.task-completion-in_progress { border-color: #43a1eb; background: #e8f4ff; }
+.task-completion-validation { border-color: #2d99a2; background: #ebf8f8; }
+.task-completion-done { color: #fff; background: #93c88f; border-color: #93c88f; }
+.task-completion:hover:not(:disabled) { background: #ff6b2b12; }
+.task-completion:hover:not(:disabled) .task-completion-box { border-color: var(--orange); }
+.task-completion:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+.task-completion-spinner { animation: task-check-spin .7s linear infinite; }
+@keyframes task-check-spin { to { transform: rotate(360deg); } }

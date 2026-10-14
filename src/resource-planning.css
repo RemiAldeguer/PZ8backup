@@ -1,0 +1,101 @@
+.resource-planning-view { min-width: 0; color: #303b40; }
+.rpv-heading { margin: 0 0 20px; }
+.rpv-heading h1 { margin: 0; font-size: 20px; font-weight: 650; }
+.rpv-toolbar, .rpv-subtoolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 14px 20px; }
+.rpv-toolbar { margin-bottom: 12px; }
+.rpv-subtoolbar { margin-bottom: 22px; gap: 12px 24px; }
+.rpv-control { display: inline-flex; align-items: center; gap: 10px; font-size: 13px; min-width: 0; }
+.rpv-control > span { white-space: nowrap; }
+.resource-planning-view select, .rpv-year input { color: #303b40; background: #fff; border: 1px solid #d9dcde; border-radius: 4px; font: inherit; height: 36px; padding: 0 30px 0 10px; max-width: 100%; }
+.rpv-control select { min-width: 135px; }
+.rpv-type-filter select { min-width: 200px; }
+.rpv-view-control { margin-left: auto; }
+.rpv-view-control select { min-width: 170px; font-size: 13px; }
+.rpv-unit-control { color: #697278; }
+.rpv-unit-control select { height: 29px; min-width: 90px; }
+.rpv-individual-filter select { max-width: 235px; height: 29px; }
+.rpv-inactive { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: #657178; }
+.rpv-inactive input { accent-color: #ff690b; }
+.rpv-year { display: inline-flex; align-items: center; height: 36px; background: #fff; border: 1px solid #d9dcde; border-radius: 4px; overflow: hidden; }
+.rpv-year button { background: transparent; border: 0; padding: 0; height: 34px; width: 32px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: #394448; }
+.rpv-year button:last-child { border-left: 1px solid #e5e6e7; }
+.rpv-year button:hover:not(:disabled) { background: #f1f3f4; }
+.rpv-year button:disabled { opacity: .4; cursor: default; }
+.rpv-year input { width: 65px; padding: 0 2px; height: 34px; border: 0; border-radius: 0; text-align: center; font-size: 14px; font-weight: 650; appearance: textfield; }
+.rpv-year input::-webkit-inner-spin-button, .rpv-year input::-webkit-outer-spin-button { appearance: none; margin: 0; }
+.rpv-explanation { position: relative; }
+.rpv-explanation > summary { display: inline-flex; align-items: center; justify-content: center; cursor: pointer; height: 34px; width: 28px; list-style: none; color: #434b4f; }
+.rpv-explanation > summary::-webkit-details-marker { display: none; }
+.rpv-explanation > div { position: absolute; z-index: 8; top: 39px; right: 0; width: min(360px, calc(100vw - 50px)); background: #fff; padding: 16px; border: 1px solid #dce1e3; border-radius: 5px; box-shadow: 0 4px 20px #1d30332b; font-size: 12px; line-height: 1.6; }
+.rpv-explanation p { margin: 9px 0 0; }
+.rpv-table-scroll { max-width: 100%; min-width: 0; overflow: auto; max-height: min(740px, calc(100vh - 255px)); border: 1px solid #e6e7e8; background: #fff; }
+.rpv-table { width: max-content; min-width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; font-size: 13px; }
+.rpv-table th, .rpv-table td { height: 50px; padding: 8px 12px; border-bottom: 1px solid #eceef0; border-right: 1px solid #eceef0; vertical-align: middle; }
+.rpv-table th:last-child, .rpv-table td:last-child { border-right: 0; }
+.rpv-table thead th { position: sticky; top: 0; background: #f7f8f9; color: #80878b; text-align: center; font-size: 11px; font-weight: 650; height: 37px; z-index: 3; min-width: 96px; text-transform: capitalize; }
+.rpv-table td { min-width: 96px; text-align: center; white-space: nowrap; }
+.rpv-table .rpv-resource-column { position: sticky; left: 0; text-align: left; width: 290px; min-width: 290px; max-width: 290px; z-index: 2; }
+.rpv-table thead .rpv-resource-column { z-index: 4; text-transform: uppercase; }
+.rpv-resource-column > div { display: flex; align-items: center; gap: 10px; }
+.rpv-resource-row { background: #fff; }
+.rpv-load .rpv-resource-row, .rpv-occupancy .rpv-resource-row { background: #f7f8f9; }
+.rpv-resource-row .rpv-resource-column { background: inherit; }
+.rpv-resource-column > .rpv-resource-name { display: flex; align-items: center; gap: 10px; width: 100%; min-width: 0; max-width: 100%; overflow: hidden; }
+.rpv-resource-name > div { flex: 1 1 0; min-width: 0; overflow: hidden; }
+.rpv-avatar.avatar { width: 31px; height: 31px; font-size: 12px; font-weight: 650; border: 0; flex-shrink: 0; }
+.rpv-resource-link { display: block; width: 100%; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: none; border: none; padding: 0; text-align: left; font: inherit; font-weight: 650; line-height: 1.35; color: #333d42; cursor: pointer; }
+.rpv-resource-link:hover { text-decoration: underline; }
+.rpv-resource-link:disabled { cursor: default; }
+.rpv-job-title, .rpv-inactive-label { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px; color: #899195; font-size: 11px; font-weight: 400; }
+.rpv-inactive-label { color: #626d72; font-style: italic; }
+.rpv-expand, .rpv-expand-spacer { flex-shrink: 0; width: 18px; height: 18px; }
+.rpv-expand { display: inline-flex; align-items: center; justify-content: center; background: #bedcf1; color: #365a6b; border: 0; border-radius: 4px; padding: 0; cursor: pointer; }
+.rpv-expand:hover { background: #a5cce7; }
+.rpv-tree-actions { display: flex; gap: 5px; }
+.rpv-tree-actions button { display: inline-flex; align-items: center; justify-content: center; background: #ff791f; border: 0; border-radius: 3px; padding: 0; height: 23px; width: 23px; color: #fff; cursor: pointer; }
+.rpv-tree-actions button:disabled { opacity: .45; cursor: default; }
+.rpv-table .rpv-overload-text { color: #d43543; font-weight: 650; }
+.rpv-table .rpv-heat { font-weight: 600; color: #29493e; }
+.rpv-heat-normal { background: #8be6af; }
+.rpv-heat-warning { background: #ffcc91; }
+.rpv-heat-overload { background: #f98d97; }
+.rpv-table .rpv-heat-warning { color: #5c3d16; }
+.rpv-table .rpv-heat-overload { color: #64262e; }
+.rpv-heat-unavailable { background: #eceff1; }
+.rpv-table .rpv-heat-unavailable { color: #687579; }
+.rpv-table .rpv-project-row th, .rpv-table .rpv-project-row td { height: 36px; padding-top: 5px; padding-bottom: 5px; background: #fff; font-size: 11px; font-weight: 400; }
+.rpv-project-link { display: flex; align-items: center; width: 100%; min-width: 0; background: none; border: 0; padding: 0 0 0 22px; font: inherit; color: #465358; gap: 8px; cursor: pointer; text-align: left; }
+.rpv-project-link > svg { color: #ff8b35; flex-shrink: 0; }
+.rpv-project-link > span:last-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rpv-project-link:hover > span:last-child { text-decoration: underline; }
+.rpv-zone-dot { width: 13px; height: 13px; border-radius: 50%; flex-shrink: 0; }
+.rpv-week-dates { display: block; font-size: 9px; font-weight: 400; margin-top: 3px; }
+.rpv-table .rpv-empty { padding: 35px; color: #6b777c; text-align: left; }
+.rpv-notes { color: #69777c; font-size: 11px; line-height: 1.6; margin-top: 12px; }
+.rpv-notes p { margin: 4px 0; }
+.rpv-legend-dot { display: inline-block; width: 11px; height: 11px; border-radius: 2px; margin: 0 5px 0 14px; vertical-align: -1px; }
+.rpv-legend-dot:first-child { margin-left: 0; }
+.resource-planning-view button:focus-visible, .resource-planning-view select:focus-visible, .resource-planning-view input:focus-visible, .rpv-explanation summary:focus-visible, .rpv-table-scroll:focus-visible { outline: 2px solid #207ba0; outline-offset: 2px; }
+@media (max-width: 700px) {
+  .rpv-heading { margin-bottom: 16px; }
+  .rpv-toolbar, .rpv-subtoolbar { gap: 10px 12px; }
+  .rpv-control { gap: 7px; font-size: 12px; }
+  .rpv-control select { min-width: 100px; }
+  .rpv-type-filter { width: 100%; }
+  .rpv-type-filter select { flex: 1; min-width: 0; }
+  .rpv-view-control { margin-left: 0; flex: 1; }
+  .rpv-view-control select { width: 100%; min-width: 0; padding-left: 8px; font-size: 12px; }
+  .rpv-year input { width: 58px; }
+  .rpv-year button { width: 26px; }
+  .rpv-explanation > div { left: -160px; right: auto; }
+  .rpv-individual-filter { width: 100%; }
+  .rpv-individual-filter select { flex: 1; max-width: none; min-width: 0; }
+  .rpv-subtoolbar { margin-bottom: 15px; }
+  .rpv-table-scroll { max-height: 68vh; }
+  .rpv-table .rpv-resource-column { width: 205px; min-width: 205px; max-width: 205px; padding-left: 8px; padding-right: 8px; }
+  .rpv-resource-column > .rpv-resource-name { gap: 7px; }
+  .rpv-avatar.avatar { width: 26px; height: 26px; font-size: 10px; }
+  .rpv-resource-link { font-size: 11px; }
+  .rpv-job-title { font-size: 10px; }
+  .rpv-table td, .rpv-table thead th { min-width: 86px; padding-left: 8px; padding-right: 8px; }
+}

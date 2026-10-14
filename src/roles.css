@@ -1,0 +1,27 @@
+.role-control { min-width: 210px; max-width: 310px; }
+.role-control select { width: 100%; padding: 11px 12px; color: #23343b; background: #fff; border: 1px solid #dce2e5; border-radius: 4px; font: inherit; font-size: 13px; }
+.role-control select:disabled { color: #65747c; background: #f7f9fa; }
+.role-control small { display: block; margin-top: 7px; white-space: normal; color: #8c979e; line-height: 1.45; font-size: 11px; }
+.roles-view { color: #243740; }
+.roles-view > header { display: flex; align-items: center; gap: 16px; margin-bottom: 25px; }
+.roles-view h1 { font-size: 24px; margin: 0 0 8px; }
+.roles-view > header p { color: #7e8d94; line-height: 1.5; }
+.roles-reference, .roles-policy { padding: 24px; margin-bottom: 20px; }
+.roles-view h2 { font-size: 17px; margin: 22px 0 15px; }
+.roles-view h2:first-child { margin-top: 0; }
+.roles-reference > div { display: grid; grid-template-columns: 190px 1fr; gap: 20px; padding: 11px 0; border-bottom: 1px solid #edf0f2; }
+.roles-reference p, .roles-policy p { color: #7e8d94; line-height: 1.5; font-size: 13px; }
+.roles-policy fieldset { padding: 0; margin: 0; border: 0; min-width: 0; }
+.roles-policy-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px 20px; margin: 20px 0; }
+.roles-policy-grid label { display: flex; align-items: center; gap: 9px; font-size: 13px; }
+.roles-policy-grid input { width: 17px; height: 17px; accent-color: #ff6b24; }
+.roles-policy footer { display: flex; justify-content: flex-end; margin-top: 20px; }
+.member-access { border-top: 1px solid #e1e6e9; padding-top: 20px; }
+.member-access h3 { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 15px; }
+.member-access small { display: block; line-height: 1.5; color: #7f8c94; margin-top: 10px; }
+.member-access-fields { margin-top: 17px; display: flex; flex-direction: column; gap: 15px; }
+.roles-capacity { border: 0; padding: 20px 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.rd-zone-access { border: 1px solid #e2e7ea; border-radius: 4px; padding: 13px; }
+.rd-zone-access legend { color: #173346; font-size: 12px; font-weight: 600; }
+.rd-zone-access label { margin: 9px 0; }
+@media (max-width: 700px) { .roles-policy-grid { grid-template-columns: 1fr; } .roles-reference > div { grid-template-columns: 1fr; gap: 8px; } .roles-reference, .roles-policy { padding: 18px; } .role-control { min-width: 190px; } }

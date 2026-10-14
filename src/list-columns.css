@@ -1,0 +1,57 @@
+.lc-list-view { min-width: 0; }
+.lc-list-toolbar { flex-wrap: wrap; }
+.lc-config-trigger { margin-left: auto; white-space: nowrap; }
+.lc-table-scroll { max-width: 100%; min-width: 0; overscroll-behavior-inline: contain; }
+.lc-table-scroll:focus-visible { outline: 2px solid #2675a9; outline-offset: -2px; }
+.lc-task-table { width: 100%; table-layout: auto; }
+.lc-task-table td:first-child { min-width: 0; }
+.lc-task-table th[data-column='task'], .lc-task-table td[data-column='task'] { min-width: 270px; }
+.lc-task-table td[data-column='assignee'] { min-width: 180px; }
+.lc-task-table td[data-column='dates'] { min-width: 175px; }
+.lc-task-table td[data-column='tags'] { min-width: 160px; max-width: 280px; }
+.lc-task-table td[data-column='allocated'] { min-width: 110px; white-space: nowrap; }
+.lc-tags-cell { display: block; border: 0; background: transparent; text-align: left; padding: 4px 0; width: 100%; color: #456475; border-radius: 4px; }
+.lc-tags-cell:hover .tag { background: #e4eef5; }
+.lc-tags-cell:focus-visible { outline: 2px solid #2675a9; outline-offset: 3px; }
+.lc-tags-cell .tag-list { display: flex; flex-wrap: wrap; gap: 5px; }
+.lc-tags-cell .tag { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lc-add-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; }
+.lc-config-body > p { margin: 0 0 17px; font-size: 12px; color: #587081; line-height: 1.5; }
+.lc-config-list { display: grid; gap: 8px; padding: 0; margin: 0; list-style: none; }
+.lc-config-list li { display: flex; align-items: center; gap: 10px; padding: 8px 10px; min-width: 0; background: #f8fafb; border: 1px solid #e2e8ed; border-radius: 6px; }
+.lc-column-position { display: grid; place-items: center; width: 22px; height: 22px; flex-shrink: 0; border-radius: 50%; background: #e5edf3; color: #385263; font-size: 11px; }
+.lc-config-list label { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 12px; color: #334d5e; }
+.lc-config-list input { accent-color: #f5670b; width: 15px; height: 15px; margin: 0; flex-shrink: 0; }
+.lc-config-list small { font-size: 10px; color: #788b98; }
+.lc-order-controls { display: flex; flex-shrink: 0; gap: 4px; margin-left: auto; }
+.lc-order-controls .icon-button { width: 30px; height: 30px; border: 1px solid #dbe3e9; border-radius: 5px; background: #fff; color: #3a5c74; }
+.lc-order-controls .icon-button:disabled { opacity: .35; cursor: default; }
+.lc-config-body p.lc-settings-note { margin: 17px 0 0; font-size: 11px; }
+.lc-config-footer { flex-wrap: wrap; gap: 10px; }
+.lc-task-tags { margin-bottom: 17px; }
+.lc-task-tags-heading { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.lc-task-tags-heading h3 { margin: 0; font-size: 11px; font-weight: 500; }
+.lc-task-tags-heading > span { margin-left: auto; color: #8d9ca6; font-size: 10px; }
+.lc-tag-chips { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; padding: 0; margin: 0 0 9px; }
+.lc-tag-chips > li { display: inline-flex; align-items: center; gap: 5px; border: 1px solid #dce8f0; border-radius: 4px; background: #edf4f8; color: #395d76; font-size: 11px; padding: 3px 5px 3px 8px; min-width: 0; max-width: 100%; }
+.lc-tag-chips > li > span { overflow-wrap: anywhere; }
+.lc-tag-chips button { display: grid; place-items: center; width: 22px; height: 22px; flex-shrink: 0; background: transparent; border: 0; color: #527186; padding: 0; border-radius: 3px; }
+.lc-tag-chips button:hover { background: #dce8f0; }
+.lc-tag-input-row { display: flex; gap: 8px; }
+.lc-tag-input-row input { flex: 1; }
+.lc-tag-input-row button { flex-shrink: 0; }
+.lc-tag-help { margin: 6px 0 0; color: #728796; font-size: 10px; line-height: 1.5; }
+.lc-tag-suggestions { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+.lc-tag-suggestions > span { width: 100%; color: #6c8393; font-size: 10px; margin-bottom: 2px; }
+.lc-tag-suggestions button { background: #fff; border: 1px dashed #ccdbe6; border-radius: 4px; color: #50718a; font-size: 10px; padding: 5px 7px; }
+.lc-tag-suggestions button:hover { background: #f0f6fa; border-style: solid; }
+.lc-tag-suggestions button:disabled { opacity: .45; cursor: default; }
+.lc-task-tags button:focus-visible, .lc-config-list button:focus-visible { outline: 2px solid #2675a9; outline-offset: 2px; }
+@media (max-width: 600px) {
+  .lc-config-trigger { margin-left: 0; width: 100%; justify-content: center; }
+  .lc-config-list label { font-size: 11px; gap: 6px; }
+  .lc-config-list small { display: none; }
+  .lc-config-list li { gap: 7px; padding: 8px; }
+  .lc-config-footer > .text-button { width: 100%; text-align: left; }
+  .lc-config-footer .modal-footer-actions { width: 100%; justify-content: flex-end; }
+}

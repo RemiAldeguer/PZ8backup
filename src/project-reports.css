@@ -1,0 +1,49 @@
+.pr-dialog { width: min(1110px, calc(100vw - 40px)); max-width: none; max-height: calc(100dvh - 40px); border: 0; border-radius: 5px; padding: 0; margin: auto; background: #fff; color: #243c49; box-shadow: 0 15px 70px #12252c50; overflow: auto; }
+.pr-dialog::backdrop { background: #14252c88; }
+.pr-dialog form { min-width: 0; }
+.pr-dialog-header { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 18px 23px; position: sticky; top: 0; z-index: 2; background: #213036; color: #fff; }
+.pr-dialog-header h2 { font-size: 16px; margin: 0; }
+.pr-dialog-header p { font-size: 12px; color: #e2ebef; margin: 6px 0 0; overflow-wrap: anywhere; }
+.pr-icon-button { padding: 5px; border: 0; background: transparent; color: inherit; display: inline-grid; place-items: center; cursor: pointer; }
+.pr-dialog-body { padding: 25px; }
+.pr-fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.pr-settings { display: grid; grid-template-columns: minmax(0, 1fr) minmax(150px, 230px); gap: 22px; margin-bottom: 22px; }
+.pr-field { display: flex; flex-direction: column; gap: 8px; min-width: 0; font-size: 13px; }
+.pr-field > span { font-weight: 650; color: #274d61; }
+.pr-field input, .pr-field select, .pr-field textarea { min-width: 0; width: 100%; border: 1px solid #d9e0e4; border-radius: 4px; padding: 11px 12px; background: #fff; color: #243c49; font: inherit; font-weight: 400; line-height: 1.5; }
+.pr-field textarea { resize: vertical; }
+.pr-field input:focus-visible, .pr-field select:focus-visible, .pr-field textarea:focus-visible, .pr-dialog button:focus-visible { outline: 2px solid #458ab9; outline-offset: 2px; }
+.pr-field small, .pr-note { color: #617580; font-size: 12px; font-weight: 400; line-height: 1.6; }
+.pr-note { padding: 12px 14px; background: #f2f7fa; border-radius: 4px; margin: 0 0 18px; }
+.pr-title-field { margin-bottom: 24px; }
+.pr-editor-document, .pr-snapshot { background: #fff; border: 1px solid #dce2e6; border-radius: 4px; overflow: hidden; }
+.pr-document-header { display: flex; align-items: center; gap: 10px; padding: 20px 24px; color: #fff; background: #458fc3; font-size: 16px; font-weight: 700; }
+.pr-document-body { padding: 25px; }
+.pr-document-body h2 { font-size: 22px; margin: 0 0 12px; overflow-wrap: anywhere; }
+.pr-project-name { font-size: 14px; color: #385c6f; font-weight: 600; margin: 0; }
+.pr-attribution { color: #627480; font-size: 12px; margin: 20px 0 30px; line-height: 1.7; }
+.pr-document-body h3 { font-size: 14px; margin: 0 0 20px; color: #2b4a5a; }
+.pr-indicator-inputs { display: flex; flex-wrap: wrap; gap: 25px; margin: 0 0 30px; }
+.pr-indicator-inputs > label { flex: 0 1 170px; }
+.pr-indicator-inputs select { font-size: 11px; padding: 8px; }
+.pr-rating-badge { display: inline-flex; flex-direction: column; align-items: center; gap: 8px; max-width: 170px; text-align: center; font-size: 12px; font-weight: 600; color: #2f4a59; overflow-wrap: anywhere; }
+.pr-rating-badge small { font-weight: 400; font-size: 11px; color: #5f737e; }
+.pr-rating-icon { display: inline-grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; color: #fff; }
+.pr-rating-1 { background: #ca303c; }.pr-rating-2 { background: #cb6419; }.pr-rating-3 { background: #647985; }.pr-rating-4 { background: #598424; }.pr-rating-5 { background: #008d42; }
+.pr-ratings { display: flex; flex-wrap: wrap; gap: 28px; margin: 0 0 30px; }
+.pr-report-input { border-top: 1px solid #e5eaed; padding-top: 18px; margin-top: 22px; }
+.pr-content-field { border-top: 1px solid #e5eaed; padding-top: 20px; margin-top: 25px; break-inside: avoid; }
+.pr-content-field h3 { margin-bottom: 12px; }
+.pr-content-field p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; line-height: 1.7; }
+.pr-content-field a { color: #1c698e; }
+.pr-dialog-footer { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 17px 25px; border-top: 1px solid #e4e9ec; position: sticky; bottom: 0; background: #fff; z-index: 1; }
+.pr-footer-left, .pr-footer-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.pr-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 11px 15px; border: 1px solid transparent; border-radius: 4px; font: inherit; font-size: 12px; font-weight: 650; cursor: pointer; }
+.pr-button-blue { background: #377aa9; border-color: #377aa9; color: #fff; }.pr-button-blue:hover { background: #2b638b; }
+.pr-button-secondary { background: #fff; border-color: #dce3e7; color: #355569; }.pr-button-secondary:hover { background: #f3f8fb; }
+.pr-button-danger { background: #fff; border-color: #e1b5ba; color: #ad303b; }
+.pr-dialog button:disabled { opacity: .5; cursor: default; }
+.pr-fieldset:disabled input, .pr-fieldset:disabled select, .pr-fieldset:disabled textarea { background: #f5f7f8; color: #637783; }
+.pr-error { color: #b12932; background: #fff0f1; border: 1px solid #edc7cb; border-radius: 4px; font-size: 13px; line-height: 1.5; padding: 12px 14px; margin: 20px 0 0; }
+@media (max-width: 700px) { .pr-dialog { width: calc(100vw - 16px); max-height: calc(100dvh - 16px); }.pr-dialog-header { padding: 16px; }.pr-dialog-header h2 { font-size: 14px; }.pr-dialog-body { padding: 17px; }.pr-settings { grid-template-columns: 1fr; gap: 17px; }.pr-document-header { padding: 16px; font-size: 14px; }.pr-document-body { padding: 20px 16px; }.pr-dialog-footer { padding: 14px 17px; flex-direction: column; align-items: stretch; }.pr-footer-left, .pr-footer-actions { justify-content: stretch; }.pr-button { flex: 1; }.pr-indicator-inputs > label { flex-basis: calc(50% - 13px); }.pr-document-body h2 { font-size: 19px; } }
+@media print { body[data-pz-print=project-report] > :not(.pr-print-report) { display: none !important; }body[data-pz-print=project-report] > .pr-print-report { display: block !important; }.pr-print-report { padding: 18px 0; }.pr-print-report .pr-snapshot { border: 0; }.pr-print-report .pr-document-header { print-color-adjust: exact; }.pr-print-report .pr-rating-icon { print-color-adjust: exact; }.pr-print-report .pr-document-body { padding: 24px 0; }.pr-print-report footer { margin-top: 24px; border-top: 1px solid #d6e0e5; padding-top: 12px; font-size: 10px; color: #5f737e; } }

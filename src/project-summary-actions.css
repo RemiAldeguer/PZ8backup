@@ -1,0 +1,33 @@
+.psr-actions { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; margin: -4px 0 18px; }
+.psr-action { display: inline-flex; align-items: center; justify-content: center; gap: 9px; padding: 11px 16px; min-height: 42px; border: 0; border-radius: 4px; font-size: 13px; font-weight: 700; }
+.psr-flash { background: #ffb33a; color: #432f10; }
+.psr-create { background: #3277a9; color: #fff; }
+.psr-flash:hover { background: #f6a728; }
+.psr-create:hover { background: #2e6e9b; }
+.psr-action:focus-visible { outline: 3px solid #233c4c; outline-offset: 3px; }
+.psr-action:disabled { opacity: .5; cursor: not-allowed; }
+.proj-summary .psr-latest { padding: 0; border-radius: 5px; margin-bottom: 20px; }
+.psr-latest-heading { display: flex; align-items: center; gap: 10px; padding: 15px 18px; border-bottom: 1px solid #e9eef1; }
+.psr-latest-heading h2 { font-size: 13px; text-transform: uppercase; margin: 0; }
+.psr-latest-heading > span { color: #6f818b; font-size: 11px; }
+.psr-report-row { display: flex; align-items: center; gap: 13px; padding: 16px 18px; border-bottom: 1px solid #eef1f3; }
+.psr-report-row:last-child { border-bottom: 0; }
+.psr-report-icon { color: #397faf; flex: 0 0 auto; }
+.psr-report-meta { flex: 1; min-width: 0; }
+.psr-report-meta button { background: transparent; border: 0; padding: 0; color: #286b9a; text-align: left; font-size: 13px; font-weight: 650; overflow-wrap: anywhere; }
+.psr-report-meta button:hover { text-decoration: underline; }
+.psr-report-meta p { font-size: 11px; color: #71818b; margin: 5px 0 0; }
+.psr-indicators { display: flex; gap: 16px; flex-wrap: wrap; justify-content: flex-end; max-width: 50%; }
+.psr-indicator { display: flex; align-items: center; flex-direction: column; gap: 4px; max-width: 120px; text-align: center; font-size: 10px; }
+.psr-indicator > span { color: #425662; overflow-wrap: anywhere; }
+.psr-indicator small { font-size: 9px; color: #6a7d86; }
+.psr-rating-1, .psr-rating-2 { color: #cc3541; }
+.psr-rating-3 { color: #c16b15; }
+.psr-rating-4, .psr-rating-5 { color: #13994d; }
+.psr-empty { padding: 25px 18px; color: #72838d; font-size: 13px; }
+@media (max-width: 800px) {
+  .psr-actions { justify-content: stretch; }
+  .psr-action { flex: 1 1 180px; }
+  .psr-report-row { align-items: flex-start; flex-wrap: wrap; }
+  .psr-indicators { max-width: 100%; margin-left: 33px; justify-content: flex-start; }
+}

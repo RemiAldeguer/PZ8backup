@@ -1,0 +1,30 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { MemoryStore } from '../server/memory-store.ts';
+import { ApiService, ApiError } from '../server/service.ts';
+import { seed } from '../server/seed.ts';
+import { projectGanttRange } from '../shared/project-gantt.ts';
+import { templateFromProject } from '../shared/customization.ts';
+import { RESOURCE_ROLE_LABELS, type Project } from '../shared/types.ts';
+
+test('Undated imported projects stay undated through editing and render a bounded Gantt without a fabricated schedule', () => {
+  const store = new MemoryStore(); seed(store);
+  const api = new ApiService(store, { id: 'resource-claire', name: 'Administrateur', role: RESOURCE_ROLE_LABELS.administrator });
+  const project = api.mutate('projects', 'POST', { name: 'Non planifié', zoneId: store.all('zones')[0].id, startDate: null, endDate: null, weather: 0 }).value as Project;
+  api.mutate('projects', 'PATCH', { name: 'Non planifié renommé' }, project.id);
+  const saved = store.get('projects', project.id)!;
+  assert.equal(saved.startDate, null); assert.equal(saved.endDate, null); assert.equal(saved.weather, 0);
+  const range = projectGanttRange(saved, [], 'project', '2026-10-14');
+  assert.ok(Number.isFinite(range.start) && Number.isFinite(range.end) && range.end > range.start);
+  const task = api.mutate('tasks', 'POST', { projectId: project.id, title: 'Sans date' }).value;
+  const template = templateFromProject(saved, store.all('tasks'));
+  assert.equal(template.tasks[0].startOffsetDays, null); assert.equal(template.tasks[0].endOffsetDays, null);
+  const definition = api.mutate('project-templates', 'POST', template).value as { id: string };
+  const cloned = api.mutate('projects', 'POST', { name: 'Copie non planifiée', zoneId: project.zoneId, templateId: definition.id }).value as Project;
+  assert.equal(cloned.startDate, null); assert.equal(cloned.endDate, null);
+  api.mutate('tasks', 'PATCH', { startDate: '2026-10-15', endDate: '2026-10-16' }, (task as { id: string }).id);
+  const datedTemplate = api.mutate('project-templates', 'POST', templateFromProject(saved, store.all('tasks'))).value as { id: string };
+  const before = store.snapshot();
+  assert.throws(() => api.mutate('projects', 'POST', { name: 'Copie avec ancrage manquant', zoneId: project.zoneId, templateId: datedTemplate.id }), error => error instanceof ApiError && error.status === 400);
+  assert.deepEqual(store.snapshot(), before);
+});

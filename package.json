@@ -1,0 +1,43 @@
+{
+  "name": "planzone8",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n API,WEB \"tsx watch server/index.ts\" \"vite --host 0.0.0.0\"",
+    "build": "tsc --noEmit && vite build",
+    "start": "tsx server/index.ts",
+    "test": "tsx --test tests/*.test.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:cloudflare": "playwright test --config playwright.cloudflare.config.ts",
+    "dev:cloudflare": "npm run build && wrangler dev --local --port 8787",
+    "check:cloudflare": "wrangler deploy --dry-run --outdir /tmp/planzone8-worker",
+    "deploy:cloudflare": "npm run build && node --use-env-proxy --import tsx scripts/deploy-cloudflare.ts"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "lucide-react": "^0.468.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261006.1",
+    "@playwright/test": "^1.55.0",
+    "@types/express": "^5.0.0",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "concurrently": "^9.2.0",
+    "esbuild": "^0.28.2",
+    "miniflare": "^5.20261001.0-alpha",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0",
+    "vite": "^7.1.0",
+    "wrangler": "^4.147.0"
+  }
+}

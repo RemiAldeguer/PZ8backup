@@ -1,0 +1,12 @@
+.project-workspace { display: grid; grid-template-columns: 76px minmax(0, 1fr); min-width: 0; width: 100%; }
+.project-workspace > .content-area { min-width: 0; width: 100%; max-width: none; padding: 24px; }
+.project-workspace > .content-area.summary-content-area { padding: 0; }
+.project-workspace > .content-area.time-content-area { padding: 20px 14px; }
+.project-navigation { position: sticky; top: 0; align-self: start; min-height: calc(100vh - 190px); display: flex; flex-direction: column; padding: 5px 5px 20px; border-right: 1px solid #e8ecee; background: #fff; }
+.project-navigation a { position: relative; display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 20px 1px; text-decoration: none; color: #4d606a; font-size: 10px; font-weight: 650; border-bottom: 1px solid #edf0f2; }
+.project-navigation a:hover, .project-navigation a[aria-current="page"] { color: #f17730; background: #fff4ea; }
+.project-navigation a[aria-current="page"]::before { content: ''; position: absolute; left: -5px; top: 9px; bottom: 9px; width: 3px; background: #ff812d; }
+.project-navigation a small { position: absolute; right: 8px; top: 9px; font-size: 8px; border-radius: 8px; color: #597786; background: #eef3f5; padding: 1px 4px; }
+.project-navigation a:focus-visible { outline: 2px solid #ee8e47; outline-offset: -2px; }
+@media (max-width: 1050px) { .project-workspace { grid-template-columns: 65px minmax(0, 1fr); } .project-workspace > .content-area { padding: 18px; } }
+@media (max-width: 700px) { .project-workspace { display: block; } .project-workspace > .content-area { padding: 14px; } .project-navigation { position: static; flex-direction: row; overflow-x: auto; min-height: 0; padding: 0 6px; border-right: 0; border-bottom: 1px solid #e5e9ec; } .project-navigation a { flex: 1 0 64px; padding: 10px 2px; gap: 4px; font-size: 9px; border-bottom: 0; } .project-navigation a > svg { width: 19px; height: 19px; } .project-navigation a small { top: 3px; right: 6px; } .project-navigation a[aria-current="page"]::before { left: 8px; right: 8px; width: auto; top: auto; bottom: 0; height: 2px; } }

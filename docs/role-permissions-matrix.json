@@ -1,0 +1,1022 @@
+{
+  "source": "Matrice rôles et permissions planzone.xlsx",
+  "purpose": "Référence métier transcrite comme données ; aucune instruction de document exécutée.",
+  "sheets": {
+    "Mode d'emploi": [
+      {
+        "A1": "Matrice exhaustive des possibilités Planzone par rôle et par domaine fonctionnel"
+      },
+      {
+        "A3": "Objet",
+        "B3": "Ce classeur regroupe une matrice détaillée des droits et possibilités de Planzone, séparée entre rôles généraux (plateforme) et rôles projet."
+      },
+      {
+        "A4": "Périmètre",
+        "B4": "Rôles généraux : Administrateur, Créateur de projet, Usager, Visiteur. Rôles projet : Chef de projet, Collaborateur, Observateur."
+      },
+      {
+        "A5": "Légende",
+        "B5": "✅ Autorisé | ⚠️ Autorisé sous conditions / selon paramétrage | 👁️ Lecture seule | ❌ Non prévu"
+      }
+    ],
+    "Domaines_fonctionnels": [
+      {
+        "A1": "Domaine fonctionnel",
+        "B1": "Description"
+      },
+      {
+        "A2": "Accès & navigation",
+        "B2": "Accès de base à la plateforme et aux zones/projets"
+      },
+      {
+        "A3": "Paramétrage global",
+        "B3": "Paramètres d'organisation, sécurité, capacités, intégrations et vues"
+      },
+      {
+        "A4": "Paramètres personnels",
+        "B4": "Préférences, sécurité personnelle, alertes et planning individuel"
+      },
+      {
+        "A5": "Personnalisation",
+        "B5": "Modèles, statuts, compte rendus, champs additionnels, mots-clefs"
+      },
+      {
+        "A6": "Ressources",
+        "B6": "Gestion des membres, compétences, coûts et calendriers"
+      },
+      {
+        "A7": "Stratégie",
+        "B7": "Axes, objectifs et scoring stratégique"
+      },
+      {
+        "A8": "Zones",
+        "B8": "Conteneurs organisationnels des projets"
+      },
+      {
+        "A9": "Projets",
+        "B9": "Détails, équipe, planification, synthèse, liens externes"
+      },
+      {
+        "A10": "Budgets",
+        "B10": "Budget projet et indicateurs de suivi financier"
+      },
+      {
+        "A11": "Charge & temps",
+        "B11": "Charge, capacité, feuille de temps, validation"
+      },
+      {
+        "A12": "Comptes rendus",
+        "B12": "Production et consultation des CR projets"
+      },
+      {
+        "A13": "Documents & discussions",
+        "B13": "GED projet et échanges"
+      },
+      {
+        "A14": "Portefeuilles",
+        "B14": "Regroupement transverse de projets"
+      },
+      {
+        "A15": "Multi-zone",
+        "B15": "Vues consolidées inter-zones"
+      },
+      {
+        "A16": "Rapports / Exports",
+        "B16": "Exports standards et personnalisés"
+      },
+      {
+        "A17": "Calendrier",
+        "B17": "Indisponibilités et synchronisation calendrier"
+      },
+      {
+        "A18": "Mon espace",
+        "B18": "Synthèse, calendrier, tâches, suivi d'activité"
+      },
+      {
+        "A19": "Administration",
+        "B19": "Facturation et pilotage central"
+      }
+    ],
+    "Roles_generaux": [
+      {
+        "A1": "Domaine fonctionnel",
+        "B1": "Fonction / Action",
+        "C1": "Administrateur",
+        "D1": "Créateur de projet",
+        "E1": "Usager",
+        "F1": "Visiteur",
+        "G1": "Notes / conditions"
+      },
+      {
+        "A2": "Accès & navigation",
+        "B2": "Accès à la Planzone",
+        "C2": "✅",
+        "D2": "✅",
+        "E2": "✅",
+        "F2": "✅",
+        "G2": "Accès de base à la plateforme"
+      },
+      {
+        "A3": "Paramétrage global",
+        "B3": "Paramètres généraux de la Planzone",
+        "C3": "✅",
+        "D3": "❌",
+        "E3": "❌",
+        "F3": "❌",
+        "G3": "Nom organisation, adresse, type, contacts principaux"
+      },
+      {
+        "A4": "Paramétrage global",
+        "B4": "Informations organisation / contacts principaux",
+        "C4": "✅",
+        "D4": "❌",
+        "E4": "❌",
+        "F4": "❌",
+        "G4": "Contacts de facturation, décisionnaire, onboarding, responsable technique"
+      },
+      {
+        "A5": "Paramétrage global",
+        "B5": "Paramètres spéciaux de la Planzone",
+        "C5": "✅",
+        "D5": "❌",
+        "E5": "❌",
+        "F5": "❌",
+        "G5": "Selon configuration de la plateforme"
+      },
+      {
+        "A6": "Paramétrage global",
+        "B6": "Paramètres d’affichage des vues par rôle",
+        "C6": "✅",
+        "D6": "❌",
+        "E6": "❌",
+        "F6": "❌",
+        "G6": "Pilotage centralisé des vues"
+      },
+      {
+        "A7": "Paramétrage global",
+        "B7": "Paramétrage des actions du rôle projet Collaborateur",
+        "C7": "✅",
+        "D7": "❌",
+        "E7": "❌",
+        "F7": "❌",
+        "G7": "Permet d’ouvrir ou restreindre certains droits du collaborateur"
+      },
+      {
+        "A8": "Paramètres personnels",
+        "B8": "Préférences personnelles",
+        "C8": "✅",
+        "D8": "✅",
+        "E8": "✅",
+        "F8": "✅",
+        "G8": "Paramètres individuels"
+      },
+      {
+        "A9": "Paramètres personnels",
+        "B9": "Editer ma capacité à faire quotidienne",
+        "C9": "✅",
+        "D9": "✅",
+        "E9": "✅",
+        "F9": "✅",
+        "G9": "Permet de définir et ajuster sa capacité quotidienne personnelle."
+      },
+      {
+        "A10": "Paramètres personnels",
+        "B10": "Alertes mail et rapport d’activité",
+        "C10": "✅",
+        "D10": "✅",
+        "E10": "✅",
+        "F10": "✅",
+        "G10": "Fréquence des emails et rapports"
+      },
+      {
+        "A11": "Paramètres personnels",
+        "B11": "Sécurité personnelle / MFA / mot de passe",
+        "C11": "✅",
+        "D11": "✅",
+        "E11": "✅",
+        "F11": "✅",
+        "G11": "Double authentification et mot de passe"
+      },
+      {
+        "A12": "Personnalisation",
+        "B12": "Modèles de projet",
+        "C12": "✅",
+        "D12": "⚠️",
+        "E12": "⚠️",
+        "F12": "❌",
+        "G12": "Disponible pour les administrateurs par défaut ; ouverture possible aux créateurs de projet et usagers selon le paramétrage."
+      },
+      {
+        "A13": "Personnalisation",
+        "B13": "Modèles de compte rendu",
+        "C13": "✅",
+        "D13": "⚠️",
+        "E13": "⚠️",
+        "F13": "❌",
+        "G13": "Disponible pour les administrateurs par défaut ; ouverture possible aux créateurs de projet et usagers selon le paramétrage."
+      },
+      {
+        "A14": "Personnalisation",
+        "B14": "Statuts de projet personnalisés",
+        "C14": "✅",
+        "D14": "⚠️",
+        "E14": "⚠️",
+        "F14": "❌",
+        "G14": "Disponible pour les administrateurs par défaut ; ouverture possible aux créateurs de projet et usagers selon le paramétrage."
+      },
+      {
+        "A15": "Personnalisation",
+        "B15": "Créer des champs personnalisés (élément de projet, projet, ressource, compte rendu)",
+        "C15": "✅",
+        "D15": "⚠️",
+        "E15": "⚠️",
+        "F15": "❌",
+        "G15": "Disponible par défaut pour les administrateurs uniquement ; ouverture possible aux créateurs de projet et usagers selon le paramétrage."
+      },
+      {
+        "A16": "Personnalisation",
+        "B16": "Éditer les valeurs des champs personnalisés créés",
+        "C16": "✅",
+        "D16": "⚠️",
+        "E16": "⚠️",
+        "F16": "⚠️",
+        "G16": "Pour les rôles autres que l’administrateur, l’accès est conditionnel au paramétrage du champ personnalisé lui-même."
+      },
+      {
+        "A17": "Personnalisation",
+        "B17": "Lire / consulter les champs personnalisés",
+        "C17": "✅",
+        "D17": "✅",
+        "E17": "✅",
+        "F17": "✅",
+        "G17": "Disponible par défaut pour tous les rôles généraux et projet ; peut être restreint ou ouvert selon paramétrage."
+      },
+      {
+        "A18": "Ressources",
+        "B18": "Accès à la vue Ressources",
+        "C18": "✅",
+        "D18": "⚠️",
+        "E18": "⚠️",
+        "F18": "⚠️",
+        "G18": "Conditionnel pour les rôles autres que l’administrateur ; quoi qu’il arrive, l’accès sera en lecture."
+      },
+      {
+        "A19": "Ressources",
+        "B19": "Création / import de ressources",
+        "C19": "✅",
+        "D19": "❌",
+        "E19": "❌",
+        "F19": "❌",
+        "G19": "Ajout par email, import masse"
+      },
+      {
+        "A20": "Ressources",
+        "B20": "Création de ressources virtuelles",
+        "C20": "✅",
+        "D20": "❌",
+        "E20": "❌",
+        "F20": "❌",
+        "G20": "Ressource sans compte ni licence"
+      },
+      {
+        "A21": "Ressources",
+        "B21": "Création de ressources matérielles",
+        "C21": "✅",
+        "D21": "❌",
+        "E21": "❌",
+        "F21": "❌",
+        "G21": "Matériel / équipement"
+      },
+      {
+        "A22": "Ressources",
+        "B22": "Attribution des rôles et accréditations générales",
+        "C22": "✅",
+        "D22": "❌",
+        "E22": "❌",
+        "F22": "❌",
+        "G22": "Administrateur, créateur de projet, usager et observateur"
+      },
+      {
+        "A23": "Ressources",
+        "B23": "Édition de la fiche membre",
+        "C23": "✅",
+        "D23": "❌",
+        "E23": "❌",
+        "F23": "❌",
+        "G23": "Compétences, calendrier, coûts"
+      },
+      {
+        "A24": "Ressources",
+        "B24": "Attribution des profils de coûts",
+        "C24": "✅",
+        "D24": "❌",
+        "E24": "❌",
+        "F24": "❌",
+        "G24": "Profils coût/jour ou équivalent"
+      },
+      {
+        "A25": "Ressources",
+        "B25": "Transfert d’allocations entre ressources",
+        "C25": "✅",
+        "D25": "❌",
+        "E25": "❌",
+        "F25": "❌",
+        "G25": "Transfert total ou partiel"
+      },
+      {
+        "A26": "Stratégie",
+        "B26": "Axes stratégiques",
+        "C26": "✅",
+        "D26": "❌",
+        "E26": "❌",
+        "F26": "❌",
+        "G26": "Définition des axes et poids"
+      },
+      {
+        "A27": "Stratégie",
+        "B27": "Editer le score stratégique du projet",
+        "C27": "✅",
+        "D27": "⚠️",
+        "E27": "⚠️",
+        "F27": "👁️",
+        "G27": "Lecture ou saisie selon accès projet"
+      },
+      {
+        "A28": "Zones",
+        "B28": "Création de zones",
+        "C28": "✅",
+        "D28": "❌",
+        "E28": "❌",
+        "F28": "❌",
+        "G28": "Le créateur de projet ne peut pas créer de zones."
+      },
+      {
+        "A29": "Zones",
+        "B29": "Suppression de zones",
+        "C29": "✅",
+        "D29": "❌",
+        "E29": "❌",
+        "F29": "❌",
+        "G29": "Avec option de transfert des projets"
+      },
+      {
+        "A30": "Zones",
+        "B30": "Accès aux zones",
+        "C30": "✅",
+        "D30": "⚠️",
+        "E30": "⚠️",
+        "F30": "👁️",
+        "G30": "Toutes pour Admin ; affectées sinon"
+      },
+      {
+        "A31": "Projets",
+        "B31": "Création de projets",
+        "C31": "✅",
+        "D31": "✅",
+        "E31": "❌",
+        "F31": "❌",
+        "G31": "Depuis zone, navigation générale ou modèle"
+      },
+      {
+        "A32": "Projets",
+        "B32": "Création de projet à partir d’un modèle",
+        "C32": "✅",
+        "D32": "✅",
+        "E32": "❌",
+        "F32": "❌",
+        "G32": "Basé sur un modèle existant"
+      },
+      {
+        "A33": "Projets",
+        "B33": "Accès aux projets",
+        "C33": "✅",
+        "D33": "⚠️",
+        "E33": "⚠️",
+        "F33": "👁️",
+        "G33": "Tous pour Admin ; propres/affectés sinon"
+      },
+      {
+        "A34": "Projets",
+        "B34": "Édition des détails projet",
+        "C34": "✅",
+        "D34": "⚠️",
+        "E34": "⚠️",
+        "F34": "❌",
+        "G34": "Dépend du rôle projet"
+      },
+      {
+        "A35": "Projets",
+        "B35": "Constitution de l’équipe projet",
+        "C35": "✅",
+        "D35": "⚠️",
+        "E35": "⚠️",
+        "F35": "❌",
+        "G35": "Ajout de ressources et groupes projet"
+      },
+      {
+        "A36": "Projets",
+        "B36": "Accès aux vues projet (Gantt, liste, tableau, synthèse...)",
+        "C36": "✅",
+        "D36": "⚠️",
+        "E36": "⚠️",
+        "F36": "👁️",
+        "G36": "Selon rôle projet"
+      },
+      {
+        "A37": "Projets",
+        "B37": "Gestion des liens externes",
+        "C37": "✅",
+        "D37": "⚠️",
+        "E37": "⚠️",
+        "F37": "👁️",
+        "G37": "Selon rôle projet"
+      },
+      {
+        "A38": "Budgets",
+        "B38": "Accès au budget projet",
+        "C38": "✅",
+        "D38": "⚠️",
+        "E38": "⚠️",
+        "F38": "❌",
+        "G38": "Pré-requis min Chef de projet ou Administrateur pour chiffrage Visiteur exclu : sur un projet, le visiteur ne peut être qu’observateur et n’accède donc pas à la vue budget."
+      },
+      {
+        "A39": "Budgets",
+        "B39": "Chiffrage / budget alloué / suivi EVA",
+        "C39": "✅",
+        "D39": "⚠️",
+        "E39": "⚠️",
+        "F39": "❌",
+        "G39": "Selon rôle projet"
+      },
+      {
+        "A40": "Charge",
+        "B40": "Accéder à la vue charge projet",
+        "C40": "✅",
+        "D40": "⚠️",
+        "E40": "⚠️",
+        "F40": "❌",
+        "G40": "Collaborateurs parfois limités à leur propre charge selon rôle projet."
+      },
+      {
+        "A41": "Temps (timesheet personnelle)",
+        "B41": "Accéder à la feuille de temps personnelle",
+        "C41": "✅",
+        "D41": "✅",
+        "E41": "✅",
+        "F41": "✅",
+        "G41": "Disponible pour tous les rôles."
+      },
+      {
+        "A42": "Temps (timesheet personnelle)",
+        "B42": "Éditer les temps passés dans la feuille de temps personnelle",
+        "C42": "⚠️",
+        "D42": "⚠️",
+        "E42": "⚠️",
+        "F42": "👁️",
+        "G42": "Pour le chef de projet et l’usager, l’édition est conditionnelle selon le paramétrage ; le visiteur peut uniquement voir."
+      },
+      {
+        "A43": "Temps (timesheet personnelle)",
+        "B43": "Valider les temps passés dans la timesheet personnelle",
+        "C43": "⚠️",
+        "D43": "⚠️",
+        "E43": "⚠️",
+        "F43": "👁️",
+        "G43": "Pour le chef de projet et l’usager, la validation est conditionnelle selon le paramétrage ; le visiteur peut uniquement voir."
+      },
+      {
+        "A44": "Comptes rendus",
+        "B44": "Création et consultation des comptes rendus",
+        "C44": "✅",
+        "D44": "⚠️",
+        "E44": "⚠️",
+        "F44": "👁️",
+        "G44": "Selon rôle projet"
+      },
+      {
+        "A45": "Comptes rendus",
+        "B45": "Export rapport flash PDF",
+        "C45": "✅",
+        "D45": "⚠️",
+        "E45": "⚠️",
+        "F45": "❌",
+        "G45": "Depuis la synthèse projet"
+      },
+      {
+        "A46": "Documents & discussions",
+        "B46": "Documents projet",
+        "C46": "✅",
+        "D46": "✅",
+        "E46": "✅",
+        "F46": "✅",
+        "G46": "Disponible pour tous les rôles."
+      },
+      {
+        "A47": "Documents & discussions",
+        "B47": "Discussions / commentaires",
+        "C47": "✅",
+        "D47": "✅",
+        "E47": "✅",
+        "F47": "✅",
+        "G47": "Disponible pour tous les rôles."
+      },
+      {
+        "A48": "Portefeuilles",
+        "B48": "Accès aux portefeuilles",
+        "C48": "✅",
+        "D48": "✅",
+        "E48": "⚠️",
+        "F48": "✅",
+        "G48": "Accessible à tous ; l’usager peut également y accéder et effectuer des actions selon le paramétrage de la Planzone."
+      },
+      {
+        "A49": "Multi-zone",
+        "B49": "Vue multi-zone : zones",
+        "C49": "✅",
+        "D49": "✅",
+        "E49": "✅",
+        "F49": "✅",
+        "G49": "Accessible à tous ; chacun voit les projets sur lesquels il se trouve, à l’exception de l’administrateur qui peut tout voir."
+      },
+      {
+        "A50": "Multi-zone",
+        "B50": "Vue multi-zone : projets / Gantt",
+        "C50": "✅",
+        "D50": "✅",
+        "E50": "✅",
+        "F50": "✅",
+        "G50": "Accessible à tous ; chacun voit les projets sur lesquels il se trouve, à l’exception de l’administrateur qui peut tout voir."
+      },
+      {
+        "A51": "Multi-zone",
+        "B51": "Vue multi-zone : comptes rendus",
+        "C51": "✅",
+        "D51": "✅",
+        "E51": "✅",
+        "F51": "✅",
+        "G51": "Accessible à tous ; chacun voit les projets sur lesquels il se trouve, à l’exception de l’administrateur qui peut tout voir."
+      },
+      {
+        "A52": "Multi-zone",
+        "B52": "Vue multi-zone : charge globale",
+        "C52": "✅",
+        "D52": "✅",
+        "E52": "✅",
+        "F52": "✅",
+        "G52": "Accessible à tous ; chacun voit les projets sur lesquels il se trouve, à l’exception de l’administrateur qui peut tout voir."
+      },
+      {
+        "A53": "Rapports / Exports",
+        "B53": "Rapports / exports classiques et custom",
+        "C53": "✅",
+        "D53": "⚠️",
+        "E53": "⚠️",
+        "F53": "❌",
+        "G53": "Selon paramétrage global"
+      },
+      {
+        "A54": "Calendrier",
+        "B54": "Création d’indisponibilité pour soi",
+        "C54": "✅",
+        "D54": "✅",
+        "E54": "✅",
+        "F54": "❌"
+      },
+      {
+        "A55": "Calendrier",
+        "B55": "Création d’indisponibilité pour une autre ressource",
+        "C55": "✅",
+        "D55": "❌",
+        "E55": "❌",
+        "F55": "❌",
+        "G55": "Si l’on est administrateur"
+      },
+      {
+        "A56": "Calendrier",
+        "B56": "Export d’un lien de synchronisation calendrier",
+        "C56": "✅",
+        "D56": "✅",
+        "E56": "✅",
+        "F56": "👁️",
+        "G56": "Selon accès"
+      },
+      {
+        "A57": "Mon espace",
+        "B57": "Mes tâches à venir et en retard",
+        "C57": "✅",
+        "D57": "✅",
+        "E57": "✅",
+        "F57": "❌",
+        "G57": "Tâches projet et hors projet"
+      },
+      {
+        "A58": "Mon espace",
+        "B58": "Voir la synthèse des tâches personnelles des autres ressources de la Planzone",
+        "C58": "✅",
+        "D58": "❌",
+        "E58": "❌",
+        "F58": "❌",
+        "G58": "Seul l’administrateur peut voir la synthèse des tâches personnelles des autres ressources de la Planzone."
+      },
+      {
+        "A59": "Mon espace",
+        "B59": "Mon suivi temporel",
+        "C59": "✅",
+        "D59": "✅",
+        "E59": "✅",
+        "F59": "❌",
+        "G59": "Saisie et validation selon paramétrage global."
+      },
+      {
+        "A60": "Mon espace",
+        "B60": "Mon suivi temporel d'équipe",
+        "C60": "✅",
+        "D60": "✅",
+        "E60": "✅",
+        "F60": "👁️",
+        "G60": "Selon équipe affectée par l’administrateur ; le visiteur peut uniquement consulter en lecture."
+      }
+    ],
+    "Roles_projet": [
+      {
+        "A1": "Domaine projet",
+        "B1": "Fonction / Action",
+        "C1": "Chef de projet",
+        "D1": "Collaborateur",
+        "E1": "Observateur",
+        "F1": "Notes / conditions"
+      },
+      {
+        "A2": "Accès",
+        "B2": "Accès au projet",
+        "C2": "✅",
+        "D2": "✅",
+        "E2": "👁️",
+        "F2": "Accès conditionné à l’affectation sur le projet"
+      },
+      {
+        "A3": "Lecture",
+        "B3": "Consultation générale du projet",
+        "C3": "✅",
+        "D3": "✅",
+        "E3": "👁️",
+        "F3": "Observateur en lecture seule"
+      },
+      {
+        "A4": "Détails projet",
+        "B4": "Modifier nom / description / statuts / météo / dates",
+        "C4": "✅",
+        "D4": "❌",
+        "E4": "❌",
+        "F4": "Seul le chef de projet peut modifier les détails du projet."
+      },
+      {
+        "A5": "Équipe projet",
+        "B5": "Gérer l’équipe projet",
+        "C5": "✅",
+        "D5": "❌",
+        "E5": "❌",
+        "F5": "Ajout de ressources et groupes projet"
+      },
+      {
+        "A6": "Champs personnalisés",
+        "B6": "Éditer les valeurs des champs personnalisés",
+        "C6": "✅",
+        "D6": "✅",
+        "E6": "❌",
+        "F6": "Pour n’importe quel rôle projet, cela dépend de la configuration des champs."
+      },
+      {
+        "A7": "Champs personnalisés",
+        "B7": "Lire / consulter les champs personnalisés",
+        "C7": "✅",
+        "D7": "✅",
+        "E7": "👁️",
+        "F7": "Pour n’importe quel rôle projet, cela dépend de la configuration des champs."
+      },
+      {
+        "A8": "Équipe projet",
+        "B8": "Consulter l’équipe projet",
+        "C8": "✅",
+        "D8": "✅",
+        "E8": "👁️"
+      },
+      {
+        "A9": "Planification",
+        "B9": "Utiliser la vue Gantt",
+        "C9": "✅",
+        "D9": "✅",
+        "E9": "👁️",
+        "F9": "Collaborateur sans paramétrage spécifique."
+      },
+      {
+        "A10": "Planification",
+        "B10": "Utiliser la vue Liste / WBS",
+        "C10": "✅",
+        "D10": "✅",
+        "E10": "👁️"
+      },
+      {
+        "A11": "Planification",
+        "B11": "Utiliser la vue Tableau / Kanban",
+        "C11": "✅",
+        "D11": "✅",
+        "E11": "👁️"
+      },
+      {
+        "A12": "Planification",
+        "B12": "Créer une liste",
+        "C12": "✅",
+        "D12": "⚠️",
+        "E12": "❌",
+        "F12": "Droit collaborateur paramétrable"
+      },
+      {
+        "A13": "Planification",
+        "B13": "Éditer une liste",
+        "C13": "✅",
+        "D13": "⚠️",
+        "E13": "❌",
+        "F13": "Droit collaborateur paramétrable"
+      },
+      {
+        "A14": "Planification",
+        "B14": "Supprimer une liste",
+        "C14": "✅",
+        "D14": "⚠️",
+        "E14": "❌",
+        "F14": "Droit collaborateur paramétrable"
+      },
+      {
+        "A15": "Planification",
+        "B15": "Créer une tâche",
+        "C15": "✅",
+        "D15": "⚠️",
+        "E15": "❌",
+        "F15": "Droit collaborateur paramétrable"
+      },
+      {
+        "A16": "Planification",
+        "B16": "Éditer une tâche",
+        "C16": "✅",
+        "D16": "⚠️",
+        "E16": "❌",
+        "F16": "Droit collaborateur paramétrable"
+      },
+      {
+        "A17": "Planification",
+        "B17": "Supprimer une tâche",
+        "C17": "✅",
+        "D17": "⚠️",
+        "E17": "❌",
+        "F17": "Droit collaborateur paramétrable"
+      },
+      {
+        "A18": "Planification",
+        "B18": "Créer un jalon",
+        "C18": "✅",
+        "D18": "⚠️",
+        "E18": "❌",
+        "F18": "Droit collaborateur paramétrable"
+      },
+      {
+        "A19": "Planification",
+        "B19": "Éditer un jalon",
+        "C19": "✅",
+        "D19": "⚠️",
+        "E19": "❌",
+        "F19": "Droit collaborateur paramétrable"
+      },
+      {
+        "A20": "Planification",
+        "B20": "Supprimer un jalon",
+        "C20": "✅",
+        "D20": "⚠️",
+        "E20": "❌",
+        "F20": "Droit collaborateur paramétrable"
+      },
+      {
+        "A21": "Planification",
+        "B21": "Créer un événement",
+        "C21": "✅",
+        "D21": "⚠️",
+        "E21": "❌",
+        "F21": "Droit collaborateur paramétrable"
+      },
+      {
+        "A22": "Planification",
+        "B22": "Éditer un événement",
+        "C22": "✅",
+        "D22": "⚠️",
+        "E22": "❌",
+        "F22": "Droit collaborateur paramétrable"
+      },
+      {
+        "A23": "Planification",
+        "B23": "Supprimer un événement",
+        "C23": "✅",
+        "D23": "⚠️",
+        "E23": "❌",
+        "F23": "Droit collaborateur paramétrable"
+      },
+      {
+        "A24": "Planification",
+        "B24": "Créer / éditer / supprimer les contraintes",
+        "C24": "✅",
+        "D24": "❌",
+        "E24": "❌",
+        "F24": "Chef de projet uniquement ; non disponible pour le collaborateur."
+      },
+      {
+        "A25": "Ressources",
+        "B25": "Allouer une ressource sur une tâche",
+        "C25": "✅",
+        "D25": "❌",
+        "E25": "❌",
+        "F25": "Seul le chef de projet peut allouer quelqu’un sur une tâche."
+      },
+      {
+        "A26": "Ressources",
+        "B26": "Éditer mes temps alloués",
+        "C26": "✅",
+        "D26": "✅",
+        "E26": "❌",
+        "F26": "Le collaborateur peut éditer son propre temps alloué."
+      },
+      {
+        "A27": "Ressources",
+        "B27": "Éditer le temps alloué d'une autre ressource sur le projet",
+        "C27": "✅",
+        "D27": "👁️",
+        "E27": "👁️",
+        "F27": "Chef de projet uniquement en édition ; autres rôles en lecture seule."
+      },
+      {
+        "A28": "Ressources",
+        "B28": "Consulter la charge projet",
+        "C28": "✅",
+        "D28": "⚠️",
+        "E28": "❌",
+        "F28": "Le collaborateur peut avoir une vue restreinte à sa propre charge"
+      },
+      {
+        "A29": "Ressources",
+        "B29": "Consulter sa propre charge",
+        "C29": "✅",
+        "D29": "✅",
+        "E29": "❌"
+      },
+      {
+        "A30": "Budget",
+        "B30": "Accéder à la vue Budget",
+        "C30": "✅",
+        "D30": "❌",
+        "E30": "❌",
+        "F30": "Seul le chef de projet a accès à la vue Budget."
+      },
+      {
+        "A31": "Budget",
+        "B31": "Définir le budget alloué",
+        "C31": "✅",
+        "D31": "❌",
+        "E31": "❌"
+      },
+      {
+        "A32": "Budget",
+        "B32": "Planifier les coûts ressources",
+        "C32": "✅",
+        "D32": "❌",
+        "E32": "❌"
+      },
+      {
+        "A33": "Budget",
+        "B33": "Déclarer des dépenses",
+        "C33": "✅",
+        "D33": "❌",
+        "E33": "❌"
+      },
+      {
+        "A34": "Budget",
+        "B34": "Suivre valeur planifiée / acquise / coût réel",
+        "C34": "✅",
+        "D34": "❌",
+        "E34": "❌",
+        "F34": "Seul le chef de projet a accès au suivi de la valeur planifiée, acquise et du coût réel."
+      },
+      {
+        "A35": "Suivi temporel",
+        "B35": "Saisir du temps passé",
+        "C35": "✅",
+        "D35": "❌",
+        "E35": "❌",
+        "F35": "Seul le chef de projet accède à la timesheet projet ; lui seul peut donc voir et éditer le temps passé sur la timesheet projet."
+      },
+      {
+        "A36": "Suivi temporel",
+        "B36": "Modifier ses temps passés",
+        "C36": "✅",
+        "D36": "❌",
+        "E36": "❌",
+        "F36": "Le collaborateur ne peut pas éditer ses temps passés car il n’a pas accès au suivi temporel projet."
+      },
+      {
+        "A37": "Suivi temporel",
+        "B37": "Intégrer / valider les temps",
+        "C37": "✅",
+        "D37": "❌",
+        "E37": "❌",
+        "F37": "Pré-requis min Chef de projet dans le guide"
+      },
+      {
+        "A38": "Synthèse",
+        "B38": "Consulter la synthèse projet",
+        "C38": "✅",
+        "D38": "✅",
+        "E38": "👁️"
+      },
+      {
+        "A39": "Synthèse",
+        "B39": "Télécharger le rapport flash PDF",
+        "C39": "✅",
+        "D39": "❌",
+        "E39": "❌",
+        "F39": "Seul le chef de projet peut exporter le rapport flash PDF."
+      },
+      {
+        "A40": "Comptes rendus",
+        "B40": "Créer un compte rendu",
+        "C40": "✅",
+        "D40": "❌",
+        "E40": "❌",
+        "F40": "Le compte rendu est créé au niveau projet"
+      },
+      {
+        "A41": "Comptes rendus",
+        "B41": "Consulter les comptes rendus",
+        "C41": "✅",
+        "D41": "✅",
+        "E41": "👁️"
+      },
+      {
+        "A42": "Documents",
+        "B42": "Télécharger un document",
+        "C42": "✅",
+        "D42": "✅",
+        "E42": "✅",
+        "F42": "L’observateur peut télécharger un document."
+      },
+      {
+        "A43": "Documents",
+        "B43": "Créer un dossier documentaire",
+        "C43": "✅",
+        "D43": "✅",
+        "E43": "❌"
+      },
+      {
+        "A44": "Documents",
+        "B44": "Consulter les documents",
+        "C44": "✅",
+        "D44": "✅",
+        "E44": "✅"
+      },
+      {
+        "A45": "Discussions",
+        "B45": "Commenter / participer aux discussions",
+        "C45": "✅",
+        "D45": "✅",
+        "E45": "✅"
+      },
+      {
+        "A46": "Discussions",
+        "B46": "Consulter les discussions",
+        "C46": "✅",
+        "D46": "✅",
+        "E46": "✅"
+      },
+      {
+        "A47": "Liens externes",
+        "B47": "Ajouter un lien externe",
+        "C47": "✅",
+        "D47": "❌",
+        "E47": "❌",
+        "F47": "Seul le chef de projet peut ajouter un lien externe."
+      },
+      {
+        "A48": "Liens externes",
+        "B48": "Consulter les liens externes",
+        "C48": "✅",
+        "D48": "✅",
+        "E48": "👁️"
+      },
+      {
+        "A49": "Suivi temporel / Suivi temporel",
+        "B49": "Consultation et édition de la timesheet de projet",
+        "C49": "✅",
+        "D49": "❌",
+        "E49": "❌",
+        "F49": "Chef de projet uniquement."
+      }
+    ]
+  }
+}

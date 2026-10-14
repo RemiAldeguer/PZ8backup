@@ -1,0 +1,167 @@
+@import './legacy-theme.css';
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/InterVariable.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+:root {
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--canvas);
+  color-scheme: light;
+  --canvas: #f4f6fa;
+  --surface: #ffffff;
+  --surface-subtle: #f6f8fb;
+  --surface-muted: #e9eef5;
+  --surface-strong: #26343d;
+  --neutral-fill: #647484;
+  --ink: #1c2c3d;
+  --muted: #526477;
+  --border: #e5ebf3;
+  --separator: color-mix(in srgb, var(--ink) 7%, transparent);
+  --card-shadow: 0 3px 18px #14253808, 0 1px 3px #14253805;
+  --weekend-surface: #fff5eb;
+  --weekend-ink: #8c5c3e;
+  --sidebar: #233036;
+  --orange: #ba430f;
+  --accent: #ba430f;
+  --orange-dark: #99370e;
+  --orange-soft: #fff1e7;
+  --green: #14734e;
+  --blue: #2367aa;
+  --red: #c23740;
+  --purple: #784db2;
+  --action-bg: #ba430f;
+  --action-text: #ffffff;
+  --focus: #2367aa;
+  --theme-shadow: #142538;
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --canvas: #0f1724;
+  --surface: #172131;
+  --surface-subtle: #1c293b;
+  --surface-muted: #27374d;
+  --surface-strong: #0c1420;
+  --neutral-fill: #586b82;
+  --ink: #e5edf6;
+  --muted: #afbed0;
+  --border: #2d3b50;
+  --card-shadow: 0 4px 20px #00000020;
+  --weekend-surface: #302731;
+  --weekend-ink: #e4bfa3;
+  --sidebar: #111b28;
+  --orange: #ffb384;
+  --accent: #ffb384;
+  --orange-dark: #ffc5a2;
+  --orange-soft: #392a24;
+  --green: #7dd9ad;
+  --blue: #8abafa;
+  --red: #ff9ba3;
+  --purple: #c8adf3;
+  --action-bg: #ffb384;
+  --action-text: #172131;
+  --focus: #8abafa;
+  --theme-shadow: #000000;
+}
+body { background: var(--canvas); color: var(--ink); }
+h1, h2, h3, h4 { letter-spacing: -.025em; }
+input, select, textarea { color-scheme: inherit; }
+input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
+button:disabled { opacity: .65; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+::selection { background: var(--orange-soft); color: var(--ink); }
+.button-primary, .auth-submit {
+  background: var(--action-bg); color: var(--action-text); border-color: var(--action-bg);
+}
+.button-primary:hover, .auth-submit:hover:not(:disabled) {
+  background: var(--orange-dark); color: var(--action-text); border-color: var(--orange-dark);
+}
+.prc-dialog .modal-footer .button-primary { background: var(--action-bg); border-color: var(--action-bg); color: var(--action-text); }
+.button, .form-input, .form-select, .form-label, .auth-field > input, .auth-password-input > input { font-size: 13px; }
+.card-header h2, .card-heading h2 { font-size: 14px; }
+.topbar-date, .breadcrumb { color: var(--muted); }
+.icon-button { color: var(--muted); }
+.sidebar.pz-sidebar { background: var(--sidebar); }
+.pz-sidebar-recents, .pz-sidebar-is-collapsed .pz-sidebar-compact-recents {
+  color: var(--ink); background: var(--surface); border-color: var(--border);
+}
+.pz-sidebar-recents select { color: var(--ink); }
+.pz-sidebar .pz-sidebar-nav-item.active, #pz-sidebar-customization > button.active {
+  background: var(--action-bg); color: var(--action-text);
+}
+.pz-sidebar-nav-item.active > svg:first-child { color: inherit; }
+.theme-control {
+  display: inline-flex; align-items: center; gap: 7px; flex-shrink: 0; min-height: 36px;
+  padding: 0 9px; border: 1px solid var(--border); border-radius: 7px;
+  background: var(--surface); color: var(--ink); font-size: 12px;
+}
+.theme-control select {
+  width: 112px; padding: 6px 1px; min-height: 34px;
+  border: 0; border-radius: 3px; color: inherit; background: transparent; cursor: pointer; font-size: 12px;
+}
+.theme-control:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; }
+.theme-control select:focus-visible { outline: none; }
+.theme-control option { color: var(--ink); background: var(--surface); }
+.theme-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.theme-auth-control { align-self: flex-end; margin: 0 0 22px; }
+.auth-intro .auth-eyebrow, .auth-intro-footer { color: #c4d1df; }
+:root[data-theme='dark'] .auth-lock { color: var(--orange); background: var(--orange-soft); }
+:root[data-theme] .pzg-gridline { border-color: var(--separator); }
+:root[data-theme='dark'] .pzg-link-line { stroke: #a8bad1; }
+:root[data-theme='dark'] .modal-overlay { background: #050c17b8; }
+/* Surfaces separate cards; a faint shadow replaces repeated grey frames. */
+:root[data-theme] :is(.card, .kpi-card, .stat-card, .metric-card, .report-card,
+  .template-card, .project-card, .zone-card, .profile-card, .document-row,
+  .board-card, .kanban-card, .pzs-card, .psr-card, .pd-card, .pcv-card,
+  .pc-template-card, .prc-choice-card, .cp-domain, .cp-skills article,
+  .cp-baselines, .cp-onboarding, .cp-project-panel) {
+  border-color: transparent;
+  box-shadow: var(--card-shadow);
+}
+:root[data-theme] :is(.calendar, .gantt-wrapper, .pzg-scroll, .time-history,
+  .context-toolbar, .modal) { border-color: transparent; }
+/* A shared warm tint identifies non-working days without dark grey blocks. */
+:root[data-theme] :is(.calendar-day.weekend, .proj-calendar-day.weekend,
+  .timesheet-table .weekend, .pd-weekend, .pd-legend-weekend,
+  .time-matrix thead th.time-weekend, .time-matrix tbody td.time-weekend:not(.time-day-integrated)) {
+  background: var(--weekend-surface);
+}
+:root[data-theme] :is(.calendar-day.weekend.outside-month, .calendar-day.weekend.other-month) {
+  background: color-mix(in srgb, var(--weekend-surface) 55%, var(--surface));
+}
+:root[data-theme] :is(.calendar-day.weekend:not(.is-today):not(.today) .calendar-day-heading > span,
+  .calendar-day.weekend:not(.is-today):not(.today) .calendar-day-number,
+  .pd-weekend:not(.pd-current-day) .pd-day-select,
+  .pd-weekend:not(.pd-current-day) .pd-day-select strong,
+  .time-matrix thead th.time-weekend:not(.time-current-day)) { color: var(--weekend-ink); }
+/* Today's marker keeps priority when it falls on a weekend. */
+:root[data-theme] :is(.calendar-day.weekend.is-today, .calendar-day.weekend.today,
+  .proj-calendar-day.weekend.today, .pd-weekend.pd-current-day,
+  .time-matrix thead th.time-weekend.time-current-day,
+  .time-matrix tbody td.time-weekend.time-current-day:not(.time-day-integrated)) {
+  background: light-dark(#fff0d6, #403221);
+}
+:root[data-theme] .time-matrix :is(th, td).time-weekend.time-day-integrated {
+  background: light-dark(#e9f6ec, #1d382a);
+  color: var(--green);
+}
+@media (max-width: 800px) {
+  .topbar-actions { gap: 8px; }
+  .theme-control { padding: 0 6px; gap: 4px; }
+  .theme-control select { width: 89px; font-size: 11px; }
+  .theme-auth-control { margin-bottom: 16px; }
+}
+@media (max-width: 700px) {
+  .auth-field > input, .auth-password-input > input, input.form-input, select.form-input, textarea.form-input { font-size: 16px; }
+}
+/* Exported reports keep their paper palette in either screen theme. */
+@media print {
+  :root[data-theme] { color-scheme: light !important; --canvas: #fff; --surface: #fff; --surface-subtle: #f6f8fb; --surface-muted: #e9eef5; --surface-strong: #26343d; --ink: #1c2c3d; --muted: #526477; --border: #e5ebf3; --weekend-surface: #fff5eb; --weekend-ink: #8c5c3e; --card-shadow: none; --orange: #ba430f; --action-bg: #ba430f; --action-text: #fff; }
+  .theme-control { display: none; }
+}

@@ -1,0 +1,13 @@
+import { useRef, useState, type FormEvent } from 'react';
+import { Modal } from './Dialogs';
+import { RESOURCE_ROLE_LABELS, type AppData, type Mutation, type Resource, type WeeklyCapacity } from '../shared/types';
+import { normalizeResource } from '../shared/resources';
+
+const days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+export function ResourceProfileDialog({ resource, data, mutate, notify, onClose }: { resource: Resource | null; data: AppData; mutate: Mutation; notify: (message: string) => void; onClose: () => void }) {
+  const own = resource?.id === data.currentUser.id; const normalized = resource ? normalizeResource(resource) : undefined;
+  const [capacity, setCapacity] = useState<WeeklyCapacity>(normalized?.weeklyCapacityHours ?? [0, 0, 0, 0, 0, 0, 0]);
+  const [busy, setBusy] = useState(false); const [error, setError] = useState(''); const pending = useRef(false);
+  async function save(event: FormEvent) { event.preventDefault(); if (!own || !resource || pending.current) return; pending.current = true; setBusy(true); setError(''); try { await mutate('resources', 'PATCH', { weeklyCapacityHours: capacity }, resource.id); notify('Votre capacité hebdomadaire a été enregistrée.'); onClose(); } catch (error) { setError(error instanceof Error ? error.message : 'Enregistrement impossible.'); } finally { pending.current = false; setBusy(false); } }
+  return <Modal title={own ? 'Ma capacité' : 'Fiche ressource'} onClose={() => { if (!busy) onClose(); }}><form onSubmit={save}><div className="modal-body"><h3>{resource?.name ?? 'Accès réservé'}</h3><p>{resource?.jobTitle}</p>{normalized && <p>Rôle global : {RESOURCE_ROLE_LABELS[normalized.role]}</p>}<p className="muted">{own ? 'Définissez votre capacité de travail pour chaque jour de la semaine.' : 'Cette fiche est disponible en consultation.'}</p><fieldset className="roles-capacity" disabled={!own || busy}>{days.map((day, index) => <label className="form-field" key={day}>{day} (heures)<input className="form-input" type="number" min={0} max={168} step={.25} value={capacity[index]} onChange={event => setCapacity(previous => previous.map((hours, position) => position === index ? Number(event.target.value) : hours) as WeeklyCapacity)} /></label>)}</fieldset>{error && <p className="form-error" role="alert">{error}</p>}</div><footer className="modal-footer"><button className="button button-secondary" type="button" disabled={busy} onClick={onClose}>Fermer</button>{own && <button className="button button-primary" disabled={busy}>{busy ? 'Enregistrement…' : 'Enregistrer ma capacité'}</button>}</footer></form></Modal>;
+}

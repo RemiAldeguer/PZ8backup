@@ -1,0 +1,51 @@
+.proj-task-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.proj-task-name-cell .proj-task-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.proj-priority-open {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+
+.proj-priority-open > svg:last-child {
+  flex-shrink: 0;
+  width: 13px;
+  color: #bdc9d0;
+}
+
+@media (max-width: 1250px) {
+  .proj-priority-open {
+    gap: 8px;
+  }
+
+  .proj-priority-open > .status-badge {
+    display: none;
+  }
+}
+
+@media (max-width: 1050px) {
+  .proj-priority-open > .status-badge {
+    display: inline-flex;
+  }
+}
+
+@media (max-width: 560px) {
+  .proj-priority-open > .status-badge,
+  .proj-priority-open > .avatar {
+    display: none;
+  }
+}

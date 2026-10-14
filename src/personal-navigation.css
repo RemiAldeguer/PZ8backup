@@ -1,0 +1,9 @@
+.personal-navigation { display: flex; flex-wrap: wrap; margin: 0 0 25px; padding: 0 5px; border-bottom: 1px solid #e7e9eb; background: #fff; min-width: 0; max-width: 100%; }
+.personal-navigation a { display: inline-flex; align-items: center; gap: 11px; padding: 20px 18px; color: #5e6a70; text-decoration: none; border-right: 1px solid #f1f2f3; font-size: 14px; }
+.personal-navigation a[aria-current='page'] { color: #e45513; }
+.personal-navigation a:hover { background: #fff7f2; }
+.personal-navigation a:focus-visible { outline: 2px solid #2675a9; outline-offset: -3px; }
+@media (max-width: 760px) {
+  .personal-navigation { flex-wrap: nowrap; overflow-x: auto; padding: 0; margin-bottom: 20px; }
+  .personal-navigation a { flex-shrink: 0; padding: 14px 11px; font-size: 12px; gap: 7px; white-space: nowrap; }
+}

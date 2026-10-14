@@ -1,0 +1,97 @@
+[
+  {
+    "path": "/",
+    "file": "public/site/index.html",
+    "title": "Le bon cap. Ensemble."
+  },
+  {
+    "path": "/site/fonctionnalites/planification/",
+    "file": "public/site/fonctionnalites/planification/index.html",
+    "title": "Planification & Gantt"
+  },
+  {
+    "path": "/site/fonctionnalites/ressources/",
+    "file": "public/site/fonctionnalites/ressources/index.html",
+    "title": "Ressources & capacité"
+  },
+  {
+    "path": "/site/fonctionnalites/budget/",
+    "file": "public/site/fonctionnalites/budget/index.html",
+    "title": "Budget, dépenses & recettes"
+  },
+  {
+    "path": "/site/fonctionnalites/temps/",
+    "file": "public/site/fonctionnalites/temps/index.html",
+    "title": "Suivi temporel"
+  },
+  {
+    "path": "/site/fonctionnalites/collaboration/",
+    "file": "public/site/fonctionnalites/collaboration/index.html",
+    "title": "Discussions & documents"
+  },
+  {
+    "path": "/site/fonctionnalites/reporting/",
+    "file": "public/site/fonctionnalites/reporting/index.html",
+    "title": "Synthèse & reporting"
+  },
+  {
+    "path": "/site/solutions/chefs-de-projet/",
+    "file": "public/site/solutions/chefs-de-projet/index.html",
+    "title": "Chefs de projet & PMO"
+  },
+  {
+    "path": "/site/solutions/managers/",
+    "file": "public/site/solutions/managers/index.html",
+    "title": "Managers & responsables de ressources"
+  },
+  {
+    "path": "/site/solutions/equipes/",
+    "file": "public/site/solutions/equipes/index.html",
+    "title": "Équipes opérationnelles"
+  },
+  {
+    "path": "/site/guides/structurer-un-projet/",
+    "file": "public/site/guides/structurer-un-projet/index.html",
+    "title": "Structurer un projet"
+  },
+  {
+    "path": "/site/guides/comprendre-capacite-charge/",
+    "file": "public/site/guides/comprendre-capacite-charge/index.html",
+    "title": "Capacité, charge et occupation"
+  },
+  {
+    "path": "/site/guides/preparer-revue-projet/",
+    "file": "public/site/guides/preparer-revue-projet/index.html",
+    "title": "Préparer une revue de projet"
+  },
+  {
+    "path": "/site/fonctionnalites/",
+    "file": "public/site/fonctionnalites/index.html",
+    "title": "Toutes les fonctionnalités"
+  },
+  {
+    "path": "/site/solutions/",
+    "file": "public/site/solutions/index.html",
+    "title": "Usages et équipes"
+  },
+  {
+    "path": "/site/guides/",
+    "file": "public/site/guides/index.html",
+    "title": "Guides pratiques"
+  },
+  {
+    "path": "/site/faq/",
+    "file": "public/site/faq/index.html",
+    "title": "Questions fréquentes"
+  },
+  {
+    "path": "/site/pourquoi-planzone/",
+    "file": "public/site/pourquoi-planzone/index.html",
+    "title": "Pourquoi Planzone 8 ?"
+  },
+  {
+    "path": "/site/decouvrir/",
+    "file": "public/site/decouvrir/index.html",
+    "title": "Découvrir l’application"
+  }
+]
