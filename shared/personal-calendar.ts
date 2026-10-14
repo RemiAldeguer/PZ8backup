@@ -11,7 +11,7 @@ export type PersonalCalendarItem =
 
 /** A dependency is blocked only while its actual predecessor remains unfinished. */
 export function personalTaskDependency(task: Task, tasks: Task[]): Task | undefined {
-  if (!task.dependsOnId || task.dependencyConstraint || task.status === 'done') return undefined;
+  if (!task.dependsOnId || task.status === 'done') return undefined;
   return tasks.find(parent => parent.id === task.dependsOnId && parent.status !== 'done');
 }
 

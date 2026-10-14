@@ -8,14 +8,12 @@ export interface Records {
   projectTemplates: ProjectTemplate; customFieldDefinitions: CustomFieldDefinition;
   reportTemplates: ReportTemplate; projectStatusDefinitions: ProjectStatusDefinition; strategicAxes: StrategicAxis;
   projectReports: ProjectReport; projectDocuments: ProjectDocument; documentFolders: DocumentFolder;
-  capacityPlans: import('../shared/capaplan.ts').CapacityPlan;
-  planzonePreferences: import('../shared/planzone-preferences.ts').PlanzonePreferences;
   organizationUnits: OrganizationUnit; taskLists: ProjectTaskList; permissionPolicies: import('../shared/permissions.ts').PermissionPolicyRecord;
 }
 export type Table = keyof Records;
 export type WorkspaceSnapshot = { [K in Table]: Records[K][] };
 /** Older saved workspaces predate calendar records and revenues; their original tables remain mandatory. */
-export type NewerTable = 'calendarEvents' | 'unavailabilities' | 'revenues' | 'projectTemplates' | 'customFieldDefinitions' | 'reportTemplates' | 'projectStatusDefinitions' | 'strategicAxes' | 'projectReports' | 'projectDocuments' | 'documentFolders' | 'taskLists' | 'permissionPolicies' | 'organizationUnits' | 'capacityPlans' | 'planzonePreferences';
+export type NewerTable = 'calendarEvents' | 'unavailabilities' | 'revenues' | 'projectTemplates' | 'customFieldDefinitions' | 'reportTemplates' | 'projectStatusDefinitions' | 'strategicAxes' | 'projectReports' | 'projectDocuments' | 'documentFolders' | 'taskLists' | 'permissionPolicies' | 'organizationUnits';
 export type CompatibleWorkspaceSnapshot = Omit<WorkspaceSnapshot, NewerTable> & Partial<Pick<WorkspaceSnapshot, NewerTable>>;
 
 /** Synchronous unit of work; persistence adapters commit after its transaction succeeds. */
@@ -28,5 +26,5 @@ export interface StoreLike {
 }
 
 export const CUSTOMIZATION_TABLES = ['projectTemplates', 'customFieldDefinitions', 'reportTemplates', 'projectStatusDefinitions', 'strategicAxes'] as const;
-export const NEWER_TABLES: NewerTable[] = ['calendarEvents', 'unavailabilities', 'revenues', ...CUSTOMIZATION_TABLES, 'projectReports', 'projectDocuments', 'documentFolders', 'taskLists', 'permissionPolicies', 'organizationUnits', 'capacityPlans', 'planzonePreferences'];
-export const TABLES: Table[] = ['zones', 'projects', 'tasks', 'resources', 'profiles', 'timeEntries', 'comments', 'expenses', 'calendarEvents', 'unavailabilities', 'revenues', ...CUSTOMIZATION_TABLES, 'projectReports', 'projectDocuments', 'documentFolders', 'taskLists', 'permissionPolicies', 'organizationUnits', 'capacityPlans', 'planzonePreferences'];
+export const NEWER_TABLES: NewerTable[] = ['calendarEvents', 'unavailabilities', 'revenues', ...CUSTOMIZATION_TABLES, 'projectReports', 'projectDocuments', 'documentFolders', 'taskLists', 'permissionPolicies', 'organizationUnits'];
+export const TABLES: Table[] = ['zones', 'projects', 'tasks', 'resources', 'profiles', 'timeEntries', 'comments', 'expenses', 'calendarEvents', 'unavailabilities', 'revenues', ...CUSTOMIZATION_TABLES, 'projectReports', 'projectDocuments', 'documentFolders', 'taskLists', 'permissionPolicies', 'organizationUnits'];

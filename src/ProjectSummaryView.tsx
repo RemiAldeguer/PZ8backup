@@ -1,4 +1,3 @@
-import { projectTimeEntries } from '../shared/planzone-preferences';
 import { useState, type ReactNode } from 'react';
 import { CheckCircle2, ChevronRight, Cloud, CloudLightning, CloudRain, CloudSun, Coins, FileDown, FilePlus, FileText, Files, Flag, Folder, Frown, Meh, MessageSquare, Pencil, Plus, Smile, Sun, Target, Users } from 'lucide-react';
 import { STATUS_LABELS, type Task, type ViewProps } from '../shared/types';
@@ -11,7 +10,6 @@ import { TaskCheck } from './TaskCheck';
 import { CustomRichTextPreview } from './CustomFieldInputs';
 import './project-summary-actions.css';
 import './project-summary.css';
-import { ProjectCapacityPanel } from './CapacityPlanView';
 
 const dateLabel = (date: string | null) => date && isCivilDate(date) ? date.split('-').reverse().join('/') : 'Non planifié';
 const percent = (value: number) => `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(value)} %`;
@@ -38,7 +36,6 @@ function SummaryTasks({ props, overdue }: { props: ViewProps; overdue: boolean }
 }
 
 function MilestoneTimeline({ milestones, props }: { milestones: Task[]; props: ViewProps }) {
-  if (!props.project.startDate || !props.project.endDate) return <div className="pzs-timeline pzs-empty"><p>Dates du projet à renseigner</p></div>;
   const start = stamp(props.project.startDate); const end = stamp(props.project.endDate); const today = stamp(props.data.today);
   if (start === null || end === null || end < start || today === null) return <p className="pzs-period">Dates du projet à renseigner.</p>;
   const position = (value: number) => Math.min(100, Math.max(0, (value - start) / Math.max(86_400_000, end - start) * 100));
@@ -53,7 +50,7 @@ export function ProjectSummaryView(props: ViewProps) {
   const [expandedAxes, setExpandedAxes] = useState(false);
   const tasks = data.tasks.filter(task => task.projectId === project.id);
   const milestones = tasks.filter(task => task.kind === 'milestone').sort((a, b) => (a.endDate ?? '9999').localeCompare(b.endDate ?? '9999'));
-  const metrics = taskMetrics(tasks, projectTimeEntries(data), data.today); const activity = projectZoneMetrics(data, [project]);
+  const metrics = taskMetrics(tasks, data.timeEntries, data.today); const activity = projectZoneMetrics(data, [project]);
   const axes = (data.strategicAxes ?? []).filter(axis => project.strategicRatings?.[axis.id] !== undefined);
   const score = strategicScore(project, data.strategicAxes ?? []);
   const reports = (data.projectReports ?? []).filter(report => report.projectId === project.id).sort((a, b) => b.reportDate.localeCompare(a.reportDate) || b.createdAt.localeCompare(a.createdAt));
@@ -67,11 +64,10 @@ export function ProjectSummaryView(props: ViewProps) {
   return <div className="pzs-summary-container proj-summary">
     <div className="pzs-summary"><h1 className="sr-only">Synthèse du projet {project.name}</h1>
       <div className="pzs-command-bar"><section className="pzs-strategy ci-project-strategy" aria-label="Stratégie du projet"><Target size={23} aria-hidden="true" /><span className="pzs-score-label">Score stratégique :</span><strong className={`ci-score-pill${score < 0 ? ' ci-score-negative' : ''}`}>{axes.length ? score : '—'}</strong><div className="pzs-axis-tags">{axes.length ? (expandedAxes ? axes : axes.slice(0, 3)).map(axis => { const rating = project.strategicRatings![axis.id]; return <span key={axis.id} className="pzs-axis-tag ci-axis-tag" style={{ backgroundColor: axis.color, color: axisTextColor(axis.color) }} title={`${axis.name} · ${axis.scale[rating + 2]} · Poids ${axis.weight}`}>{axis.code}</span>; }) : <span className="pzs-strategy-empty">Aucune évaluation</span>}{axes.length > 3 && <button type="button" className="pzs-more-axes" aria-label={expandedAxes ? 'Réduire les axes stratégiques' : 'Afficher les autres axes stratégiques'} aria-expanded={expandedAxes} onClick={() => setExpandedAxes(value => !value)}>{expandedAxes ? 'Réduire' : `+ ${axes.length - 3}`}</button>}</div><button type="button" className="pzs-icon-action" aria-label="Modifier l’évaluation stratégique" title="Modifier l’évaluation stratégique" disabled={!props.editProject} onClick={() => props.editProject?.(project)}><Pencil size={17} /></button></section>
-        <div className="pzs-project-state"><button type="button" className="pzs-weather" aria-label={`Modifier la météo du projet : ${project.weather || 'non renseignée'} sur 5`} title="Météo déclarée du projet" disabled={!props.editProject} onClick={() => props.editProject?.(project)}>{project.weather > 0 && <WeatherIcon size={27} />}<span>{project.weather > 0 ? `${project.weather}/5` : '—'}</span></button><button type="button" className={`pzs-project-status pzs-project-${project.status}`} aria-label="Modifier le statut du projet" disabled={!props.editProject} onClick={() => props.editProject?.(project)}><Folder size={16} />{projectStatusLabel(project, data)}<ChevronRight size={16} /></button></div>
+        <div className="pzs-project-state"><button type="button" className="pzs-weather" aria-label={`Modifier la météo du projet : ${project.weather} sur 5`} title="Météo déclarée du projet" disabled={!props.editProject} onClick={() => props.editProject?.(project)}><WeatherIcon size={27} /><span>{project.weather}/5</span></button><button type="button" className={`pzs-project-status pzs-project-${project.status}`} aria-label="Modifier le statut du projet" disabled={!props.editProject} onClick={() => props.editProject?.(project)}><Folder size={16} />{projectStatusLabel(project, data)}<ChevronRight size={16} /></button></div>
         <div className="psr-actions" aria-label="Rapports du projet"><button type="button" className="psr-action psr-flash" onClick={props.openFlashReport} disabled={!props.openFlashReport}><FileDown size={24} />Rapport flash</button><button type="button" className="psr-action psr-create" aria-label="Créer un compte rendu" onClick={props.createReport} disabled={!props.createReport || locked}><FilePlus size={24} />Créer un compte rendu</button></div>
       </div>
       {locked && <p className="pzs-locked-notice">Ce projet est {projectStatusLabel(project, data).toLocaleLowerCase('fr')}. Les tâches et comptes rendus restent consultables.</p>}
-      <ProjectCapacityPanel data={data} project={project} />
       <div className="pzs-top-grid">
         <Card title="Derniers comptes rendus" className="psr-latest pzs-reports-card"><div className="pzs-report-scroll">{reports.length ? reports.slice(0, 5).map(report => <article className="psr-report-row" key={report.id}><FileText className="psr-report-icon" size={19} aria-hidden="true" /><div className="psr-report-meta"><button type="button" onClick={() => props.openReport?.(report)} disabled={!props.openReport}>{report.title}</button><p>par {report.authorName} · {dateLabel(report.reportDate)}</p></div><div className="psr-indicators">{report.indicators.map(indicator => { const Icon = indicator.rating <= 2 ? Frown : indicator.rating === 3 ? Meh : Smile; return <span key={indicator.id} className={`psr-indicator psr-rating-${indicator.rating}`} aria-label={`${indicator.label} : ${indicator.rating} sur 5`} title={`${indicator.label} : ${indicator.rating} / 5`}><Icon size={27} aria-hidden="true" /><span>{indicator.label}</span></span>; })}</div></article>) : <p className="psr-empty">Aucun compte rendu enregistré pour ce projet.</p>}</div></Card>
         <Card title="Description" className="pzs-description-card" action={<button type="button" className="pzs-icon-action" aria-label="Modifier la description du projet" disabled={!props.editProject} onClick={() => props.editProject?.(project)}><Pencil size={17} /></button>}><div className="pzs-description-scroll" tabIndex={0} role="region" aria-label="Description du projet">{project.descriptionFormat === 'markdown' ? <CustomRichTextPreview value={project.description} /> : <p>{project.description || 'Aucune description pour ce projet.'}</p>}</div></Card>

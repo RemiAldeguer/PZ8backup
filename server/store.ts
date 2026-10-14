@@ -65,8 +65,6 @@ export class Store implements StoreLike {
       CREATE TABLE IF NOT EXISTS reportTemplates (id TEXT PRIMARY KEY, data TEXT NOT NULL CHECK(json_valid(data)));
       CREATE TABLE IF NOT EXISTS projectStatusDefinitions (id TEXT PRIMARY KEY, data TEXT NOT NULL CHECK(json_valid(data)));
       CREATE TABLE IF NOT EXISTS permissionPolicies (id TEXT PRIMARY KEY, data TEXT NOT NULL CHECK(json_valid(data)));
-      CREATE TABLE IF NOT EXISTS capacityPlans (id TEXT PRIMARY KEY, data TEXT NOT NULL CHECK(json_valid(data)));
-      CREATE TABLE IF NOT EXISTS planzonePreferences (id TEXT PRIMARY KEY CHECK(id = 'planzone-preferences'), data TEXT NOT NULL CHECK(json_valid(data)));
       CREATE TABLE IF NOT EXISTS strategicAxes (id TEXT PRIMARY KEY, data TEXT NOT NULL CHECK(json_valid(data)));
       CREATE TABLE IF NOT EXISTS projectReports (
         id TEXT PRIMARY KEY, data TEXT NOT NULL CHECK(json_valid(data)),

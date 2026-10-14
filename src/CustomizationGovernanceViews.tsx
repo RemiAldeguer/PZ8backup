@@ -6,7 +6,7 @@ import type { ProjectStatusDefinition, StrategicAxis } from '../shared/customiza
 import { Modal } from './Dialogs';
 import './customization-governance.css';
 
-interface GovernanceProps { readOnly?: boolean; data: AppData; mutate: Mutation; notify: (message: string) => void; }
+interface GovernanceProps { data: AppData; mutate: Mutation; notify: (message: string) => void; }
 
 const nativeStatuses: { status: ProjectStatus; description: string; color: string }[] = [
   { status: 'requested', description: 'Le projet nécessite une validation avant de pouvoir passer à l’état ouvert.', color: '#c8b717' },
@@ -28,7 +28,7 @@ function NativeStatusRow({ status, description, color }: typeof nativeStatuses[n
   return <div className="pg-status-row pg-native-status"><Folder size={18} color={color} aria-hidden="true" /><strong>{PROJECT_STATUS_LABELS[status]}</strong><p>{description}</p><span className="pg-native-label">Statut natif</span></div>;
 }
 
-export function ProjectStatusesView({ data, mutate, notify, readOnly = false }: GovernanceProps) {
+export function ProjectStatusesView({ data, mutate, notify }: GovernanceProps) {
   const definitions = data.projectStatusDefinitions ?? [];
   const [editor, setEditor] = useState<ProjectStatusDefinition | null | undefined>();
   const [error, setError] = useState('');
@@ -50,14 +50,14 @@ export function ProjectStatusesView({ data, mutate, notify, readOnly = false }: 
         <Folder size={18} color={definition.color} aria-hidden="true" />
         <strong>{definition.name}</strong><p>{definition.description}</p>
         <span className="pg-behavior">{PROJECT_STATUS_LABELS[definition.baseStatus]}</span>
-        <div className="pg-row-actions"><button type="button" className="pg-action" disabled={readOnly || deletingId !== null} onClick={() => { setError(''); setEditor(definition); }} aria-label={`Modifier le statut ${definition.name}`}><Pencil size={16} /></button>
-          <button type="button" className="pg-action pg-delete" disabled={readOnly || deletingId !== null} onClick={() => void remove(definition)} aria-label={`Supprimer le statut ${definition.name}`}><Trash2 size={16} /></button></div>
+        <div className="pg-row-actions"><button type="button" className="pg-action" disabled={deletingId !== null} onClick={() => { setError(''); setEditor(definition); }} aria-label={`Modifier le statut ${definition.name}`}><Pencil size={16} /></button>
+          <button type="button" className="pg-action pg-delete" disabled={deletingId !== null} onClick={() => void remove(definition)} aria-label={`Supprimer le statut ${definition.name}`}><Trash2 size={16} /></button></div>
       </div>)}
       {!definitions.length && <p className="pg-empty-note">Aucun statut personnalisé. Les statuts natifs sont disponibles dans tous vos projets.</p>}
-      <button className="pg-new-status" type="button" disabled={readOnly || deletingId !== null} onClick={() => { setError(''); setEditor(null); }}><Plus size={18} />Nouveau statut</button>
+      <button className="pg-new-status" type="button" disabled={deletingId !== null} onClick={() => { setError(''); setEditor(null); }}><Plus size={18} />Nouveau statut</button>
       <div className="pg-closed-status"><NativeStatusRow {...nativeStatuses[3]} /></div>
     </div>
-    {!readOnly && editor !== undefined && <StatusDialog key={editor?.id ?? 'new'} definition={editor} mutate={mutate} notify={notify} onClose={() => setEditor(undefined)} />}
+    {editor !== undefined && <StatusDialog key={editor?.id ?? 'new'} definition={editor} mutate={mutate} notify={notify} onClose={() => setEditor(undefined)} />}
   </section>;
 }
 
@@ -86,7 +86,7 @@ function StatusDialog({ definition, mutate, notify, onClose }: { definition: Pro
   </Modal></div>;
 }
 
-export function StrategicAxesView({ data, mutate, notify, readOnly = false }: GovernanceProps) {
+export function StrategicAxesView({ data, mutate, notify }: GovernanceProps) {
   const axes = data.strategicAxes ?? [];
   const [editor, setEditor] = useState<StrategicAxis | null | undefined>();
   const [error, setError] = useState(''); const [deletingId, setDeletingId] = useState<string | null>(null); const deleting = useRef(false);
@@ -98,16 +98,16 @@ export function StrategicAxesView({ data, mutate, notify, readOnly = false }: Go
     finally { deleting.current = false; setDeletingId(null); }
   };
   return <section className="sa-view" aria-label="Axes stratégiques">
-    <div className="sa-toolbar"><button type="button" className="button button-primary" disabled={readOnly || deletingId !== null} onClick={() => { setError(''); setEditor(null); }}><Plus size={16} />Axe stratégique</button></div>
+    <div className="sa-toolbar"><button type="button" className="button button-primary" disabled={deletingId !== null} onClick={() => { setError(''); setEditor(null); }}><Plus size={16} />Axe stratégique</button></div>
     {error && <p className="form-error" role="alert">{error}</p>}
     {axes.length ? <div className="sa-table-scroll" role="region" aria-label="Liste des axes stratégiques" tabIndex={0}><table className="sa-table">
       <colgroup><col className="sa-code-column" /><col className="sa-name-column" />{scaleValues.map(value => <col key={value} />)}<col className="sa-weight-column" /><col className="sa-actions-column" /></colgroup>
       <thead><tr className="sa-scale-title"><th colSpan={2} /><th colSpan={5} scope="colgroup">Possibilités de cohérence du projet avec la stratégie</th><th colSpan={2} /></tr>
         <tr><th scope="col">Code</th><th scope="col">Axe stratégique</th>{scaleValues.map(value => <th key={value} scope="col">{value}</th>)}<th scope="col">Poids</th><th scope="col"><span className="sr-only">Actions</span></th></tr></thead>
       <tbody>{axes.map(axis => <tr key={axis.id}><td><span className="sa-code-badge" style={{ backgroundColor: axis.color, color: textColor(axis.color) }}>{axis.code}</span></td><td>{axis.name}</td>{axis.scale.map((label, index) => <td key={index}>{label}</td>)}<td className="sa-weight">{axis.weight}</td>
-        <td><div className="sa-row-actions"><button type="button" className="pg-action" disabled={readOnly || deletingId !== null} onClick={() => { setError(''); setEditor(axis); }} aria-label={`Modifier l’axe ${axis.code}`}><Pencil size={16} /></button><button type="button" className="pg-action pg-delete" disabled={readOnly || deletingId !== null} onClick={() => void remove(axis)} aria-label={`Supprimer l’axe ${axis.code}`}><Trash2 size={16} /></button></div></td></tr>)}</tbody>
-    </table></div> : <div className="sa-empty"><Target size={36} /><h2>Aucun axe stratégique</h2><p>Ajoutez vos axes et leur poids, puis évaluez leur cohérence dans les paramètres de chaque projet.</p><button className="button button-secondary" type="button" disabled={readOnly} onClick={() => setEditor(null)}><Plus size={16} />Créer un axe stratégique</button></div>}
-    {!readOnly && editor !== undefined && <AxisDialog key={editor?.id ?? 'new'} axis={editor} mutate={mutate} notify={notify} onClose={() => setEditor(undefined)} />}
+        <td><div className="sa-row-actions"><button type="button" className="pg-action" disabled={deletingId !== null} onClick={() => { setError(''); setEditor(axis); }} aria-label={`Modifier l’axe ${axis.code}`}><Pencil size={16} /></button><button type="button" className="pg-action pg-delete" disabled={deletingId !== null} onClick={() => void remove(axis)} aria-label={`Supprimer l’axe ${axis.code}`}><Trash2 size={16} /></button></div></td></tr>)}</tbody>
+    </table></div> : <div className="sa-empty"><Target size={36} /><h2>Aucun axe stratégique</h2><p>Ajoutez vos axes et leur poids, puis évaluez leur cohérence dans les paramètres de chaque projet.</p><button className="button button-secondary" type="button" onClick={() => setEditor(null)}><Plus size={16} />Créer un axe stratégique</button></div>}
+    {editor !== undefined && <AxisDialog key={editor?.id ?? 'new'} axis={editor} mutate={mutate} notify={notify} onClose={() => setEditor(undefined)} />}
   </section>;
 }
 

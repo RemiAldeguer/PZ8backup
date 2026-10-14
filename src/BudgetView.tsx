@@ -1,4 +1,3 @@
-import { projectTimeEntries } from '../shared/planzone-preferences';
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { ArrowDownLeft, CalendarDays, Check, Coins, Edit3, Plus, Tags, Trash2, Users, Wallet, X } from 'lucide-react';
 import type { Expense, Revenue, ViewProps } from '../shared/types';
@@ -83,7 +82,7 @@ export function BudgetView({ data, project, mutate, notify }: ViewProps) {
   const overview = projectBudgetOverview(data, project.id);
   const { metrics, resourceCosts, expenseCosts, revenues } = overview;
   const tasks = data.tasks.filter(task => task.projectId === project.id);
-  const work = taskMetrics(tasks, projectTimeEntries(data), data.today);
+  const work = taskMetrics(tasks, data.timeEntries, data.today);
   const writable = project.status !== 'paused' && project.status !== 'closed';
   const expenses = data.expenses.filter(expense => expense.projectId === project.id).sort((a, b) => a.plannedDate.localeCompare(b.plannedDate));
   const projectRevenues = data.revenues.filter(revenue => revenue.projectId === project.id).sort((a, b) => a.plannedDate.localeCompare(b.plannedDate));

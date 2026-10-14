@@ -1,4 +1,3 @@
-import { ThemeControl } from '../theme/ThemeControl';
 import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { ArrowRight, Eye, EyeOff, KeyRound, LockKeyhole, ShieldCheck } from 'lucide-react';
 import { Modal } from '../Dialogs';
@@ -60,7 +59,7 @@ export function AuthBoundary({ children }: { children: (controls: AuthControls) 
     const controller = new AbortController();
     const sequence = ++generation.current;
     setLoadError(false);
-    fetch('/api/auth/session', { credentials: 'same-origin', cache: 'no-store', signal: AbortSignal.any([controller.signal, AbortSignal.timeout(20_000)]) })
+    fetch('/api/auth/session', { credentials: 'same-origin', cache: 'no-store', signal: controller.signal })
       .then(async response => {
         if (!response.ok && response.status !== 401) throw new Error('Session unavailable');
         const body: unknown = response.ok ? await response.json() : { authenticated: false };
@@ -71,13 +70,6 @@ export function AuthBoundary({ children }: { children: (controls: AuthControls) 
       .catch(() => { if (!controller.signal.aborted && sequence === generation.current) setLoadError(true); });
     return () => controller.abort();
   }, [retry]);
-
-  useEffect(() => {
-    if (auth || !loadError) return;
-    const resume = () => setRetry(value => value + 1);
-    window.addEventListener('online', resume); window.addEventListener('focus', resume);
-    return () => { window.removeEventListener('online', resume); window.removeEventListener('focus', resume); };
-  }, [auth, loadError]);
 
   const isAuthenticated = auth?.authenticated === true;
   useEffect(() => {
@@ -125,7 +117,7 @@ export function AuthBoundary({ children }: { children: (controls: AuthControls) 
 }
 
 function AuthBrand() {
-  return <div className="auth-brand"><img src="/planzone-logo.png" alt="" width={38} height={38} /><span>planzone<span className="auth-brand-version">8</span></span></div>;
+  return <div className="auth-brand"><img src="/favicon.svg" alt="" /><span>planzone<span className="auth-brand-version">8</span></span></div>;
 }
 
 function LoginScreen({ notice, onAuthenticated }: { notice: string; onAuthenticated: (user: AuthUser) => void }) {
@@ -168,7 +160,6 @@ function LoginScreen({ notice, onAuthenticated }: { notice: string; onAuthentica
       <p className="auth-intro-footer">Un espace commun pour faire avancer vos projets.</p>
     </section>
     <section className="auth-login-area">
-      <ThemeControl className="theme-auth-control" />
       <div className="auth-mobile-brand"><AuthBrand /></div>
       <div className="auth-login-card">
         <span className="auth-lock"><LockKeyhole size={23} strokeWidth={1.7} /></span>
