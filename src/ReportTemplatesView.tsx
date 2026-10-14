@@ -15,7 +15,7 @@ function FieldIcon({ type }: { type: ReportTemplate['fields'][number]['type'] })
   return type === 'date' ? <CalendarDays size={17} /> : type === 'url' ? <Link size={17} /> : <FileText size={17} />;
 }
 
-export function ReportTemplatesView({ data, mutate, notify, readOnly = false }: { readOnly?: boolean; data: AppData; mutate: Mutation; notify: (message: string) => void }) {
+export function ReportTemplatesView({ data, mutate, notify }: { data: AppData; mutate: Mutation; notify: (message: string) => void }) {
   const templates = data.reportTemplates ?? [];
   const [selectedId, setSelectedId] = useState<string | null>(() => templates[0]?.id ?? null);
   const [draft, setDraft] = useState<TemplateDraft>(() => templates[0] ? copyTemplate(templates[0]) : newDraft());
@@ -85,10 +85,10 @@ export function ReportTemplatesView({ data, mutate, notify, readOnly = false }: 
 
   return <section className="rt-view" aria-label="Gestion des modèles de compte rendu">
     <div className="rt-heading"><h1>Modèle de compte rendu</h1><span>Composez vos indicateurs et vos champs, puis enregistrez le modèle.</span></div>
-    <div className="rt-selector-row"><label><span className="sr-only">Modèle de compte rendu enregistré</span><select aria-label="Modèle de compte rendu enregistré" value={selectedId ?? ''} disabled={busy} onChange={event => load(templates.find(item => item.id === event.target.value) ?? null)}><option value="">Nouveau modèle</option>{templates.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label><button className="rt-add-model" aria-label="Nouveau modèle de compte rendu" disabled={busy || readOnly} onClick={() => load(null)}><Plus size={18} /><span>Nouveau modèle</span></button></div>
+    <div className="rt-selector-row"><label><span className="sr-only">Modèle de compte rendu enregistré</span><select aria-label="Modèle de compte rendu enregistré" value={selectedId ?? ''} disabled={busy} onChange={event => load(templates.find(item => item.id === event.target.value) ?? null)}><option value="">Nouveau modèle</option>{templates.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label><button className="rt-add-model" aria-label="Nouveau modèle de compte rendu" disabled={busy} onClick={() => load(null)}><Plus size={18} /><span>Nouveau modèle</span></button></div>
     {!templates.length && <p className="rt-note">Aucun modèle enregistré. Configurez le premier modèle ci-dessous.</p>}
     <form onSubmit={save}>
-      <fieldset className="rt-form-fieldset" disabled={busy || readOnly}>
+      <fieldset className="rt-form-fieldset" disabled={busy}>
         <div className="rt-model-details"><label className="rt-field"><span>Nom du modèle</span><input required maxLength={200} value={draft.name} placeholder="Ex. Comité de pilotage" onChange={event => update('name', event.target.value)} /></label><label className="rt-field"><span>Titre du compte rendu</span><input required maxLength={500} value={draft.titlePattern} onChange={event => update('titlePattern', event.target.value)} /><small>Utilisez {'{date}'} pour insérer la date du compte rendu.</small></label></div>
         <article className="rt-builder" aria-label="Composition du modèle">
           <header className="rt-blue-header">COMPTE RENDU</header>
@@ -109,7 +109,7 @@ export function ReportTemplatesView({ data, mutate, notify, readOnly = false }: 
         <section className="rt-custom-fields" aria-label="Champs personnalisés de compte rendu"><h2>Champs personnalisés</h2><p>Ajoutez une copie d’un champ configuré pour les comptes rendus.</p><div className="rt-custom-picker"><select aria-label="Champ personnalisé à ajouter au modèle" value={customFieldId} onChange={event => setCustomFieldId(event.target.value)}><option value="">Sélectionner un champ</option>{usableFields.map(item => <option key={item.id} value={item.id}>{item.name} · {FIELD_TYPES[item.type as keyof typeof FIELD_TYPES]}</option>)}</select><button type="button" className="rt-button rt-button-secondary" disabled={!customFieldId || draft.fields.length >= 25} onClick={addCustomField}><Plus size={16} />Ajouter au modèle</button></div>{!usableFields.length && <p className="rt-note">Aucun champ compatible configuré pour les comptes rendus.</p>}{reportFields.some(item => !['text', 'number', 'date', 'url'].includes(item.type)) && <p className="rt-note">Les modèles de compte rendu acceptent les champs de texte simple, nombre, date et lien web.</p>}</section>
       </fieldset>
       {error && <p className="rt-error" role="alert">{error}</p>}
-      <div className="rt-save-actions"><span role="status">{busy ? 'Enregistrement en cours…' : dirty || !selectedId ? 'Modèle non enregistré' : 'Modèle enregistré'}</span>{selectedId && <button type="button" className="rt-button rt-button-danger" disabled={busy || readOnly} onClick={() => void remove()}><Trash2 size={16} />Supprimer le modèle</button>}<button type="submit" className="rt-button rt-button-primary" disabled={busy || readOnly || (!!selectedId && !dirty)}><Save size={16} />{busy ? 'Enregistrement…' : 'Enregistrer le modèle'}</button></div>
+      <div className="rt-save-actions"><span role="status">{busy ? 'Enregistrement en cours…' : dirty || !selectedId ? 'Modèle non enregistré' : 'Modèle enregistré'}</span>{selectedId && <button type="button" className="rt-button rt-button-danger" disabled={busy} onClick={() => void remove()}><Trash2 size={16} />Supprimer le modèle</button>}<button type="submit" className="rt-button rt-button-primary" disabled={busy || (!!selectedId && !dirty)}><Save size={16} />{busy ? 'Enregistrement…' : 'Enregistrer le modèle'}</button></div>
     </form>
   </section>;
 }

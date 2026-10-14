@@ -1,4 +1,3 @@
-import { projectTimeEntries } from '../shared/planzone-preferences';
 import { CustomRichTextPreview, ReadOnlyCustomField } from './CustomFieldInputs';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -31,7 +30,7 @@ function marginClass(amount: number, missing: number): string {
 /** Shared by the project summary preview and the existing printable export. */
 export function FlashReportContent({ data, project, subject = '', linkedReportId }: { data: AppData; project: Project; subject?: string; linkedReportId?: string | null }) {
   const tasks = data.tasks.filter(task => task.projectId === project.id);
-  const work = taskMetrics(tasks, projectTimeEntries(data), data.today);
+  const work = taskMetrics(tasks, data.timeEntries, data.today);
   const overview = projectBudgetOverview(data, project.id);
   const budget = overview.metrics;
   const milestoneRows = tasks.filter(task => task.kind === 'milestone');
@@ -54,13 +53,13 @@ export function FlashReportContent({ data, project, subject = '', linkedReportId
   const axes = (data.strategicAxes ?? []).filter(axis => project.strategicRatings?.[axis.id] !== undefined);
   const Weather = [CloudLightning, CloudRain, Cloud, CloudSun, Sun][Math.max(0, Math.min(4, project.weather - 1))];
   const segments = [{ label: 'Réalisé', percent: activity.realizedPercent, hours: work.realizedHours, color: '#96cd96' }, { label: 'Retard', percent: activity.latePercent, hours: work.lateHours, color: '#e84c58' }, { label: 'Ouvert', percent: activity.openPercent, hours: work.openHours, color: '#9b9ea0' }];
-  const shortDate = (date: string | null) => date ? date.split('-').reverse().join('/') : '—';
+  const shortDate = (date: string) => date.split('-').reverse().join('/');
   return <div className="fr-report-document fr-reference-report">
     <section className="fr-cover" aria-label="Présentation du rapport flash">
       <header className="fr-reference-heading"><div className="fr-reference-brand"><span><FileDown size={25} /></span><strong>Planzone 8</strong></div><div><h1>RAPPORT FLASH</h1><p>Créé le : {shortDate(data.today)}<br />Par : {data.currentUser.name}</p></div></header>
       <div className="fr-project-identity"><div><span>Projet :</span><Folder size={24} /><h2>{project.name}</h2></div><div><span>Dans la zone :</span>{zone && <i style={{ backgroundColor: zone.color }}>{data.zones.indexOf(zone) + 1}</i>}<strong>{zone?.name ?? 'Zone non renseignée'}</strong></div></div>
       <section className="fr-subject"><h2>Objet :</h2><p>{subject.trim() || 'Point d’avancement du projet'}</p></section>
-      <div className="fr-project-summary"><div><h2>Météo :</h2>{project.weather > 0 && <Weather size={39} />}<strong>{project.weather >= 1 ? `${project.weather}/5` : '—'}</strong></div><div><h2>Statut :</h2><strong><Folder size={17} />{projectStatusLabel(project, data)}</strong></div><div><h2>Début :</h2><strong>{shortDate(project.startDate)}</strong></div><div><h2>Fin :</h2><strong>{shortDate(project.endDate)}</strong></div><div><h2>Score stratégique :</h2><strong className="fr-strategy-score">{axes.length ? strategicScore(project, data.strategicAxes ?? []) : '—'}</strong></div></div>
+      <div className="fr-project-summary"><div><h2>Météo :</h2><Weather size={39} /><strong>{project.weather >= 1 ? `${project.weather}/5` : '—'}</strong></div><div><h2>Statut :</h2><strong><Folder size={17} />{projectStatusLabel(project, data)}</strong></div><div><h2>Début :</h2><strong>{shortDate(project.startDate)}</strong></div><div><h2>Fin :</h2><strong>{shortDate(project.endDate)}</strong></div><div><h2>Score stratégique :</h2><strong className="fr-strategy-score">{axes.length ? strategicScore(project, data.strategicAxes ?? []) : '—'}</strong></div></div>
       <div className="fr-portfolios"><h2>Portefeuille(s) :</h2>{project.portfolioNames?.length ? project.portfolioNames.map(name => <span key={name}><Folder size={16} />{name}</span>) : <p>Aucun portefeuille associé</p>}</div>
       <section className="fr-description"><h2>Description du projet :</h2>{project.description ? project.descriptionFormat === 'markdown' ? <CustomRichTextPreview value={project.description} /> : <p>{project.description}</p> : <p>Description non renseignée.</p>}</section>
     </section>

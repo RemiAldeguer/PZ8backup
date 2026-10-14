@@ -1,20 +1,20 @@
 import type { AppData, Entity, Project, Resource, Task } from '../shared/types.ts';
-import { canCreateProject, canCustomize, canEditTime, canProject, canReadProject, canSeeView, canValidateTime, globalRole, isAdmin, type ProjectAction } from '../shared/permissions.ts';
+import { canCreateProject, canCustomize, canEditTime, canProject, canReadProject, canValidateTime, globalRole, isAdmin, type ProjectAction } from '../shared/permissions.ts';
 import type { StoreLike, Table } from './contracts.ts';
 
 /** Called on each authenticated mutation, before any record is written. */
 export function authorizeMutation(store: StoreLike, data: AppData, entity: Entity, method: string, body: unknown, recordId: string | undefined,
   deny: (status: number, message: string) => never): void {
-  const view = { 'project-templates': 'project-templates', 'custom-field-definitions': 'custom-fields', 'report-templates': 'report-templates', 'project-status-definitions': 'project-statuses', 'strategic-axes': 'strategic-axes', 'profiles': 'profiles', 'organization-units': 'organization', 'project-reports': 'reports' } as const;
-  const requiredView = view[entity as keyof typeof view];
-  if (requiredView && !canSeeView(data, requiredView)) deny(403, 'Votre rôle ne donne pas accès à cette vue.');
-  if (['project-documents', 'document-folders'].includes(entity) && (!canSeeView(data, 'documents') || !canSeeView(data, 'document-edit'))) deny(403, 'Votre rôle ne permet pas de créer ou modifier les documents.');
   if (isAdmin(data)) return;
   const input = body && typeof body === 'object' && !Array.isArray(body) ? body as Record<string, unknown> : {};
   const assert = (allowed: boolean) => { if (!allowed) deny(403, 'Votre rôle ne permet pas cette action dans ce périmètre.'); };
   const previous = (table: Table) => recordId ? store.get(table, recordId) as unknown as Record<string, unknown> | undefined : undefined;
   const changed = (old: Record<string, unknown> | undefined) => Object.keys(input).filter(key => JSON.stringify(input[key] ?? null) !== JSON.stringify(old?.[key] ?? null));
   const check = (id: unknown, action: ProjectAction, task?: Task) => { assert(typeof id === 'string' && canProject(data, id, action, task)); };
+  const checkNewProject = (old: Record<string, unknown> | undefined, action: ProjectAction, task?: Task) => {
+    if (method !== 'DELETE' && Object.hasOwn(input, 'projectId') && input.projectId !== old?.projectId)
+      check(input.projectId, action, task);
+  };
   const suffix = method === 'POST' ? 'Create' : method === 'DELETE' ? 'Delete' : 'Edit';
   if (entity === 'projects') {
     if (method === 'DELETE') { assert(false); return; }
@@ -46,30 +46,36 @@ export function authorizeMutation(store: StoreLike, data: AppData, entity: Entit
       for (const key of fields) check(projectId, key === 'allocatedHours' ? 'ownAllocation' : key === 'customValues' ? 'customValues' : 'taskComplete', old);
       if (!fields.length) check(projectId, 'read'); return;
     }
-    check(projectId, `${(old?.kind ?? input.kind) === 'milestone' ? 'milestone' : 'task'}${suffix}` as ProjectAction, old);
+    const action = `${(old?.kind ?? input.kind) === 'milestone' ? 'milestone' : 'task'}${suffix}` as ProjectAction;
+    check(projectId, action, old);
+    checkNewProject(old as unknown as Record<string, unknown> | undefined, action, old);
     if (method !== 'DELETE' && Object.hasOwn(input, 'kind') && old && input.kind !== old.kind) check(projectId, `${input.kind === 'milestone' ? 'milestone' : 'task'}Edit`);
-    if (method !== 'DELETE' && (input.assigneeId ?? null) !== (old?.assigneeId ?? null) && Object.hasOwn(input, 'assigneeId')) check(projectId, 'team');
-    if (method !== 'DELETE' && Object.hasOwn(input, 'dependsOnId') && (input.dependsOnId ?? null) !== (old?.dependsOnId ?? null)) check(projectId, 'details');
-    if (method !== 'DELETE' && Object.hasOwn(input, 'dependencyConstraint') && JSON.stringify(input.dependencyConstraint ?? null) !== JSON.stringify(old?.dependencyConstraint ?? null)) check(projectId, 'details');
+    if (method !== 'DELETE' && (input.assigneeId ?? null) !== (old?.assigneeId ?? null) && Object.hasOwn(input, 'assigneeId')) { check(projectId, 'team'); checkNewProject(old as unknown as Record<string, unknown> | undefined, 'team'); }
+    if (method !== 'DELETE' && Object.hasOwn(input, 'dependsOnId') && (input.dependsOnId ?? null) !== (old?.dependsOnId ?? null)) { check(projectId, 'details'); checkNewProject(old as unknown as Record<string, unknown> | undefined, 'details'); }
     if (Object.hasOwn(input, 'allocatedHours') && input.allocatedHours !== (old?.allocatedHours ?? 0)) check(projectId, 'ownAllocation', old); return;
   }
-  if (entity === 'task-lists') { const projectId = previous('taskLists')?.projectId ?? input.projectId; check(projectId, `list${suffix}`); if (input.parentPhase || input.sourcePhase) check(projectId, 'listEdit'); return; }
+  if (entity === 'task-lists') { const old = previous('taskLists'); const projectId = old?.projectId ?? input.projectId; check(projectId, `list${suffix}`); checkNewProject(old, `list${suffix}`); if (input.parentPhase || input.sourcePhase) check(projectId, 'listEdit'); return; }
   if (entity === 'project-item-moves') {
     const source = input.source as { type?: string } | undefined;
     const task = source?.type === 'task' && typeof (source as { id?: string }).id === 'string' ? store.get('tasks', (source as { id: string }).id) : undefined;
     check(input.projectId, source?.type === 'task' ? task?.kind === 'milestone' ? 'milestoneEdit' : 'taskEdit' : 'listEdit');
     if (source?.type === 'phase' || (input.target as { type?: string } | undefined)?.type === 'phase') check(input.projectId, 'listCreate'); return;
   }
-  if (entity === 'expenses' || entity === 'revenues') { check(previous(entity)?.projectId ?? input.projectId, 'budget'); return; }
-  if (entity === 'project-reports') { check(previous('projectReports')?.projectId ?? input.projectId, 'report'); return; }
+  if (entity === 'expenses' || entity === 'revenues') { const old = previous(entity); check(old?.projectId ?? input.projectId, 'budget'); checkNewProject(old, 'budget'); return; }
+  if (entity === 'project-reports') { const old = previous('projectReports'); check(old?.projectId ?? input.projectId, 'report'); checkNewProject(old, 'report'); return; }
   if (entity === 'project-documents' || entity === 'document-folders') {
     const old = previous(entity === 'project-documents' ? 'projectDocuments' : 'documentFolders');
-    check(old?.projectId ?? input.projectId, entity === 'project-documents' && (input.kind ?? old?.kind) === 'link' ? 'externalLink' : 'documents'); return;
+    const action = entity === 'project-documents' && (input.kind ?? old?.kind) === 'link' ? 'externalLink' : 'documents';
+    check(old?.projectId ?? input.projectId, action); checkNewProject(old, action); return;
   }
   if (entity === 'comments') {
-    const old = previous('comments'); const taskId = input.taskId ?? old?.taskId;
+    const old = previous('comments');
+    const oldTask = typeof old?.taskId === 'string' ? store.get('tasks', old.taskId) : undefined;
+    const taskId = Object.hasOwn(input, 'taskId') ? input.taskId : old?.taskId;
     const task = typeof taskId === 'string' ? store.get('tasks', taskId) : undefined;
-    check(task?.projectId ?? old?.projectId ?? input.projectId, 'comment'); return;
+    if (old) check(oldTask?.projectId ?? old.projectId, 'comment');
+    check(task?.projectId ?? input.projectId ?? old?.projectId, 'comment');
+    return;
   }
   if (entity === 'calendar-events') {
     const old = previous('calendarEvents'); const projectId = Object.hasOwn(input, 'projectId') ? input.projectId : old?.projectId;
@@ -87,6 +93,12 @@ export function authorizeMutation(store: StoreLike, data: AppData, entity: Entit
     const old = previous('timeEntries'); const taskId = old?.taskId ?? input.taskId; const resourceId = old?.resourceId ?? input.resourceId;
     const task = typeof taskId === 'string' ? store.get('tasks', taskId) : undefined;
     assert(!!task && canReadProject(data, task.projectId));
+    if (method !== 'DELETE' && Object.hasOwn(input, 'taskId') && input.taskId !== old?.taskId) {
+      const destination = typeof input.taskId === 'string' ? store.get('tasks', input.taskId) : undefined;
+      assert(!!destination && canReadProject(data, destination.projectId)
+        && typeof input.taskId === 'string' && typeof (input.resourceId ?? resourceId) === 'string'
+        && canEditTime(data, input.taskId, (input.resourceId ?? resourceId) as string));
+    }
     if (method === 'PATCH' && Object.keys(input).every(key => key === 'validated')) { assert(typeof resourceId === 'string' && canValidateTime(data, resourceId, task?.projectId)); return; }
     assert(typeof taskId === 'string' && typeof resourceId === 'string' && canEditTime(data, taskId, resourceId));
     if (input.validated === true) assert(typeof resourceId === 'string' && canValidateTime(data, resourceId, task?.projectId)); return;

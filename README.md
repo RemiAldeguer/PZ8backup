@@ -1,54 +1,39 @@
 # Planzone 8
 
-**Branche de travail conservée :** le module CapaPlan est en cours et n'est pas déployé. Voir son [état et les travaux restants](docs/capaplan-work-in-progress.md). Le cadrage du futur produit multi-organisation reste distinct de la démonstration existante.
+Application française de gestion de projets, adaptée à l’ordinateur et au mobile. **SQLite fonctionne dans le navigateur** (WASM, Web Worker et stockage OPFS) : pas d’API métier, de base distante, de comptes ni de synchronisation. Chaque navigateur conserve sa propre copie et doit importer puis sauvegarder ses données manuellement. Voir le [guide SQLite navigateur](docs/browser-sqlite.md).
 
-Première application fonctionnelle issue du cadrage et des références Planzone 7 fournis. Interface française, adaptée à l’ordinateur et au mobile, avec une API et des données persistantes : SQLite en local, Cloudflare D1 sur le web.
-
-**Tester l’application en ligne : [Planzone 8](https://planzone8-demo.aldeguer-remi.workers.dev).** Une connexion est requise ; chaque membre retrouve les projets et les actions autorisés par ses rôles.
+**Site local HTTPS : [Planzone 8](https://planzone8.codex.f10web.com/).** Tant que sa bascule statique n’a pas été annoncée, cette URL peut encore afficher l’ancienne version serveur ; n’y importer aucun fichier avant la vérification du nouvel écran local.
 
 ![Synthèse d’un projet](docs/screenshots/planzone8-desktop.png)
 
-## Lancer l’application
+## Lancer l’application statique
 
-Prérequis : **Node.js 24 ou supérieur** et npm. Aucun service de base de données externe n’est nécessaire.
+Prérequis : **Node.js 24 ou supérieur**, npm et un navigateur compatible OPFS sur une origine sécurisée.
 
 ```bash
 npm ci
 npm run build
-npm start
+npm start             # aperçu statique Vite : http://127.0.0.1:3001
+# ou npm run dev      # développement : http://127.0.0.1:5173
 ```
 
-Sur la machine où ces commandes tournent, ouvrir `http://127.0.0.1:3001`. Au premier lancement, l’application crée `data/planzone.sqlite` avec quatre projets et des ressources fictives. Un compte local est créé avec un mot de passe aléatoire conservé dans le fichier privé ignoré `data/admin-credentials.json`. Les modifications et le compte sont conservés après un rechargement ou un redémarrage. `PLANZONE_ADMIN_USERNAME` et `PLANZONE_ADMIN_PASSWORD` permettent de définir le premier compte local ; ils ne remplacent pas le mot de passe d’un compte existant.
-
-Pour développer avec rechargement automatique :
+Le premier écran demande de choisir **manuellement** un fichier SQLite PZ7 préparé ; aucun fichier privé n’est inclus dans les assets. La copie reste propre à l’origine et au profil du navigateur. Pour préparer un export privé de la base serveur historique sans comptes ni sessions :
 
 ```bash
-npm run dev
+python3 scripts/export-pz7-browser.py \
+  --source data/pz7-runtime-active.sqlite \
+  --output /chemin/prive/planzone-import.sqlite
 ```
 
-Ouvrir alors `http://localhost:5173` sur cette machine. Vite relaie les requêtes `/api` vers le serveur local sur le port 3001. Éviter de lancer `npm start` et `npm run dev` simultanément sur les mêmes ports.
-
-Dans l’environnement cloud, `bash scripts/cloud-setup.sh` installe les dépendances, compile et exécute les tests métier et API avec un cache npm accessible en écriture. Les adresses locales ci-dessus ne sont accessibles que depuis la machine exécutant l’application.
+Ne jamais placer ce fichier dans `dist/`, `public/` ni sur un serveur public. Exporter régulièrement une sauvegarde depuis le menu **Base locale**. La page exige `Cross-Origin-Opener-Policy: same-origin` et `Cross-Origin-Embedder-Policy: require-corp` ; le serveur Vite les fournit pour les essais.
 
 ## Publier sur Cloudflare
 
-Le [guide Cloudflare](docs/cloudflare-deployment.md) décrit la connexion du compte et la publication sur `workers.dev`. Configurer `CLOUDFLARE_ACCOUNT_ID` et le secret `CLOUDFLARE_API_TOKEN`, puis exécuter :
-
-```bash
-npm run deploy:cloudflare
-```
-
-Le script prépare la base D1, publie l’interface et l’API, puis affiche l’adresse publique après vérification. Aucune adresse publique n’est générée sans accès au compte Cloudflare.
-
-Pour tester cette version sur sa propre machine : `npm run dev:cloudflare`. Le serveur Workers local utilise le port 8787 et une base D1 locale indépendante de SQLite. Dans l’environnement géré, définir `XDG_CONFIG_HOME=/tmp/planzone8-wrangler-config`, `WRANGLER_LOG_PATH=/tmp/planzone8-wrangler-logs` et `WRANGLER_SEND_METRICS=false` pour les commandes Wrangler.
-
-Le premier déploiement crée le compte `admin` avec un mot de passe aléatoire conservé dans le fichier privé ignoré `.cloudflare/admin-credentials.json`. Les publications suivantes conservent son mot de passe, y compris après un changement depuis l’application. Le compte retrouve le même espace dans les différents navigateurs. Lors de sa première connexion depuis le navigateur utilisé pour l’ancienne démonstration, ses données peuvent être reprises si l’espace du compte n’a pas encore été modifié ; les lignes D1 existantes sont conservées.
-
-La connexion utilise une session serveur expirant après sept jours, transmise exclusivement par cookie `HttpOnly`, `Secure` en HTTPS et `SameSite=Lax`. Les mots de passe sont hachés avec un sel aléatoire ; les tentatives répétées sont limitées. Le menu du compte permet de changer le mot de passe et de se déconnecter. Un changement de mot de passe invalide les autres sessions ouvertes. Un administrateur peut créer une connexion pour une ressource humaine active depuis sa fiche. Le rôle global de cette ressource et ses rôles projet s’appliquent à chaque requête ; changer un rôle prend effet immédiatement. Le compte administrateur principal conserve son autorité et ses identifiants existants.
+`npm run check:cloudflare` vérifie les assets hors ligne ; `npm run deploy:cloudflare` publie uniquement `dist/` via Wrangler, **sans Worker applicatif ni binding D1**. Aucune donnée personnelle n’est publiée. Vérifier sur l’URL finale les en-têtes d’isolation et l’absence de route `/api`. L’ancienne base D1 n’est ni transférée ni détruite par cette publication. Voir [le guide de migration](docs/browser-sqlite.md) avant toute bascule.
 
 ## Parcours disponibles
 
-- Comptes membres, quatre rôles globaux et trois rôles projet, autorisations appliquées dans les vues et l’API, déconnexion et changement de mot de passe.
+- Rôles de ressources et projets utilisés pour organiser les vues locales ; **ils ne protègent pas les données du navigateur**. Aucun compte, mot de passe ni espace partagé.
 - Création de projet en deux étapes, depuis zéro ou depuis un modèle : zone, statut, dates, description mise en forme, tags, portefeuilles nommés, champs personnalisés et activation des vues ; modification persistante de ces paramètres.
 - Classement par zones, recherche globale et espace personnel avec listes de tâches à gauche et calendrier hebdomadaire à droite.
 - Sidebar proche de PZ7 : projets récents, menus de gestion, zones avec projets imbriqués, compteurs réels, repli sur ordinateur et menu mobile ; Mon espace réunit Ma synthèse, Mes discussions et Suivi temporel dans des onglets communs.
@@ -62,7 +47,7 @@ La connexion utilise une session serveur expirant après sept jours, transmise e
 - Annuaire : ajout direct d’un membre, création d’une ressource virtuelle ou matérielle ; équipe projet enrichie depuis les ressources déjà présentes dans la Planzone ou par création d’une ressource associée. Désactivation avec conservation des références ; profils de coûts séparés des droits d’accès.
 - Fiche ressource complète : identité, e-mail, fonction, rôle, description, tags, profil de coût, champs personnalisés et projets associés.
 - Gestion : tableaux Capacité, Charge prévisionnelle et Taux d’occupation par ressource, sur douze mois ou par semaine, calculés depuis les capacités des sept jours, les jours fériés et les indisponibilités ; affichage en heures ou jours et détail par projet.
-- Délégations de validation des temps appliquées dans le suivi temporel et son API.
+- Délégations de validation des temps appliquées dans le suivi temporel local.
 - Suivi temporel hebdomadaire Personnel/Équipe, lignes dépliables par ressource, projet, phase et tâche, sept jours et totaux historiques ; saisie, correction et validation des temps avec conservation du tarif associé.
 - Budget projet : budget alloué modifiable depuis sa carte ou le bouton Modifier le budget ; dépenses prévues/réglées et recettes prévues/encaissées, avec création, modification, suppression et conservation après rechargement ; résultats prévisionnel et réel.
 - Répartitions des coûts planifiés ou réels par catégorie de dépenses et type de ressources, synthèse ressources/dépenses, valeur acquise des allocations et budget disponible.
@@ -77,9 +62,7 @@ L’[état de couverture et les règles métier](docs/implementation.md) décriv
 
 **Gestion → Ressources** permet d’attribuer Administrateur, Créateur de projet, Usager ou Visiteur à chaque membre humain. Dans **Projet → Équipe**, choisir Chef(fe) de projet, Collaborateur ou Observateur indépendamment pour chaque projet. Un visiteur reste observateur. Les membres voient leurs projets associés ; un créateur peut créer dans ses zones accessibles et devient chef du nouveau projet. L’administrateur accède à tous les projets.
 
-Le chef de projet gère ses paramètres, son équipe, son budget, ses rapports et l’intégration de ses temps. Le collaborateur peut réaliser ses tâches, ajuster sa propre allocation et gérer les documents. L’observateur consulte le planning et les documents et peut participer aux discussions. **Gestion → Droits et rôles** permet à l’administrateur d’activer les actions de planning conditionnelles des collaborateurs, la lecture de l’annuaire, la gestion de la personnalisation et les règles des temps personnels. Les budgets et tarifs non autorisés sont retirés des réponses serveur.
-
-Pour permettre à un membre de se connecter, ouvrir sa fiche enregistrée puis **Créer l’accès de connexion**, saisir un identifiant et un mot de passe initial. Cette action crée un compte dans le même espace ; aucune invitation par e-mail n’est envoyée. Le membre peut ensuite changer son mot de passe. La [matrice fournie](docs/role-permissions-matrix.json) sert de référence pour les fonctions existantes ; les domaines encore absents de l’application ne sont pas déclarés implémentés.
+Les rôles importés influencent les vues et validations métier locales ; la ressource de référence est celle de la base préparée. **Il n’y a plus d’authentification ni de droits de confidentialité** : toute personne ayant accès au profil du navigateur peut consulter la copie entière et exporter la base. **Gestion → Droits et rôles** n’est qu’une configuration métier locale. La [matrice historique](docs/role-permissions-matrix.json) décrit les rôles de l’ancienne version serveur, pas une protection d’accès de cette variante.
 
 ### Dossiers, saisies de temps et tableaux de ressources
 
@@ -133,7 +116,7 @@ Les totaux journaliers des lignes de ressource et de projet, ainsi que la ligne 
 
 L’onglet **Suivi temporel** du projet, sous `#project/<identifiant>/time`, ouvre sa grille hebdomadaire avec les ressources associées explicitement, affectées aux tâches ou jalons, ou ayant saisi du temps sur le projet. Les ressources inactives sont incluses par défaut pour conserver leur historique. Le filtre de personne et les nouvelles saisies restent limités aux membres du projet ; une nouvelle saisie exige une ressource active et une tâche disponible du projet. Les heures allouées suivent l’affectation actuelle et le passé reste attribué à son auteur. Le suivi global Personnel/Équipe reste accessible dans les onglets de Mon espace.
 
-Dans **Synthèse**, **Créer un compte rendu** ouvre un formulaire bleu fondé sur les modèles de Personnalisation, ou sur un modèle simple si le catalogue est vide. Le titre, la date, les indicateurs et les champs sont enregistrés dans le projet avec l’auteur et les dates techniques fournis par le serveur. Chaque compte rendu conserve sa propre structure : modifier ou supprimer le modèle ne réécrit pas les comptes rendus existants. Les comptes rendus d’un projet clos ou interrompu restent consultables et imprimables ; leurs écritures sont verrouillées.
+Dans **Synthèse**, **Créer un compte rendu** ouvre un formulaire bleu fondé sur les modèles de Personnalisation, ou sur un modèle simple si le catalogue est vide. Le titre, la date, les indicateurs et les champs sont enregistrés dans le projet avec l’auteur et les dates techniques de la base locale. Chaque compte rendu conserve sa propre structure : modifier ou supprimer le modèle ne réécrit pas les comptes rendus existants. Les comptes rendus d’un projet clos ou interrompu restent consultables et imprimables ; leurs écritures sont verrouillées.
 
 **Rapport flash** reprend la présentation du PDF de référence : couverture avec projet, zone, objet, météo, statut, dates, score stratégique, portefeuilles et description ; champs personnalisés, activité, travail, jalons, budget et tâches ouvertes. Un sélecteur permet de joindre un compte rendu enregistré du même projet ; l’objet et le compte rendu choisis se retrouvent dans l’export. Il s’imprime ou s’enregistre en PDF via le navigateur. Les comptes rendus enregistrés se rouvrent depuis la Synthèse ou Rapports ; leur impression utilise la version enregistrée. Le brouillon de rédaction dans Rapports peut également être imprimé ou envoyé au formulaire d’enregistrement.
 
@@ -141,7 +124,7 @@ Dans **Synthèse**, **Créer un compte rendu** ouvre un formulaire bleu fondé s
 
 Dans Budget, la carte **Budget alloué** et **Modifier le budget** ouvrent un montant modifiable au centime. L’enregistrement met à jour uniquement l’enveloppe du projet et recalcule les marges et la consommation, sans changer les coûts ni les recettes. Les paramètres de budget restent accessibles pour un projet clos ou interrompu, comme les autres paramètres du projet.
 
-**Nouvelle recette** enregistre un libellé, une catégorie, un montant saisi au centime, une date prévue et une date d’encaissement facultative. Une recette peut être encaissée avant sa date prévue ; renseigner cette date la classe comme encaissée, et la vider la remet à encaisser. Les recettes restent séparées de l’enveloppe allouée au projet. Le résultat prévisionnel correspond aux recettes prévues moins les coûts planifiés ; le résultat réel aux recettes encaissées moins les coûts réels. Les dépenses et recettes restent consultables dans un projet clos ou interrompu, mais leurs mutations sont bloquées dans l’interface et l’API.
+**Nouvelle recette** enregistre un libellé, une catégorie, un montant saisi au centime, une date prévue et une date d’encaissement facultative. Une recette peut être encaissée avant sa date prévue ; renseigner cette date la classe comme encaissée, et la vider la remet à encaisser. Les recettes restent séparées de l’enveloppe allouée au projet. Le résultat prévisionnel correspond aux recettes prévues moins les coûts planifiés ; le résultat réel aux recettes encaissées moins les coûts réels. Les dépenses et recettes restent consultables dans un projet clos ou interrompu, mais leurs mutations sont bloquées par les validations métier locales.
 
 Le sélecteur Planifié/Réel commande les répartitions : Achat logiciel, Formation, Matériels, Fournitures, Frais juridiques et Autres pour les dépenses ; Externes, Internes, Matérielles, Virtuelles et Non classées pour les ressources. Le planifié utilise les allocations et les tarifs actuels. Le réel conserve le tarif de chaque saisie et la ressource ayant déclaré le temps, même après une réaffectation. Une date de règlement classe une dépense dans le réel. Les dépenses ne contribuent pas à la valeur acquise, calculée sur l’avancement des allocations. Sans tarif, les coûts affichés sont des minimums connus et les résultats des maximums ; les proportions portent uniquement sur les coûts connus.
 
@@ -157,7 +140,7 @@ Les **modèles de compte rendu** enregistrent le titre, jusqu’à cinq indicate
 
 Les **statuts de projet** personnalisés portent un libellé, une description, une couleur et un comportement Demandé, Ouvert, Interrompu ou Clos. Les quatre statuts natifs sont conservés en lecture seule. Un comportement Interrompu ou Clos applique les verrous existants. Les **axes stratégiques** définissent un code, une couleur, cinq libellés d’évaluation de −2 à 2 et un poids entier de 0 à 1000. Les paramètres du projet permettent son évaluation ; le score additionne les évaluations multipliées par leurs poids, avec zéro pour les axes non évalués.
 
-Un statut utilisé, un axe évalué ou un champ portant encore des valeurs ne peut pas être supprimé : l’API refuse l’opération avec une erreur explicite, sans supprimer les données référencées.
+Un statut utilisé, un axe évalué ou un champ portant encore des valeurs ne peut pas être supprimé : le moteur local refuse l’opération avec une erreur explicite, sans supprimer les données référencées.
 
 ## Vérifier
 
@@ -165,33 +148,21 @@ Un statut utilisé, un axe évalué ou un champ portant encore des valeurs ne pe
 npm test
 npm run build
 npm run test:e2e
-npm run test:e2e:cloudflare
+npm run check:cloudflare
 ```
 
-Les tests API et navigateur utilisent des bases temporaires indépendantes des données de démonstration. Les tests navigateur nécessitent Chromium ; sous Linux ils utilisent `/usr/bin/chromium`. Sur une autre machine, définir `CHROMIUM_PATH` avec le chemin du navigateur Chromium/Chrome installé, par exemple :
-
-```bash
-CHROMIUM_PATH=/chemin/vers/chromium npm run test:e2e
-```
+Les tests du moteur historique et les parcours navigateur utilisent des bases temporaires indépendantes des données actives. Les tests Playwright locaux nécessitent Chromium (`npx playwright install chromium --only-shell`) et le schéma PZ7 fourni pour le parcours d’import ; sans ce schéma, ce parcours est explicitement ignoré. Ils vérifient l’OPFS, l’import, une mutation persistante, l’export/réimport et un remplacement invalide.
 
 ## Organisation du code
 
 | Dossier | Rôle |
 |---|---|
-| `src/` | Interface React et styles |
-| `shared/` | Contrats TypeScript et calculs métier communs |
-| `server/` | API Express, validation des mutations et SQLite |
-| `cloudflare/` | Worker HTTP, persistance D1 et migration SQL |
-| `tests/` | Tests métier, API et parcours Playwright |
-| `scripts/` | Installation cloud et serveur de tests isolé |
-| `data/` | Données locales générées, exclues de Git et de l’archive de code |
+| `src/` | Interface React, Worker SQLite WASM/OPFS et styles |
+| `shared/` | Contrats TypeScript et calculs métier |
+| `server/pz7-store-core.ts` | Adaptateur PZ7 portable utilisé dans le Worker |
+| `server/`, `cloudflare/` | Anciennes implémentations serveur conservées pour tests/migration/retour arrière, **non déployées par le site statique** |
+| `tests/` | Tests métier, export privé et parcours Chromium locaux |
+| `scripts/` | Import/export des bases PZ7 et outils historiques |
+| `data/` | Bases serveur privées et sauvegardes, exclues de Git et des assets publiés |
 
-Variables facultatives : `PORT` (3001 par défaut), `HOST` (`127.0.0.1`), `DB_PATH` (chemin de la base), `APP_ORIGIN` (origine autorisée supplémentaire), `DEMO_TODAY` (date ISO pour une démonstration reproductible), `PLANZONE_ADMIN_USERNAME` et `PLANZONE_ADMIN_PASSWORD` (premier compte SQLite uniquement). Pour `npm run dev`, conserver l’API sur le port 3001 utilisé par le proxy Vite.
-
-Pour sauvegarder les données, arrêter le serveur puis copier le dossier `data/` complet. Pour restaurer, remettre ce dossier au même emplacement avant de redémarrer. Ne pas supprimer la base pour résoudre un problème d’installation.
-
-## Portée
-
-Cette version fournit une **connexion avec un compte administrateur** et un espace partagé entre les sessions de ce compte. La création de comptes supplémentaires, les droits par zone/projet et la matrice complète des permissions restent à développer. Les rôles des fiches ressources sont des paramètres métier distincts du compte de connexion ; le compte administrateur conserve son autorité de validation des temps et de gestion des discussions et documents. Les fichiers du projet sont limités à 512 Ko chacun ; les images des champs à 64 Ko. Les pièces jointes spécifiques aux dépenses et comptes rendus, les circuits de validation des comptes rendus, les portefeuilles et les intégrations restent à développer. Les règles métier sont communes aux versions Express/SQLite et Workers/D1 ; une architecture Spring Boot/MySQL évoquée dans le contexte reste une évolution à décider.
-
-Le [guide de stockage et d’accès](docs/backend-storage.md) décrit le chiffrement des snapshots D1, la migration sans réinitialisation et les copies privées de clés. Les fichiers des projets sont chargés à la demande après contrôle de la session et du projet ; leur contenu n’est plus inclus dans l’état global du navigateur. Le Gantt dispose de **Zoom arrière**, **Zoom avant** et d’un retour à **100 %**, de 25 à 400 %, en conservant le point central du planning.
+Le navigateur conserve SQLite dans son stockage propre à l’origine et au profil. Pour sauvegarder, choisir **Exporter une sauvegarde .sqlite** et mettre ce fichier en lieu sûr ; l’effacement des données du navigateur ou un changement de domaine peut supprimer l’accès à la copie OPFS. Le site statique ne propose ni compte partagé, ni synchronisation, ni création d’une base vierge. Les limites métier et le retour arrière sont décrits dans [le guide navigateur](docs/browser-sqlite.md).

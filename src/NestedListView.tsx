@@ -214,7 +214,7 @@ export function NestedListView(props: ViewProps) {
   function taskRow(task: Task, depth: number) {
     const resource = data.resources.find(item => item.id === task.assigneeId);
     const dependency = data.tasks.find(item => item.id === task.dependsOnId);
-    const blocked = !task.dependencyConstraint && dependency && dependency.status !== 'done';
+    const blocked = dependency && dependency.status !== 'done';
     const cells: Record<ListColumnId, ReactNode> = {
       task: <div className="nlv-name-cell proj-task-name-cell" style={{ '--nlv-depth': depth } as CSSProperties}>{movement.handle({ type: 'task', id: task.id }, task.title)}{task.kind === 'task' ? <TaskCheck task={task} data={data} mutate={props.mutate} notify={props.notify} /> : <Flag size={18} className="nlv-milestone-icon" aria-label="Jalon" />}<button className="proj-task-name nlv-task-name" {...movement.dragProps({ type: 'task', id: task.id })} onClick={() => props.openTask(task)}><strong>{task.title}</strong></button>{blocked && <span className="nlv-dependency" title={`Bloquée par ${dependency.title}`} aria-label={`Bloquée par ${dependency.title}`}>↳</span>}</div>,
       status: <TaskStatusSelect task={task} props={props} />,

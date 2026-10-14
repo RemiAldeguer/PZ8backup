@@ -1,4 +1,4 @@
-import type { AppData, Project, ProjectStatus, ProjectTaskList, Task, TaskConstraint } from './types';
+import type { AppData, Project, ProjectStatus, ProjectTaskList, Task } from './types';
 
 export type CustomizationPage = 'project-templates' | 'custom-fields' | 'report-templates' | 'project-statuses' | 'strategic-axes';
 export const CUSTOMIZATION_PAGES: { id: CustomizationPage; label: string }[] = [
@@ -19,7 +19,6 @@ export interface TemplateTask {
   key: string; title: string; description: string; phase: string; kind: 'task' | 'milestone';
   allocatedHours: number; tags: string[]; startOffsetDays: number | null; endOffsetDays: number | null;
   dependsOnKey: string | null;
-  dependencyConstraint?: TaskConstraint | null;
   listKey?: string | null;
   position?: number;
 }
@@ -46,8 +45,7 @@ export function strategicScore(project: Project, axes: StrategicAxis[]): number 
   return axes.reduce((sum, axis) => sum + axis.weight * (project.strategicRatings?.[axis.id] ?? 0), 0);
 }
 export function templateFromProject(project: Project, tasks: Task[], lists?: ProjectTaskList[]): Omit<ProjectTemplate, 'id'> {
-  const originDate = project.startDate ?? tasks.filter(task => task.projectId === project.id).flatMap(task => [task.startDate, task.endDate]).filter((date): date is string => !!date).sort()[0];
-  const origin = originDate ? Date.parse(`${originDate}T00:00:00Z`) : 0;
+  const origin = Date.parse(`${project.startDate}T00:00:00Z`);
   const offset = (date: string | null) => date ? Math.round((Date.parse(`${date}T00:00:00Z`) - origin) / 86_400_000) : null;
   const selected = tasks.filter(task => task.projectId === project.id);
   const keys = new Set(selected.map(task => task.id));
@@ -60,7 +58,6 @@ export function templateFromProject(project: Project, tasks: Task[], lists?: Pro
       ...(list.position !== undefined ? { position: list.position } : {}) })) } : {}),
     tasks: selected.map(task => ({ key: task.id, title: task.title, description: task.description, phase: task.phase,
       kind: task.kind, allocatedHours: task.allocatedHours, tags: [...task.tags],
-      ...(task.dependencyConstraint ? { dependencyConstraint: { ...task.dependencyConstraint } } : {}),
       startOffsetDays: offset(task.startDate), endOffsetDays: offset(task.endDate),
       ...(selectedLists && Object.hasOwn(task, 'listId') ? { listKey: task.listId && listKeys.has(task.listId) ? task.listId : null } : {}),
       ...(task.position !== undefined ? { position: task.position } : {}),

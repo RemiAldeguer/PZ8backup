@@ -1,5 +1,3 @@
-import { TEST_DATA_KEYS, TEST_KEYS, plaintextRow } from './storage-fixture.ts';
-import { encryptWorkspace } from '../server/workspace-crypto.ts';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { once } from 'node:events';
@@ -260,7 +258,7 @@ test('actual Worker/D1 upgrades absent report history only on write, preserves t
   const databaseId = randomUUID(), workspaceId = randomUUID();
   const runtime = () => new Miniflare(convertV4MiniflareOptions({
     modules: true, script: bundled.outputFiles[0].text, compatibilityDate: '2026-10-06', host: '127.0.0.1', port: 0, cf: false,
-    log: new Log(LogLevel.ERROR), resourcePersistencePath: directory, d1Databases: { DB: databaseId }, bindings: { DEMO_TODAY: '2026-10-12', PLANZONE_DATA_KEYS: TEST_DATA_KEYS },
+    log: new Log(LogLevel.ERROR), resourcePersistencePath: directory, d1Databases: { DB: databaseId }, bindings: { DEMO_TODAY: '2026-10-12' },
     serviceBindings: { ASSETS: () => new MiniflareResponse('Project report fixture') },
   }));
   let instance = runtime(); t.after(async () => { await instance.dispose(); await rm(directory, { recursive: true, force: true }); }); await instance.ready;
@@ -276,7 +274,7 @@ test('actual Worker/D1 upgrades absent report history only on write, preserves t
   assert.equal((await request('GET', '/api/state', undefined, cookie)).status, 200);
   const row = async () => {
     const result = await (await db()).prepare('SELECT data, revision FROM demo_workspaces WHERE id = ?').bind(workspaceId).first<{ data: string; revision: number }>();
-    assert.ok(result); return plaintextRow(result, workspaceId);
+    assert.ok(result); return result;
   };
   const initial = new MemoryStore(); seed(initial); const setup = new ApiService(initial, actor);
   const template = setup.mutate('report-templates', 'POST', templateInput).value as ReportTemplate;
@@ -289,7 +287,7 @@ test('actual Worker/D1 upgrades absent report history only on write, preserves t
   setup.mutate('unavailabilities', 'POST', { title: 'Absence préexistante', resourceId: 'resource-claire', startDate: input.reportDate, endDate: input.reportDate });
   const { projectReports: _reports, ...legacy } = initial.snapshot();
   legacy.projects[0].description = 'Description préexistante personnalisée'; legacy.tasks[0].description = 'Tâche préexistante personnalisée';
-  await (await db()).prepare('UPDATE demo_workspaces SET data = ? WHERE id = ?').bind(await encryptWorkspace(JSON.stringify(legacy), workspaceId, TEST_KEYS), workspaceId).run();
+  await (await db()).prepare('UPDATE demo_workspaces SET data = ? WHERE id = ?').bind(JSON.stringify(legacy), workspaceId).run();
   const savedLegacy = await row();
   const before = await (await request('GET', '/api/state', undefined, cookie)).json() as AppData;
   assert.deepEqual(before.projectReports, []); assert.deepEqual(await row(), savedLegacy, 'Read must not write defaults or increment revision.');

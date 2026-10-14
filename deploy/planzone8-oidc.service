@@ -1,0 +1,21 @@
+[Unit]
+Description=Planzone 8 OIDC gateway
+After=network-online.target cas-codex.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=planzone
+Group=planzone
+WorkingDirectory=/home/planzone/src/RemiAldeguer/Planzone8
+EnvironmentFile=/home/planzone/src/RemiAldeguer/Planzone8/env.cas.local
+Environment=PORT=3002
+ExecStart=/home/planzone/.local/bin/node server/oidc-gateway.ts
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

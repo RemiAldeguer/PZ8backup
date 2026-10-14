@@ -1,5 +1,3 @@
-import { TEST_DATA_KEYS, TEST_KEYS, plaintextRow } from './storage-fixture.ts';
-import { encryptWorkspace } from '../server/workspace-crypto.ts';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { once } from 'node:events';
@@ -69,7 +67,7 @@ test('Worker/D1 persists two bounded image uploads in one request and after rest
   const databaseId = randomUUID(); const workspaceId = randomUUID();
   const runtime = () => new Miniflare(convertV4MiniflareOptions({ modules: true, script: bundled.outputFiles[0].text,
     compatibilityDate: '2026-10-06', host: '127.0.0.1', port: 0, cf: false, log: new Log(LogLevel.ERROR),
-    resourcePersistencePath: directory, d1Databases: { DB: databaseId }, bindings: { DEMO_TODAY: '2026-10-12', PLANZONE_DATA_KEYS: TEST_DATA_KEYS },
+    resourcePersistencePath: directory, d1Databases: { DB: databaseId }, bindings: { DEMO_TODAY: '2026-10-12' },
     serviceBindings: { ASSETS: () => new MiniflareResponse('Raster field fixture') } }));
   let instance = runtime(); await instance.ready;
   t.after(async () => { await instance.dispose(); await rm(directory, { recursive: true, force: true }); });

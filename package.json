@@ -7,18 +7,17 @@
     "node": ">=24.0.0"
   },
   "scripts": {
-    "dev": "concurrently -k -n API,WEB \"tsx watch server/index.ts\" \"vite --host 0.0.0.0\"",
+    "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
-    "start": "tsx server/index.ts",
+    "start": "vite preview --host 127.0.0.1 --port 3001",
     "test": "tsx --test tests/*.test.ts",
-    "test:e2e": "playwright test",
-    "test:e2e:cloudflare": "playwright test --config playwright.cloudflare.config.ts",
+    "test:e2e": "playwright test --config playwright.local.config.ts",
     "dev:cloudflare": "npm run build && wrangler dev --local --port 8787",
     "check:cloudflare": "wrangler deploy --dry-run --outdir /tmp/planzone8-worker",
-    "deploy:cloudflare": "npm run build && node --use-env-proxy --import tsx scripts/deploy-cloudflare.ts"
+    "deploy:cloudflare": "npm run build && wrangler deploy"
   },
   "dependencies": {
-    "express": "^5.1.0",
+    "@sqlite.org/sqlite-wasm": "^3.53.4-build2",
     "lucide-react": "^0.468.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
@@ -32,8 +31,8 @@
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "@vitejs/plugin-react": "^4.7.0",
-    "concurrently": "^9.2.0",
     "esbuild": "^0.28.2",
+    "express": "^5.3.0",
     "miniflare": "^5.20261001.0-alpha",
     "tsx": "^4.20.0",
     "typescript": "^5.9.0",

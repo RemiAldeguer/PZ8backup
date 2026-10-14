@@ -86,7 +86,6 @@
 .time-name-button { padding: 0; background: transparent; border: 0; border-radius: 0; text-align: left; font-size: inherit; font-weight: inherit; }
 .time-name-button:hover { color: #cf652e; text-decoration: underline; }
 .time-row-title > small { display: block; font-size: 10px; color: #99a0a4; font-weight: 400; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.time-task-progress { margin-left: auto; flex-shrink: 0; padding: 4px 7px; border-radius: 5px; color: var(--blue); background: color-mix(in srgb, var(--blue) 10%, var(--surface)); font-size: 11px; font-weight: 650; }
 .time-matrix thead th.time-weekend, .time-matrix tbody td.time-weekend { background: #e1e3e5; }
 .time-matrix thead th.time-current-day, .time-matrix tbody td.time-current-day { background: #fff0d6; }
 .time-matrix tbody .time-row-resource > td.time-weekend, .time-matrix tbody .time-row-project > td.time-weekend { background: #d8dcdf; }

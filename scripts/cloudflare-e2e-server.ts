@@ -29,18 +29,10 @@ try {
   ].map(quote).join(', ')});`;
   const schemaPath = join(temporaryDirectory, 'fixture.sql');
   await writeFile(schemaPath, [...migrationSql, ...AUTH_SCHEMA.map(statement => `${statement};`), adminSql].join('\n'), { mode: 0o600 });
-  const config = JSON.parse(await readFile(resolve('wrangler.jsonc'), 'utf8'));
-  config.main = resolve(config.main); config.assets.directory = resolve(config.assets.directory);
-  config.d1_databases = config.d1_databases.map((binding: Record<string, string>) => ({ ...binding, migrations_dir: resolve(binding.migrations_dir) }));
-  delete config.$schema;
-  const configPath = join(temporaryDirectory, 'wrangler.json');
-  await writeFile(configPath, JSON.stringify(config), { mode: 0o600 });
-  const testKeys = JSON.stringify({ current: 'test', keys: { test: Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString('base64') } });
-  await writeFile(join(temporaryDirectory, '.dev.vars'), `PLANZONE_DATA_KEYS='${testKeys}'\nPLANZONE_MIGRATE_PLAINTEXT=false\n`, { mode: 0o600 });
-  await execute(wrangler, ['d1', 'execute', 'DB', '--config', configPath, '--local', '--persist-to', persistDirectory, '--file', schemaPath], {
+  await execute(wrangler, ['d1', 'execute', 'DB', '--local', '--persist-to', persistDirectory, '--file', schemaPath], {
     env, maxBuffer: 1024 * 1024,
   });
-  const worker = spawn(wrangler, ['dev', '--config', configPath, '--local', '--ip', '127.0.0.1', '--port', '8787', '--persist-to', persistDirectory], {
+  const worker = spawn(wrangler, ['dev', '--local', '--ip', '127.0.0.1', '--port', '8787', '--persist-to', persistDirectory], {
     env, stdio: 'inherit',
   });
   let stopping = false;

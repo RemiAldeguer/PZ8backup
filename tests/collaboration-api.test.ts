@@ -1,5 +1,3 @@
-import { TEST_DATA_KEYS, TEST_KEYS, plaintextRow } from './storage-fixture.ts';
-import { encryptWorkspace } from '../server/workspace-crypto.ts';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { once } from 'node:events';
@@ -99,9 +97,7 @@ for (const backend of ['sqlite', 'memory'] as const) {
       assert.equal(document.url, link.url); assert.equal(document.contentBase64, null); assert.equal(document.fileName, null); assert.equal(document.sizeBytes, null);
       assert.equal(document.authorId, actor.id); assert.equal(document.authorName, actor.name); assert.equal(document.createdAt, document.updatedAt);
       const uploaded = api.mutate('project-documents', 'POST', pdf(130000)).value as ProjectDocument;
-      assert.equal(uploaded.sizeBytes, 130000); assert.equal(uploaded.url, null); assert.equal(uploaded.contentBase64, null);
-      assert.equal(Buffer.from(api.readDocument(uploaded.id).contentBase64!, 'base64').length, uploaded.sizeBytes);
-      assert.equal(api.readState().projectDocuments!.find(item => item.id === uploaded.id)!.contentBase64, null);
+      assert.equal(uploaded.sizeBytes, 130000); assert.equal(uploaded.url, null); assert.equal(Buffer.from(uploaded.contentBase64!, 'base64').length, uploaded.sizeBytes);
       const updated = api.mutate('project-documents', 'PATCH', { name: 'Version corrigée', url: 'https://example.test/version-2' }, document.id).value as ProjectDocument;
       assert.equal(updated.createdAt, document.createdAt); assert.equal(updated.authorId, actor.id);
       const fileUpdated = api.mutate('project-documents', 'PATCH', { description: 'Pièce jointe conservée' }, uploaded.id).value as ProjectDocument;
@@ -239,7 +235,7 @@ test('actual Worker/D1 upgrades absent documents on first write only, enforces q
   const databaseId = randomUUID(), workspaceId = randomUUID();
   const runtime = () => new Miniflare(convertV4MiniflareOptions({
     modules: true, script: bundled.outputFiles[0].text, compatibilityDate: '2026-10-06', host: '127.0.0.1', port: 0, cf: false,
-    log: new Log(LogLevel.ERROR), resourcePersistencePath: directory, d1Databases: { DB: databaseId }, bindings: { DEMO_TODAY: '2026-10-12', PLANZONE_DATA_KEYS: TEST_DATA_KEYS },
+    log: new Log(LogLevel.ERROR), resourcePersistencePath: directory, d1Databases: { DB: databaseId }, bindings: { DEMO_TODAY: '2026-10-12' },
     serviceBindings: { ASSETS: () => new MiniflareResponse('Collaboration fixture') },
   }));
   let instance = runtime(); t.after(async () => { await instance.dispose(); await rm(directory, { recursive: true, force: true }); }); await instance.ready;
@@ -251,8 +247,8 @@ test('actual Worker/D1 upgrades absent documents on first write only, enforces q
   const login = await request('POST', '/api/auth/login', { username: admin.username, password: admin.password }); assert.equal(login.status, 200);
   const cookie = login.headers.get('set-cookie')!.split(';', 1)[0]!; await request('GET', '/api/state', undefined, cookie);
   const initial = new MemoryStore(); seed(initial); const { projectDocuments: _docs, ...legacy } = initial.snapshot();
-  legacy.projects[0].description = 'Valeur préexistante conservée'; await (await db()).prepare('UPDATE demo_workspaces SET data = ? WHERE id = ?').bind(await encryptWorkspace(JSON.stringify(legacy), workspaceId, TEST_KEYS), workspaceId).run();
-  const row = async () => { const result = await (await db()).prepare('SELECT data, revision FROM demo_workspaces WHERE id = ?').bind(workspaceId).first<{ data: string; revision: number }>(); assert.ok(result); return plaintextRow(result, workspaceId); };
+  legacy.projects[0].description = 'Valeur préexistante conservée'; await (await db()).prepare('UPDATE demo_workspaces SET data = ? WHERE id = ?').bind(JSON.stringify(legacy), workspaceId).run();
+  const row = async () => { const result = await (await db()).prepare('SELECT data, revision FROM demo_workspaces WHERE id = ?').bind(workspaceId).first<{ data: string; revision: number }>(); assert.ok(result); return result; };
   const before = await row(); const oldState = await (await request('GET', '/api/state', undefined, cookie)).json() as AppData;
   assert.deepEqual(oldState.projectDocuments, []); assert.deepEqual(await row(), before);
   assert.equal((await request('POST', '/api/project-documents', link, cookie, { Origin: 'https://other.test' })).status, 403);

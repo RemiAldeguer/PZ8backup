@@ -1,20 +1,14 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "planzone8-demo",
-  "main": "cloudflare/worker.ts",
+  "main": "cloudflare/oidc.ts",
   "compatibility_date": "2026-10-06",
   "workers_dev": true,
   "preview_urls": false,
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
-    "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api", "/api/*"]
-  },
-  "d1_databases": [{
-    "binding": "DB",
-    "database_name": "planzone8-demo",
-    "database_id": "00000000-0000-0000-0000-000000000000",
-    "migrations_dir": "cloudflare/migrations"
-  }]
+    "not_found_handling": "none",
+    "run_worker_first": true
+  }
 }

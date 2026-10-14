@@ -20,8 +20,6 @@ import { MAX_DOCUMENT_FOLDER_DEPTH } from '../server/document-folder-validation.
 import type { CustomFieldDefinition } from '../shared/customization.ts';
 import { evaluateCustomFormula } from '../shared/custom-field-values.ts';
 import type { AppData, DocumentFolder, Project, ProjectDocument, TimeEntry } from '../shared/types.ts';
-import { encryptWorkspace } from '../server/workspace-crypto.ts';
-import { TEST_DATA_KEYS, TEST_KEYS, plaintextRow } from './storage-fixture.ts';
 
 const admin = { username: 'admin', password: 'Folders-and-time-local-tests-2026!', name: 'Administrateur' };
 const actor = { id: 'resource-claire', name: admin.name, role: 'Administrateur' as const };
@@ -218,7 +216,7 @@ test('actual Worker/D1 reads legacy absent folders without revision changes and 
   const directory = await mkdtemp(join(tmpdir(), 'planzone8-folders-d1-'));
   const bundled = await build({ entryPoints: [resolve('cloudflare/worker.ts')], write: false, bundle: true, format: 'esm', platform: 'browser', target: 'es2022', logLevel: 'silent' });
   const databaseId = randomUUID(), workspaceId = randomUUID();
-  const runtime = () => new Miniflare(convertV4MiniflareOptions({ modules: true, script: bundled.outputFiles[0].text, compatibilityDate: '2026-10-06', host: '127.0.0.1', port: 0, cf: false, log: new Log(LogLevel.ERROR), resourcePersistencePath: directory, d1Databases: { DB: databaseId }, bindings: { DEMO_TODAY: '2026-10-12', PLANZONE_DATA_KEYS: TEST_DATA_KEYS }, serviceBindings: { ASSETS: () => new MiniflareResponse('Folders fixture') } }));
+  const runtime = () => new Miniflare(convertV4MiniflareOptions({ modules: true, script: bundled.outputFiles[0].text, compatibilityDate: '2026-10-06', host: '127.0.0.1', port: 0, cf: false, log: new Log(LogLevel.ERROR), resourcePersistencePath: directory, d1Databases: { DB: databaseId }, bindings: { DEMO_TODAY: '2026-10-12' }, serviceBindings: { ASSETS: () => new MiniflareResponse('Folders fixture') } }));
   let instance = runtime(); await instance.ready; t.after(async () => { await instance.dispose(); await rm(directory, { recursive: true, force: true }); });
   const db = () => instance.getD1Database('DB'); await new AuthManager(new D1AuthDatabase(await db() as unknown as D1Database)).createAdmin({ ...admin, workspaceId });
   const request: Request = (method, path, body, cookie, extraHeaders) => instance.dispatchFetch(`https://planzone8.test${path}`, { method, headers: { ...(body === undefined ? {} : { 'Content-Type': 'application/json' }), ...(cookie ? { Cookie: cookie } : {}), ...extraHeaders }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
@@ -226,8 +224,8 @@ test('actual Worker/D1 reads legacy absent folders without revision changes and 
   const login = await request('POST', '/api/auth/login', { username: admin.username, password: admin.password }); assert.equal(login.status, 200); const cookie = login.headers.get('set-cookie')!.split(';', 1)[0]; await request('GET', '/api/state', undefined, cookie);
   const initial = new MemoryStore(); seed(initial); new ApiService(initial, actor).mutate('project-documents', 'POST', linkPayload);
   const { documentFolders: _folders, ...legacy } = initial.snapshot(); legacy.projects[0].description = 'Donnée préexistante conservée';
-  await (await db()).prepare('UPDATE demo_workspaces SET data = ? WHERE id = ?').bind(await encryptWorkspace(JSON.stringify(legacy), workspaceId, TEST_KEYS), workspaceId).run();
-  const row = async () => { const result = await (await db()).prepare('SELECT data, revision FROM demo_workspaces WHERE id = ?').bind(workspaceId).first<{ data: string; revision: number }>(); assert.ok(result); return plaintextRow(result, workspaceId); };
+  await (await db()).prepare('UPDATE demo_workspaces SET data = ? WHERE id = ?').bind(JSON.stringify(legacy), workspaceId).run();
+  const row = async () => { const result = await (await db()).prepare('SELECT data, revision FROM demo_workspaces WHERE id = ?').bind(workspaceId).first<{ data: string; revision: number }>(); assert.ok(result); return result; };
   const before = await row(); const state = await (await request('GET', '/api/state', undefined, cookie)).json() as AppData; assert.deepEqual(state.documentFolders, []); assert.deepEqual(await row(), before);
   assert.equal((await request('POST', '/api/document-folders', { ...folderPayload, authorId: 'forged' }, cookie)).status, 400); assert.equal((await request('POST', '/api/document-folders', folderPayload, cookie, { Origin: 'https://other.test' })).status, 403); assert.deepEqual(await row(), before);
   const created = await request('POST', '/api/document-folders', folderPayload, cookie); assert.equal(created.status, 201); const folder = await created.json() as DocumentFolder;

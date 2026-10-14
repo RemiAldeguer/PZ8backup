@@ -1,3 +1,0 @@
-User-agent: *
-Allow: /
-Sitemap: https://planzone8-site.aldeguer-remi.workers.dev/sitemap.xml

@@ -1,11 +1,14 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
+const isolationHeaders = {
+  'Cross-Origin-Opener-Policy': 'same-origin',
+  'Cross-Origin-Embedder-Policy': 'require-corp',
+};
+
 export default defineConfig({
   plugins: [react()],
-  server: {
-    port: 5173,
-    strictPort: true,
-    proxy: { '/api': 'http://127.0.0.1:3001' },
-  },
+  optimizeDeps: { exclude: ['@sqlite.org/sqlite-wasm'] },
+  server: { port: 5173, strictPort: true, headers: isolationHeaders },
+  preview: { headers: isolationHeaders },
 });
