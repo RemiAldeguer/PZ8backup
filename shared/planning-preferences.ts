@@ -4,7 +4,6 @@ import { normalizeResource } from './resources';
 import { addCalendarDays } from './time-sheets';
 import { ganttDatePatch, type GanttDatePart, type GanttDateRecord } from './gantt-dates';
 import { planzonePreferences } from './planzone-preferences';
-import { calendarConstraintShift, constraintDate, TaskConstraintError, type ConstraintShift } from './task-constraints';
 
 export function durationAllocation(task: Pick<Task, 'startDate' | 'endDate' | 'kind'>, resource?: Resource): number | null {
   if (task.kind === 'milestone') return 0;
@@ -39,29 +38,4 @@ export function preferenceGanttPatch(data: AppData, record: GanttDateRecord, par
   const duration = record.startDate && record.endDate ? workingDurationDays(record.startDate, record.endDate, resource) : 1;
   const endDate = workingMoveEnd(patch.startDate, Math.max(1, duration), resource);
   return endDate ? { ...patch, endDate } : null;
-}
-
-/** Preserve working duration when automatic planning uses the resource's working calendar. */
-export function preferenceConstraintShift(data: AppData): ConstraintShift {
-  if (!planzonePreferences(data).extendAcrossNonWorkingDays) return calendarConstraintShift;
-  return (task, edge, target) => {
-    if (task.kind !== 'task' || !task.startDate || !task.endDate) return calendarConstraintShift(task, edge, target);
-    if ((Date.parse(task.endDate) - Date.parse(task.startDate)) / 86400000 > 36_600) throw new TaskConstraintError('La durée dépasse la plage du calendrier de travail prise en charge.');
-    const resource = data.resources.find(item => item.id === task.assigneeId);
-    const duration = workingDurationDays(task.startDate, task.endDate, resource);
-    if (!duration) return calendarConstraintShift(task, edge, target);
-    if (edge === 'start') {
-      const endDate = workingMoveEnd(target, duration, resource);
-      if (!endDate) throw new TaskConstraintError('Le calendrier de la ressource ne permet pas cette replanification.');
-      return { ...task, startDate: target, endDate };
-    }
-    let startDate = target, remaining = duration;
-    for (let attempts = 0; attempts < 51_500; attempts++) {
-      const working = resource ? resourceCapacity(resource, startDate, startDate, []) > 0 : businessDays(startDate, startDate) > 0;
-      if (working && --remaining === 0) return { ...task, startDate, endDate: target };
-      if (startDate === '0001-01-01') break;
-      startDate = constraintDate(startDate, -1);
-    }
-    throw new TaskConstraintError('Le calendrier de la ressource ne permet pas cette replanification.');
-  };
 }

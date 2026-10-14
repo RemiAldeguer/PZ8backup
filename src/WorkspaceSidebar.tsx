@@ -2,10 +2,9 @@ import { useEffect, useState, type ReactNode } from 'react';
 import {
   CalendarDays, ChevronDown, ChevronRight, ChevronsLeft, ChevronsRight, CircleHelp,
   CircleUserRound, Coins, FileText, Files, Folder, FolderClock, FolderPlus,
-  Gauge, Network, Orbit, Plus, Users, Wrench, Target, ListPlus, PanelsTopLeft, UserRoundCheck, Settings2, ListOrdered,
+  Gauge, Network, Orbit, Plus, Users, Wrench, Target, ListPlus, PanelsTopLeft, UserRoundCheck, Settings2,
 } from 'lucide-react';
-import type { AppData, Project, Zone } from '../shared/types';
-import { ZoneActions } from './ZoneActions';
+import type { AppData, Project } from '../shared/types';
 import { CUSTOMIZATION_PAGES, type CustomizationPage } from '../shared/customization';
 import './workspace-sidebar.css';
 import { canReadCapacityPlan } from '../shared/capaplan';
@@ -27,9 +26,6 @@ export interface WorkspaceSidebarProps {
   onProject: (project: Project) => void;
   onCreateProject: (zoneId?: string) => void;
   onCreateZone: () => void;
-  onOrderZones: () => void;
-  onEditZone: (zone: Zone) => void;
-  onDeleteZone: (zone: Zone) => void;
   onHelp: () => void;
   footer: ReactNode;
 }
@@ -52,7 +48,7 @@ function markerText(color: string): string {
 
 export function WorkspaceSidebar({
   data, section, resourcesSubview, customizationPage, projectId, zoneId, collapsed, onCollapse, onNavigate, onZone,
-  onProject, onCreateProject, onCreateZone, onOrderZones, onEditZone, onDeleteZone, onHelp, footer,
+  onProject, onCreateProject, onCreateZone, onHelp, footer,
 }: WorkspaceSidebarProps) {
   const currentProject = section === 'project' ? data.projects.find(project => project.id === projectId) : undefined;
   const [recentIds, setRecentIds] = useState(loadRecents);
@@ -141,7 +137,7 @@ export function WorkspaceSidebar({
     </nav>
 
     <div className="sidebar-zones pz-sidebar-zones">
-      <div className="pz-sidebar-zone-tools"><button className="pz-sidebar-add-zone" disabled={!isAdmin(data)} onClick={onCreateZone} aria-label="Créer une zone" title="Créer une zone"><Plus size={14} /><span className="pz-sidebar-label">zone</span></button>{isAdmin(data) && <button type="button" className="pz-sidebar-order-zones" disabled={data.zones.length < 2} aria-label="Organiser les zones" title="Organiser les zones" onClick={onOrderZones}><ListOrdered size={17} /></button>}</div>
+      <button className="pz-sidebar-add-zone" disabled={!isAdmin(data)} onClick={onCreateZone} aria-label="Créer une zone" title="Créer une zone"><Plus size={14} /><span className="pz-sidebar-label">zone</span></button>
       {canSeeView(data, 'projects') && <button className={`pz-sidebar-all${section === 'projects' && !zoneId ? ' active' : ''}`} onClick={() => onZone(null)} aria-label="Tous les projets, toutes les zones" title="Tous les projets, toutes les zones"><Orbit className="pz-sidebar-all-symbol" size={21} strokeWidth={1.4} aria-hidden="true" /><span className="pz-sidebar-label">Tout</span></button>}
       {data.zones.map((zone, index) => {
         const projects = data.projects.filter(project => project.zoneId === zone.id);
@@ -151,7 +147,6 @@ export function WorkspaceSidebar({
             <button disabled={!canSeeView(data, 'projects')} className="pz-sidebar-zone-link" onClick={() => onZone(zone.id)} title={zone.name} aria-current={section === 'projects' && zoneId === zone.id ? 'page' : undefined}><span className="pz-sidebar-zone-number" style={{ backgroundColor: zone.color, color: markerText(zone.color) }} aria-hidden="true">{index + 1}</span><span className="pz-sidebar-label pz-sidebar-zone-name">{index + 1}. {zone.name}</span><span className="pz-sidebar-zone-count" aria-label={`${projects.length} projets`}>{projects.length}</span></button>
             <button className="pz-sidebar-zone-toggle" onClick={() => toggleZone(zone.id)} aria-label={`${expanded ? 'Réduire' : 'Développer'} les projets de ${zone.name}`} aria-expanded={expanded} aria-controls={`pz-sidebar-projects-${zone.id}`} title={expanded ? 'Réduire les projets' : 'Développer les projets'}>{expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}</button>
             <button className="pz-sidebar-zone-add" aria-label={`Créer un projet dans ${zone.name}`} title={`Créer un projet dans ${zone.name}`} disabled={!canCreateProject(data)} onClick={() => onCreateProject(zone.id)}><FolderPlus size={20} /></button>
-            {isAdmin(data) && <ZoneActions zone={zone} onEdit={onEditZone} onDelete={onDeleteZone} sidebar />}
           </div>
           <div id={`pz-sidebar-projects-${zone.id}`} className="pz-sidebar-zone-projects" hidden={!expanded}>
             {projects.map(project => <button key={project.id} className={`sidebar-project-item${currentProject?.id === project.id ? ' active' : ''}`} aria-label={project.name} aria-current={currentProject?.id === project.id ? 'page' : undefined} title={project.name} onClick={() => onProject(project)}><Folder size={16} aria-hidden="true" /><span>{project.name}</span><small className="pz-sidebar-task-count" title={`${taskCounts.get(project.id) ?? 0} tâches et jalons`} aria-hidden="true">{taskCounts.get(project.id) ?? 0}</small></button>)}

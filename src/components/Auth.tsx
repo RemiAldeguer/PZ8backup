@@ -60,7 +60,7 @@ export function AuthBoundary({ children }: { children: (controls: AuthControls) 
     const controller = new AbortController();
     const sequence = ++generation.current;
     setLoadError(false);
-    fetch('/api/auth/session', { credentials: 'same-origin', cache: 'no-store', signal: AbortSignal.any([controller.signal, AbortSignal.timeout(20_000)]) })
+    fetch('/api/auth/session', { credentials: 'same-origin', cache: 'no-store', signal: controller.signal })
       .then(async response => {
         if (!response.ok && response.status !== 401) throw new Error('Session unavailable');
         const body: unknown = response.ok ? await response.json() : { authenticated: false };
@@ -71,13 +71,6 @@ export function AuthBoundary({ children }: { children: (controls: AuthControls) 
       .catch(() => { if (!controller.signal.aborted && sequence === generation.current) setLoadError(true); });
     return () => controller.abort();
   }, [retry]);
-
-  useEffect(() => {
-    if (auth || !loadError) return;
-    const resume = () => setRetry(value => value + 1);
-    window.addEventListener('online', resume); window.addEventListener('focus', resume);
-    return () => { window.removeEventListener('online', resume); window.removeEventListener('focus', resume); };
-  }, [auth, loadError]);
 
   const isAuthenticated = auth?.authenticated === true;
   useEffect(() => {

@@ -10,9 +10,7 @@ import { taskListInput, taskListPatch, projectItemMoveInput, projectItemPosition
 import { planProjectItemMove, ProjectItemMoveError } from '../shared/project-item-moves.ts';
 import { timeIntegrationIndex } from '../shared/time-integration.ts';
 import { planzonePreferences, DEFAULT_PLANZONE_PREFERENCES } from '../shared/planzone-preferences.ts';
-import { durationAllocation, workingDurationDays, workingMoveEnd, preferenceConstraintShift } from '../shared/planning-preferences.ts';
-import { planTaskConstraints, TaskConstraintError } from '../shared/task-constraints.ts';
-import { taskConstraintInput } from './task-constraint-validation.ts';
+import { durationAllocation, workingDurationDays, workingMoveEnd } from '../shared/planning-preferences.ts';
 import { planzonePreferencesInput } from './planzone-preferences-validation.ts';
 import { authorizeMutation } from './authorize-mutation.ts';
 import { permissionPolicyInput, permissionPolicyPatch } from './permission-validation.ts';
@@ -25,7 +23,6 @@ import { canValidateResourceTime, normalizeResource } from '../shared/resources.
 import { TABLES, type Records, type StoreLike, type Table } from './contracts.ts';
 import { CURRENT_USER } from './seed.ts';
 import { mutateCapacityPlan, CapacityPlanError } from './capaplan-service.ts';
-import { deleteZoneContents } from './zone-deletion.ts';
 
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(value => {
   const parsed = new Date(`${value}T00:00:00.000Z`);
@@ -60,11 +57,10 @@ const customField = z.object({
 });
 
 const zoneInput = z.object({ name, color: color.default('#0F766E') }).strict();
-const zoneDeleteInput = z.object({ deleteProjects: z.literal(true), expectedProjectIds: z.array(id).max(1000).refine(values => new Set(values).size === values.length) }).strict();
 const projectInput = z.object({
   name, description: z.string().max(10000).default(''), zoneId: id,
-  startDate: date.nullable().default(null), endDate: date.nullable().default(null), status: z.enum(['requested', 'open', 'paused', 'closed']).default('open'),
-  weather: z.number().int().min(0).max(5).default(4), budget: money.default(0), color: color.default('#6366F1'),
+  startDate: date, endDate: date, status: z.enum(['requested', 'open', 'paused', 'closed']).default('open'),
+  weather: z.number().int().min(1).max(5).default(4), budget: money.default(0), color: color.default('#6366F1'),
   templateId: id.optional(), customStatusId: id.nullable().optional(), customValues: customValuesInput.optional(), strategicRatings: strategicRatingsInput.optional(),
   ...projectMetadataInput.shape,
 }).strict();
@@ -74,7 +70,6 @@ const taskInput = z.object({
   assigneeId: id.nullable().default(null), startDate: date.nullable().default(null), endDate: date.nullable().default(null),
   allocatedHours: hours.default(0), kind: z.enum(['task', 'milestone']).default('task'),
   tags: z.array(z.string().trim().min(1).max(50)).max(20).default([]), dependsOnId: id.nullable().default(null),
-  dependencyConstraint: taskConstraintInput.nullable().optional(),
   customValues: customValuesInput.optional(),
   listId: id.nullable().optional(),
   position: projectItemPosition.optional(),
@@ -149,7 +144,7 @@ const patchSchemas = {
   'permission-policies': permissionPolicyPatch, 'organization-units': organizationUnitPatch,
   ...customizationPatchSchemas,
 };
-type StoredEntity = Exclude<Entity, 'project-item-moves' | 'time-integrations' | 'capacity-plan' | 'planzone-preferences' | 'task-self-assignment' | 'zone-order'>;
+type StoredEntity = Exclude<Entity, 'project-item-moves' | 'time-integrations' | 'capacity-plan' | 'planzone-preferences' | 'task-self-assignment'>;
 const tables: Record<StoredEntity, Table> = {
   zones: 'zones', projects: 'projects', tasks: 'tasks', resources: 'resources', profiles: 'profiles',
   'time-entries': 'timeEntries', comments: 'comments', expenses: 'expenses', revenues: 'revenues',
@@ -273,7 +268,6 @@ export class ApiService {
       }
       const shiftedDate = (offset: number | null) => {
         if (offset === null) return null;
-        if (!project.startDate) reject(400, 'Indiquez une date de début pour créer les éléments datés de ce modèle.');
         const shifted = new Date(`${project.startDate}T00:00:00.000Z`);
         shifted.setUTCDate(shifted.getUTCDate() + offset);
         const formatted = shifted.toISOString().slice(0, 10);
@@ -287,11 +281,10 @@ export class ApiService {
           status: 'todo', progress: 0, assigneeId: null,
           startDate: shiftedDate(source.startOffsetDays), endDate: shiftedDate(source.endOffsetDays),
           dependsOnId: source.dependsOnKey ? clonedIds.get(source.dependsOnKey)! : null,
-          ...(source.dependencyConstraint ? { dependencyConstraint: { ...source.dependencyConstraint } } : {}),
           ...(Object.hasOwn(source, 'listKey') ? { listId: source.listKey ? listIds.get(source.listKey)! : null } : {}),
           ...(source.position !== undefined ? { position: source.position } : {}),
         };
-        persistTask(task);
+        store.put('tasks', validateTask(task));
       }
     }
     function assertActiveResource(resourceId: string): Records['resources'] {
@@ -425,7 +418,7 @@ export class ApiService {
     function started(task: Task): boolean {
       return ['in_progress', 'validation', 'done'].includes(task.status) || task.progress > 0;
     }
-    function validateTask(task: Task, previous?: Task, adjustMovement = true, authority?: AppData): Task {
+    function validateTask(task: Task, previous?: Task): Task {
       assertProjectWritable(task.projectId);
       if (task.listId && requireRecord('taskLists', task.listId).projectId !== task.projectId) {
         reject(400, 'La liste doit appartenir au même projet que la tâche.');
@@ -436,7 +429,7 @@ export class ApiService {
       const resource = task.assigneeId ? store.get('resources', task.assigneeId) : undefined;
       const startShift = previous?.startDate && task.startDate ? Date.parse(task.startDate) - Date.parse(previous.startDate) : 0;
       const endShift = previous?.endDate && task.endDate ? Date.parse(task.endDate) - Date.parse(previous.endDate) : 0;
-      if (adjustMovement && preferences.extendAcrossNonWorkingDays && task.kind === 'task' && previous?.startDate && previous.endDate && task.startDate && startShift !== 0 && startShift === endShift) {
+      if (preferences.extendAcrossNonWorkingDays && task.kind === 'task' && previous?.startDate && previous.endDate && task.startDate && startShift !== 0 && startShift === endShift) {
         const duration = Math.max(1, workingDurationDays(previous.startDate, previous.endDate, resource));
         task.endDate = workingMoveEnd(task.startDate, duration, resource) ?? reject(400, 'Le calendrier de la ressource ne permet pas ce déplacement.');
       }
@@ -444,7 +437,7 @@ export class ApiService {
         const allocation = durationAllocation(task, resource);
         if (task.startDate && task.endDate && (allocation === null || !Number.isFinite(allocation) || allocation > 100000)) reject(400, 'La période dépasse la durée ou l’allocation prise en charge.');
         if (allocation !== null) {
-          if (actor && !canProject(authority ?? state(), task.projectId, 'ownAllocation', task)) reject(403, 'La modification de durée nécessite aussi le droit de modifier l’allocation.');
+          if (actor && !canProject(state(), task.projectId, 'ownAllocation', task)) reject(403, 'La modification de durée nécessite aussi le droit de modifier l’allocation.');
           task.allocatedHours = allocation;
         }
       }
@@ -460,7 +453,7 @@ export class ApiService {
       if (task.dependsOnId) {
         let predecessor = requireRecord('tasks', task.dependsOnId);
         if (predecessor.projectId !== task.projectId) reject(409, 'La dépendance doit appartenir au même projet.');
-        if (!task.dependencyConstraint && started(task) && predecessor.status !== 'done') reject(409, 'Terminez la tâche précédente avant de démarrer cette tâche.');
+        if (started(task) && predecessor.status !== 'done') reject(409, 'Terminez la tâche précédente avant de démarrer cette tâche.');
         const visited = new Set([task.id]);
         while (true) {
           if (visited.has(predecessor.id)) reject(409, 'Cette dépendance crée un cycle.');
@@ -470,31 +463,15 @@ export class ApiService {
         }
       }
       if (previous?.status === 'done' && task.status !== 'done') {
-        if (store.all('tasks').some(dependent => dependent.dependsOnId === task.id && !dependent.dependencyConstraint && started(dependent))) {
+        if (store.all('tasks').some(dependent => dependent.dependsOnId === task.id && started(dependent))) {
           reject(409, 'Une tâche dépendante a déjà démarré. Sa dépendance doit rester terminée.');
         }
       }
       return task;
     }
-    function persistTask(task: Task, previous?: Task): Task {
-      const updated = validateTask(task, previous);
-      let plan: Task[];
-      const authority = state();
-      try { plan = planTaskConstraints(store.all('tasks'), updated, previous, preferenceConstraintShift(authority)); }
-      catch (error) { if (error instanceof TaskConstraintError) reject(409, error.message); throw error; }
-      const validated = plan.map(next => {
-        const old = next.id === task.id ? previous : store.get('tasks', next.id);
-        if (actor && !(next.id === task.id && !previous) && (next.startDate !== old?.startDate || next.endDate !== old?.endDate) && !canProject(authority, next.projectId, next.kind === 'milestone' ? 'milestoneEdit' : 'taskEdit', next)) {
-          reject(403, `La replanification nécessite le droit de modifier « ${next.title} ». Aucune date n’a été modifiée.`);
-        }
-        return validateTask(next, old, false, authority);
-      });
-      for (const next of validated) store.put('tasks', next);
-      return validated.find(next => next.id === task.id)!;
-    }
     function state(today?: string): AppData {
       const data: AppData = {
-        zones: store.all('zones').sort((a, b) => (a.position ?? Number.MAX_SAFE_INTEGER) - (b.position ?? Number.MAX_SAFE_INTEGER)), projects: store.all('projects'), tasks: store.all('tasks'),
+        zones: store.all('zones'), projects: store.all('projects'), tasks: store.all('tasks'),
         resources: store.all('resources').map(resource => actor && resource.id === 'resource-claire' ? normalizeResource({ ...resource, role: 'administrator', active: true, type: 'human' }) : normalizeResource(resource)), profiles: store.all('profiles'), timeEntries: store.all('timeEntries'),
         comments: store.all('comments'), expenses: store.all('expenses'), revenues: store.all('revenues'), currentUser: currentUser(),
         calendarEvents: store.all('calendarEvents'), unavailabilities: store.all('unavailabilities'),
@@ -542,7 +519,7 @@ export class ApiService {
             if (template) cloneTemplate(project, template);
             break;
           }
-          case 'tasks': Object.assign(value, persistTask(value as Task)); break;
+          case 'tasks': store.put('tasks', validateTask(value as Task)); break;
           case 'task-lists': {
             const list = value as Records['taskLists'] & { sourcePhase?: string; parentPhase?: string };
             const { sourcePhase, parentPhase } = list; delete list.sourcePhase; delete list.parentPhase;
@@ -649,10 +626,8 @@ export class ApiService {
           }
           case 'tasks': {
             const task = value as Task; const old = previous as Task;
-            if (!task.dependsOnId && task.dependencyConstraint && Object.hasOwn(parsed.data, 'dependencyConstraint')) reject(409, 'Choisissez un prédécesseur pour cette contrainte.');
-            if (!task.dependsOnId || (task.dependsOnId !== old.dependsOnId && !Object.hasOwn(parsed.data, 'dependencyConstraint'))) task.dependencyConstraint = null;
             if ((task.listId ?? null) !== (old.listId ?? null) || (!task.listId && task.phase !== old.phase)) delete task.position;
-            Object.assign(task, persistTask(task, old)); break;
+            store.put('tasks', validateTask(task, old)); break;
           }
           case 'task-lists': {
             const list = value as Records['taskLists'];
@@ -745,27 +720,13 @@ export class ApiService {
       });
       return { status: 200, value: result };
     }
-    function remove(entity: StoredEntity, recordId: string, body?: unknown): MutationResult {
+    function remove(entity: StoredEntity, recordId: string): MutationResult {
+      if (entity === 'zones') reject(405, 'La suppression des zones n’est pas disponible.');
       const table = tables[entity];
 
       commit(() => {
         const value = requireRecord(table, recordId);
         switch (entity) {
-          case 'zones': {
-            const projects = store.all('projects').filter(project => project.zoneId === value.id);
-            if (body !== undefined) {
-              const parsed = zoneDeleteInput.safeParse(body);
-              if (!parsed.success) reject(400, 'Confirmez explicitement la suppression de la zone et de ses projets.');
-              const expected = new Set(parsed.data.expectedProjectIds);
-              if (expected.size !== projects.length || projects.some(project => !expected.has(project.id))) {
-                reject(409, 'Les projets de cette zone ont changé. Rechargez la page et vérifiez la liste avant de confirmer à nouveau.');
-              }
-            } else if (projects.length) {
-              reject(409, 'Cette zone contient des projets. Confirmez leur suppression dans la fenêtre de suppression de zone.');
-            }
-            deleteZoneContents(store, value.id, projects);
-            break;
-          }
           case 'organization-units': {
             const unit = value as Records['organizationUnits'];
             if (unit.resourceIds.length || store.all('organizationUnits').some(child => child.parentId === unit.id) || store.all('capacityPlans').some(plan => plan.domains.some(domain => domain.teamIds.includes(unit.id)))) reject(409, 'Cette unité contient des ressources ou des sous-unités. Retirez-les avant de la supprimer.');
@@ -859,20 +820,6 @@ export class ApiService {
       return document!;
     };
     this.mutate = (entity, method, body, recordId) => {
-      if (entity === 'zone-order') {
-        if (method !== 'POST' || recordId) reject(405, 'L’ordre des zones utilise un enregistrement contrôlé.');
-        if (!isAdmin(state())) reject(403, 'Seul un administrateur peut organiser les zones.');
-        const parsed = z.object({ zoneIds: z.array(id).max(1000).refine(values => new Set(values).size === values.length) }).strict().safeParse(body);
-        if (!parsed.success) reject(400, 'Sélectionnez chaque zone une seule fois.');
-        commit(() => {
-          const zones = store.all('zones');
-          const ids = new Set(parsed.data.zoneIds);
-          if (ids.size !== zones.length || zones.some(zone => !ids.has(zone.id))) reject(409, 'Les zones ont changé. Rechargez la page avant de réorganiser leur ordre.');
-          const positions = new Map(parsed.data.zoneIds.map((id, position) => [id, position]));
-          for (const zone of zones) store.put('zones', { ...zone, position: positions.get(zone.id)! });
-        });
-        return { status: 204 };
-      }
       if (entity === 'planzone-preferences') {
         if (method !== 'POST' || recordId) reject(405, 'Les préférences utilisent un enregistrement contrôlé.');
         if (!isAdmin(state())) reject(403, 'Seul un administrateur peut modifier les paramètres de la Planzone.');
@@ -957,7 +904,7 @@ export class ApiService {
       if (method === 'POST') return create(entity, body);
       if (!recordId) reject(404, 'Cet élément est introuvable.');
       if (method === 'PATCH') return update(entity, body, recordId);
-      if (method === 'DELETE') return remove(entity, recordId, body);
+      if (method === 'DELETE') return remove(entity, recordId);
       return reject(405, 'Cette méthode n’est pas disponible.');
     };
     const originalMutate = this.mutate;
@@ -965,7 +912,7 @@ export class ApiService {
       const original = originalMutate(entity, method, body, recordId);
       const result = entity === 'project-documents' && original.value
         ? { ...original, value: { ...original.value, contentBase64: null } as ProjectDocument } : original;
-      if (entity === 'zone-order' || !actor || !result.value || isAdmin(state())) return result;
+      if (!actor || !result.value || isAdmin(state())) return result;
       const data = this.readState();
       const table = entity === 'time-integrations' ? (body as { scope: string }).scope === 'project' ? 'projects' : 'resources'
         : entity === 'planzone-preferences' ? 'planzonePreferences' : entity === 'task-self-assignment' ? 'tasks' : entity === 'capacity-plan' ? 'capacityPlans' : entity === 'project-item-moves' ? 'title' in result.value ? 'tasks' : 'taskLists' : tables[entity];

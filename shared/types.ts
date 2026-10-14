@@ -7,10 +7,10 @@ export type ProjectStatus = 'requested' | 'open' | 'paused' | 'closed';
 export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
   requested: 'Demandé', open: 'Ouvert', paused: 'Interrompu', closed: 'Clos',
 };
-export interface Zone { id: string; name: string; color: string; position?: number; }
+export interface Zone { id: string; name: string; color: string; }
 export interface Project {
   id: string; name: string; description: string; zoneId: string;
-  startDate: string | null; endDate: string | null; status: ProjectStatus;
+  startDate: string; endDate: string; status: ProjectStatus;
   weather: number; budget: number; color: string;
   timeIntegrationDate?: string | null;
   customStatusId?: string | null; customValues?: Record<string, string>; strategicRatings?: Record<string, number>;
@@ -35,17 +35,9 @@ export interface Task {
   assigneeId: string | null; startDate: string | null; endDate: string | null;
   allocatedHours: number; kind: 'task' | 'milestone'; tags: string[];
   dependsOnId: string | null;
-  dependencyConstraint?: TaskConstraint | null;
   listId?: string | null;
   position?: number;
   customValues?: Record<string, string>;
-}
-export interface TaskConstraint {
-  mode: 'exact' | 'not_before' | 'not_after';
-  offset: number;
-  unit: 'days' | 'weeks';
-  direction: 'after' | 'before';
-  automatic: boolean;
 }
 export interface ProjectTaskList { id: string; projectId: string; name: string; parentId: string | null; position?: number; }
 export interface OrganizationUnit { id: string; name: string; parentId: string | null; resourceIds: string[]; }
@@ -143,7 +135,7 @@ export interface AppData {
   today: string;
 }
 export type Entity = 'zones' | 'projects' | 'tasks' | 'resources' | 'profiles' | 'time-entries' | 'comments' | 'expenses' | 'revenues' | 'calendar-events' | 'unavailabilities'
-  | 'project-templates' | 'custom-field-definitions' | 'report-templates' | 'project-status-definitions' | 'strategic-axes' | 'project-reports' | 'project-documents' | 'document-folders' | 'task-lists' | 'project-item-moves' | 'time-integrations' | 'permission-policies' | 'organization-units' | 'capacity-plan' | 'planzone-preferences' | 'task-self-assignment' | 'zone-order';
+  | 'project-templates' | 'custom-field-definitions' | 'report-templates' | 'project-status-definitions' | 'strategic-axes' | 'project-reports' | 'project-documents' | 'document-folders' | 'task-lists' | 'project-item-moves' | 'time-integrations' | 'permission-policies' | 'organization-units' | 'capacity-plan' | 'planzone-preferences' | 'task-self-assignment';
 export type Mutation = (entity: Entity, method: 'POST' | 'PATCH' | 'DELETE', payload?: unknown, id?: string) => Promise<void>;
 export interface TaskCreationOptions { kind?: Task['kind']; listId?: string | null; phase?: string; }
 export interface ViewProps {
