@@ -7,12 +7,6 @@
 .pzg-toolbar .nlv-menu-container { margin-left: auto; }
 .pzg-controls > label { display: flex; gap: 6px; align-items: center; font-weight: 600; font-size: 11px; }
 .pzg-controls input { accent-color: #ff7029; }
-.pzg-zoom { display: inline-flex; align-items: stretch; border: 1px solid #dfe4e8; border-radius: 5px; overflow: hidden; background: #fff; }
-.pzg-zoom button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-height: 34px; padding: 6px 9px; border: 0; background: #fff; color: #334d5b; font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap; }
-.pzg-zoom button + button { border-left: 1px solid #dfe4e8; }
-.pzg-zoom button:hover:not(:disabled) { background: #fff1e8; color: #f56800; }
-.pzg-zoom button:disabled { opacity: .45; cursor: default; }
-.pzg-zoom button:focus-visible { outline: 2px solid #f56800; outline-offset: -3px; }
 .pzg-controls .button { padding: 8px 10px; font-size: 10px; }
 .pzg-period { display: flex; align-items: center; margin-left: auto; border: 1px solid #dfe4e8; border-radius: 4px; background: white; font-size: 10px; }
 .pzg-period strong { padding: 7px; white-space: nowrap; }
@@ -128,7 +122,7 @@
 .pzg-date-handle:hover, .pzg-date-handle:focus-visible { background: #ffead4; color: #df6920; outline: 1px solid #ee8d3e; }
 .pzg-date-start { left: 1px; }
 .pzg-date-end { right: 1px; }
-.pzg-date-move { width: 18px; left: 0; top: 20px; height: 12px; color: #2c6a87; }
+.pzg-date-move { width: 100%; left: 0; color: #2c6a87; }
 .pzg-bar-project .pzg-date-handle { color: white; }
 .pzg-bar[data-date-draggable] { cursor: grab; touch-action: none; }
 .pzg-bar.pzg-link-selectable { cursor: crosshair; touch-action: none; outline: 1px dashed #e9933c; }

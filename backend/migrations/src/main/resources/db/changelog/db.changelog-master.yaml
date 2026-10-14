@@ -1,0 +1,55 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-planzone-isolation
+      author: pz8
+      changes:
+        - sqlFile:
+            path: 001-planzone-isolation.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false
+  - changeSet:
+      id: 002-people-resources
+      author: pz8
+      changes:
+        - sqlFile:
+            path: 002-people-resources.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false
+  - changeSet:
+      id: 003-pz7-access
+      author: pz8
+      changes:
+        - sqlFile:
+            path: 003-pz7-access.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false
+  - changeSet:
+      id: 004-oidc-sessions
+      author: pz8
+      changes:
+        - sqlFile:
+            path: 004-oidc-sessions.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false
+  - changeSet:
+      id: 005-invitations
+      author: pz8
+      changes:
+        - sqlFile:
+            path: 005-invitations.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false
+  - changeSet:
+      id: 006-pz7-project-access
+      author: pz8
+      changes:
+        - sqlFile:
+            path: 006-pz7-project-access.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

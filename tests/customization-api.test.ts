@@ -1,5 +1,3 @@
-import { TEST_DATA_KEYS, TEST_KEYS, plaintextRow } from './storage-fixture.ts';
-import { encryptWorkspace } from '../server/workspace-crypto.ts';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { once } from 'node:events';
@@ -295,7 +293,7 @@ test('actual Worker/D1 reads legacy customization without rewriting and persists
   const databaseId = randomUUID(), workspaceId = randomUUID();
   const runtime = () => new Miniflare(convertV4MiniflareOptions({
     modules: true, script: bundled.outputFiles[0].text, compatibilityDate: '2026-10-06', host: '127.0.0.1', port: 0, cf: false,
-    log: new Log(LogLevel.ERROR), resourcePersistencePath: directory, d1Databases: { DB: databaseId }, bindings: { DEMO_TODAY: '2026-10-12', PLANZONE_DATA_KEYS: TEST_DATA_KEYS },
+    log: new Log(LogLevel.ERROR), resourcePersistencePath: directory, d1Databases: { DB: databaseId }, bindings: { DEMO_TODAY: '2026-10-12' },
     serviceBindings: { ASSETS: () => new MiniflareResponse('Customization fixture') },
   }));
   let instance = runtime();
@@ -312,12 +310,12 @@ test('actual Worker/D1 reads legacy customization without rewriting and persists
   assert.equal((await request('GET', '/api/state', undefined, cookie)).status, 200);
   const row = async () => {
     const result = await (await db()).prepare('SELECT data, revision FROM demo_workspaces WHERE id = ?').bind(workspaceId).first<{ data: string; revision: number }>();
-    assert.ok(result); return plaintextRow(result, workspaceId);
+    assert.ok(result); return result;
   };
   const legacy = JSON.parse((await row()).data) as CompatibleWorkspaceSnapshot;
   for (const table of CUSTOMIZATION_TABLES) delete legacy[table];
   legacy.projects[0].description = 'Existing customized project'; legacy.tasks[0].description = 'Existing customized task';
-  await (await db()).prepare('UPDATE demo_workspaces SET data = ? WHERE id = ?').bind(await encryptWorkspace(JSON.stringify(legacy), workspaceId, TEST_KEYS), workspaceId).run();
+  await (await db()).prepare('UPDATE demo_workspaces SET data = ? WHERE id = ?').bind(JSON.stringify(legacy), workspaceId).run();
   const savedLegacy = await row();
   const displayed = await request('GET', '/api/state', undefined, cookie); assert.equal(displayed.status, 200);
   const before = await displayed.json() as AppData;

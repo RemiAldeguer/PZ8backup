@@ -1,7 +1,5 @@
-import { permittedCapacityPlans } from './capaplan';
 import { RESOURCE_ROLE_LABELS, type AppData, type Project, type ProjectRole, type ResourceRole, type Task } from './types';
 import { normalizeResource } from './resources';
-import { rolesForView, type WorkspaceView } from './view-access';
 
 export const COLLABORATOR_ACTIONS = ['taskCreate', 'taskEdit', 'taskDelete', 'milestoneCreate', 'milestoneEdit', 'milestoneDelete', 'listCreate', 'listEdit', 'listDelete', 'eventCreate', 'eventEdit', 'eventDelete'] as const;
 export type CollaboratorAction = typeof COLLABORATOR_ACTIONS[number];
@@ -22,9 +20,8 @@ export function globalRole(data: AppData): ResourceRole {
   return (Object.entries(RESOURCE_ROLE_LABELS).find(([, label]) => label === data.currentUser.role)?.[0] as ResourceRole | undefined) ?? 'visitor';
 }
 export function isAdmin(data: AppData): boolean { return globalRole(data) === 'administrator'; }
-export function canSeeView(data: AppData, view: WorkspaceView): boolean { return rolesForView(data, view).includes(globalRole(data)); }
 export function canCreateProject(data: AppData): boolean { return ['administrator', 'project_creator'].includes(globalRole(data)); }
-export function canReadResources(data: AppData): boolean { return canSeeView(data, 'resources'); }
+export function canReadResources(data: AppData): boolean { return isAdmin(data) || permissionPolicy(data).resourcesRead.includes(globalRole(data)); }
 export function canCustomize(data: AppData): boolean { return isAdmin(data) || globalRole(data) !== 'visitor' && permissionPolicy(data).customizationManage.includes(globalRole(data)); }
 export function projectMemberIds(data: AppData, project: Project): Set<string> {
   return new Set([...Object.keys(project.projectRoles ?? {}), ...(project.createdByResourceId ? [project.createdByResourceId] : []),
@@ -47,8 +44,6 @@ export type ProjectAction = 'read' | 'details' | 'team' | 'budget' | 'time' | 'r
 export function canProject(data: AppData, projectId: string, action: ProjectAction, task?: Task): boolean {
   const project = data.projects.find(project => project.id === projectId);
   if (!project || !canReadProject(data, projectId)) return false;
-  if ((action === 'documents' || action === 'externalLink') && (!canSeeView(data, 'documents') || !canSeeView(data, 'document-edit'))) return false;
-  if (action === 'report' && !canSeeView(data, 'reports')) return false;
   if (isAdmin(data)) return true;
   const role = projectRoleFor(data, project);
   if (action === 'read' || action === 'comment') return true;
@@ -61,7 +56,6 @@ export function canProject(data: AppData, projectId: string, action: ProjectActi
 }
 export function canUseProjectView(data: AppData, project: Project, view: string): boolean {
   if (!canReadProject(data, project.id)) return false;
-  if (view === 'documents' && !canSeeView(data, 'documents') || view === 'reports' && !canSeeView(data, 'reports')) return false;
   return view === 'budget' ? canProject(data, project.id, 'budget') : view === 'time' ? canProject(data, project.id, 'time') : view === 'reports' ? canProject(data, project.id, 'report') : true;
 }
 export function canEditTime(data: AppData, taskId: string, resourceId: string): boolean {
@@ -78,7 +72,7 @@ export function canValidateTime(data: AppData, resourceId: string, projectId?: s
 
 /** Never send inaccessible projects or financial data to non-administrators. */
 export function permittedState(data: AppData): AppData {
-  if (isAdmin(data)) return { ...data, projectDocuments: canSeeView(data, 'documents') ? data.projectDocuments : [], documentFolders: canSeeView(data, 'documents') ? data.documentFolders : [], projectReports: canSeeView(data, 'reports') ? data.projectReports : [] };
+  if (isAdmin(data)) return data;
   const projects = data.projects.filter(project => canReadProject(data, project.id));
   const projectIds = new Set(projects.map(project => project.id));
   const budgetIds = new Set(projects.filter(project => canProject(data, project.id, 'budget')).map(project => project.id));
@@ -86,14 +80,12 @@ export function permittedState(data: AppData): AppData {
   const own = data.resources.find(resource => resource.id === data.currentUser.id);
   const resourceIds = new Set([data.currentUser.id, ...(globalRole(data) !== 'visitor' ? own?.validatesTimeForIds ?? [] : []), ...projects.flatMap(project => [...projectMemberIds(data, project)])]);
   const budgetResources = new Set(projects.filter(project => budgetIds.has(project.id)).flatMap(project => [...projectMemberIds(data, project)]));
-  const planning = ['capacity', 'load', 'occupancy'].some(view => canSeeView(data, view as WorkspaceView));
-  const costCatalog = canSeeView(data, 'profiles');
-  const directory = canReadResources(data) || canSeeView(data, 'organization') || planning || projects.some(project => canProject(data, project.id, 'team'));
+  const directory = canReadResources(data) || projects.some(project => canProject(data, project.id, 'team'));
   const resources = data.resources.filter(resource => directory || resourceIds.has(resource.id)).map(resource => {
-    if (resource.id === data.currentUser.id || budgetResources.has(resource.id)) return { ...resource, profileId: budgetResources.has(resource.id) || costCatalog ? resource.profileId : null };
+    if (resource.id === data.currentUser.id || budgetResources.has(resource.id)) return { ...resource, profileId: budgetResources.has(resource.id) ? resource.profileId : null };
     return { ...resource, email: '', description: '', customValues: {}, customFields: [], validatesTimeForIds: [],
-      profileId: costCatalog ? resource.profileId : null, projectIds: resource.projectIds?.filter(id => projectIds.has(id)) ?? [],
-      ...(resourceIds.has(resource.id) || canReadResources(data) || planning ? {} : { dailyHours: 0, mondayHours: 0, weeklyCapacityHours: [0, 0, 0, 0, 0, 0, 0] as const }) };
+      profileId: null, projectIds: resource.projectIds?.filter(id => projectIds.has(id)) ?? [],
+      ...(resourceIds.has(resource.id) || canReadResources(data) ? {} : { dailyHours: 0, mondayHours: 0, weeklyCapacityHours: [0, 0, 0, 0, 0, 0, 0] as const }) };
   }).map(resource => ({ ...resource, weeklyCapacityHours: resource.weeklyCapacityHours ? [...resource.weeklyCapacityHours] as import('./types').WeeklyCapacity : undefined, projectIds: resource.projectIds?.filter(id => projectIds.has(id)),
     validatesTimeForIds: resource.validatesTimeForIds?.filter(id => resourceIds.has(id)) }));
   const tasks = data.tasks.filter(task => projectIds.has(task.projectId)); const taskIds = new Set(tasks.map(task => task.id));
@@ -103,14 +95,13 @@ export function permittedState(data: AppData): AppData {
   return { ...data, projects: projects.map(project => budgetIds.has(project.id) ? project : { ...project, budget: 0 }),
     zones: data.zones.filter(zone => own?.zoneIds?.includes(zone.id) || projects.some(project => project.zoneId === zone.id)),
     tasks, resources: resources.map(resource => ({ ...resource, managerId: resources.some(item => item.id === resource.managerId) ? resource.managerId : null })),
-    capacityPlans: permittedCapacityPlans(data),
-    organizationUnits: canSeeView(data, 'organization') ? data.organizationUnits?.map(unit => ({ ...unit, resourceIds: unit.resourceIds.filter(id => resources.some(resource => resource.id === id)) })) : [],
-    profiles: data.profiles.filter(profile => costCatalog || profiles.has(profile.id)), timeEntries: entries,
+    organizationUnits: canReadResources(data) ? data.organizationUnits?.map(unit => ({ ...unit, resourceIds: unit.resourceIds.filter(id => resources.some(resource => resource.id === id)) })) : [],
+    profiles: data.profiles.filter(profile => profiles.has(profile.id)), timeEntries: entries,
     expenses: data.expenses.filter(item => budgetIds.has(item.projectId)), revenues: data.revenues.filter(item => budgetIds.has(item.projectId)),
     comments: data.comments.filter(item => item.projectId && projectIds.has(item.projectId) || item.taskId && taskIds.has(item.taskId)),
-    projectReports: canSeeView(data, 'reports') ? data.projectReports?.filter(item => projectIds.has(item.projectId)) : [], projectDocuments: canSeeView(data, 'documents') ? data.projectDocuments?.filter(item => projectIds.has(item.projectId)) : [],
-    documentFolders: canSeeView(data, 'documents') ? data.documentFolders?.filter(item => projectIds.has(item.projectId)) : [], taskLists: data.taskLists?.filter(item => projectIds.has(item.projectId)),
-    projectTemplates: canCreateProject(data) || canSeeView(data, 'project-templates') ? data.projectTemplates : [],
+    projectReports: data.projectReports?.filter(item => projectIds.has(item.projectId)), projectDocuments: data.projectDocuments?.filter(item => projectIds.has(item.projectId)),
+    documentFolders: data.documentFolders?.filter(item => projectIds.has(item.projectId)), taskLists: data.taskLists?.filter(item => projectIds.has(item.projectId)),
+    projectTemplates: canCreateProject(data) || canCustomize(data) ? data.projectTemplates : [],
     calendarEvents: data.calendarEvents.filter(item => item.projectId ? projectIds.has(item.projectId) : item.resourceIds.includes(data.currentUser.id)),
     unavailabilities: data.unavailabilities.filter(item => resourceIds.has(item.resourceId)), userAccounts: undefined,
   };

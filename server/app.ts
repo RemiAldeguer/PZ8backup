@@ -115,9 +115,6 @@ export function createApp(options: AppOptions = {}) {
     return new ApiService(store, accountActor(principal, store));
   }
   app.get('/api/state', async (_request, response) => { const principal = response.locals.principal as AuthPrincipal; const data = serviceFor(principal).readState(options.today); if (accountRole(principal, store) === 'administrator') data.userAccounts = await auth.members(principal.workspaceId); response.json(data); });
-  app.get('/api/project-documents/:id/content', (request, response) => {
-    response.json(serviceFor(response.locals.principal as AuthPrincipal).readDocument(request.params.id as string));
-  });
   app.post('/api/auth/members', async (request, response) => {
     const principal = response.locals.principal as AuthPrincipal;
     if (accountRole(principal, store) !== 'administrator') throw new ApiError(403, 'Seul un administrateur peut créer un accès de connexion.');
@@ -128,7 +125,7 @@ export function createApp(options: AppOptions = {}) {
     await auth.createMember({ ...parsed.data, workspaceId: principal.workspaceId, name: resource.name });
     response.status(201).json({ resourceId: resource.id, username: parsed.data.username.toLowerCase().trim() });
   });
-  const entities: Entity[] = ['zones', 'projects', 'tasks', 'resources', 'profiles', 'time-entries', 'comments', 'expenses', 'revenues', 'calendar-events', 'unavailabilities', 'project-templates', 'custom-field-definitions', 'report-templates', 'project-status-definitions', 'strategic-axes', 'project-reports', 'project-documents', 'document-folders', 'task-lists', 'project-item-moves', 'time-integrations', 'permission-policies', 'organization-units', 'capacity-plan', 'planzone-preferences', 'task-self-assignment', 'zone-order'];
+  const entities: Entity[] = ['zones', 'projects', 'tasks', 'resources', 'profiles', 'time-entries', 'comments', 'expenses', 'revenues', 'calendar-events', 'unavailabilities', 'project-templates', 'custom-field-definitions', 'report-templates', 'project-status-definitions', 'strategic-axes', 'project-reports', 'project-documents', 'document-folders', 'task-lists', 'project-item-moves', 'time-integrations', 'permission-policies', 'organization-units'];
   for (const entity of entities) {
     app.post(`/api/${entity}`, (request, response) => {
       const result = serviceFor(response.locals.principal as AuthPrincipal).mutate(entity, 'POST', request.body);
@@ -139,7 +136,7 @@ export function createApp(options: AppOptions = {}) {
       response.status(result.status).json(result.value);
     });
     app.delete(`/api/${entity}/:id`, (request, response) => {
-      serviceFor(response.locals.principal as AuthPrincipal).mutate(entity, 'DELETE', request.body, request.params.id as string);
+      serviceFor(response.locals.principal as AuthPrincipal).mutate(entity, 'DELETE', undefined, request.params.id as string);
       response.status(204).end();
     });
   }

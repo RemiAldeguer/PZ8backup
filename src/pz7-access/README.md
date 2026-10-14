@@ -1,6 +1,6 @@
 # Interface d’accès PZ7
 
-Composant autonome React/TypeScript. Aucun fichier d’entrée de l’application existante, backend ou module legacy n’est modifié. Aucun jeu de démonstration, compte synthétique ou mot de passe n’est présent dans le chemin produit.
+Composant React/TypeScript intégré depuis `src/main.tsx` sur `/access`, `/invitations/accept` et `/account/validation`. `VITE_PZ8_BACKEND=java` active aussi cette entrée à la racine. Aucun jeu de démonstration, compte synthétique ou mot de passe n’est présent dans le chemin produit.
 
 ```tsx
 import { Pz7AccessApp } from "./pz7-access";
@@ -45,21 +45,9 @@ Depuis le dépôt, avec les dépendances du lockfile et Chromium installés :
 
 ```sh
 node_modules/.bin/tsc --noEmit
-node_modules/.bin/playwright test tests/browser/pz7-access.spec.ts
+npm run test:e2e:access
 ```
 
 Le test monte exclusivement l’export `Pz7AccessApp` via un bundle esbuild en mémoire. Les fixtures HTTP et le fournisseur de redirection de test sont contenus dans le seul fichier de test ; ils ne font pas partie du produit. Les comportements couverts comprennent les refus, les conflits, les réponses tardives, les curseurs, les restrictions, le CSRF et l’arrivée dans une nouvelle Planzone.
 
-Le coordinateur a intégré le premier lot sur `/access` et les deux chemins d’invitation dans son clone Java. Ce checkout conserve la bibliothèque autonome : il ne remplace pas les fichiers d’entrée du coordinateur. Les tests de contrat ne constituent pas une recette de son backend Java ou de son fournisseur OIDC. L’API historique Cloudflare n’expose pas `/api/v1/session` ; ne pas y activer les routes OIDC sans un backend raccordé.
-
-## Organisation des couches
-
-`domain` contient les modèles et les politiques de ressource. `application` décrit les ports et les cas d’usage, avec des commandes liées à une Planzone, l’affectation des identifiants d’opération et le contrôle du périmètre des réponses. `infrastructure` implémente le transport HTTP, la mémoire CSRF et la navigation du navigateur. `presentation` contient les composants, formulaires, messages français et hooks React. `composition.ts` assemble les adaptateurs ; l’export public `Pz7AccessApp` reste compatible. La façade historique `client.ts` conserve ses exports pour les hôtes déjà intégrés ; les nouveaux composants utilisent les ports d’application.
-
-La session du domaine ne contient pas le token CSRF ; il reste dans l’adaptateur HTTP. Les restrictions inconnues d’une ressource sont conservées par le cas d’usage d’édition, même si elles ne sont pas affichées comme cases du formulaire. Le verrou métier de rôle est `role`, tandis que son affectation utilise `roleId`. Les noms acceptent 256 caractères, descriptions et messages 5 000 ; l’e-mail d’identité peut être nul. L’accueil et la sortie d’invitation conduisent à `/access`.
-
-Le contrôle AST dans `__tests__/architecture.test.ts` refuse les dépendances vers l’extérieur des couches, les imports du transport depuis la présentation et les cycles. Les tests de cas d’usage exercent les droits, les réponses hors périmètre, les conflits, les restrictions et le traitement de session sans React.
-
-```sh
-node_modules/.bin/tsx --test src/pz7-access/__tests__/*.test.ts
-```
+La recette `npm run test:e2e:access:java` utilise l’entrée réelle, Vite et un backend Java/PostgreSQL avec fournisseur de test OIDC signé. Elle nécessite d’abord la tâche `:api:browserAcceptanceFixture` et son manifeste `PZ8_BROWSER_FIXTURE_FILE`. Les [instructions et résultats](../../docs/refoundation/2026-10-14-access-validation.md) distinguent cette recette des 25 scénarios avec fixtures HTTP et de l’exploitation avec le futur fournisseur. Aucun déploiement n’a été réalisé.

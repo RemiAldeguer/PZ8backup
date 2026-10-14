@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: pz8-api
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+server:
+  port: ${PZ8_API_PORT:8080}
+  shutdown: graceful
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+pz8:
+  access:
+    enabled: ${PZ8_ACCESS_ENABLED:false}
+    allow-local-http: ${PZ8_ALLOW_LOCAL_HTTP:false}
+    jdbc-url: ${PZ8_JDBC_URL:}
+    jdbc-username: ${PZ8_JDBC_USERNAME:}
+    jdbc-password: ${PZ8_JDBC_PASSWORD:}
+    oidc-issuer: ${PZ8_OIDC_ISSUER:}
+    oidc-client-id: ${PZ8_OIDC_CLIENT_ID:}
+    oidc-client-secret: ${PZ8_OIDC_CLIENT_SECRET:}
+    frontend-url: ${PZ8_FRONTEND_URL:}
+    public-api-url: ${PZ8_PUBLIC_API_URL:}
+    invitation-encryption-key: ${PZ8_INVITATION_ENCRYPTION_KEY:}
+    invitation-days: ${PZ8_INVITATION_DAYS:7}
+    session-seconds: ${PZ8_SESSION_SECONDS:1800}
+    mail-from: ${PZ8_MAIL_FROM:}

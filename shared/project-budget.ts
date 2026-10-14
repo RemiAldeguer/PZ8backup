@@ -1,4 +1,3 @@
-import { projectTimeEntries } from './planzone-preferences';
 import { actualCost, plannedCost } from './domain';
 import type { AppData, Project } from './types';
 
@@ -29,7 +28,7 @@ export function projectBudgetMetrics(data: AppData, projects: Project[]): Projec
   const scopedProjects = new Map(projects.map(project => [project.id, project]));
   const tasks = data.tasks.filter(task => scopedProjects.has(task.projectId));
   const taskIds = new Set(tasks.map(task => task.id));
-  const entries = projectTimeEntries(data).filter(entry => taskIds.has(entry.taskId));
+  const entries = data.timeEntries.filter(entry => taskIds.has(entry.taskId));
   const expenses = data.expenses.filter(expense => scopedProjects.has(expense.projectId));
 
   const allocated = [...scopedProjects.values()].reduce((sum, project) => sum + project.budget, 0);

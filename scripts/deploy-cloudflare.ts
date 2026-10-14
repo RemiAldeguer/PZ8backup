@@ -3,8 +3,6 @@ import { access, mkdir, readFile, readdir, rename, writeFile } from 'node:fs/pro
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { AuthManager, type AuthDatabase } from '../server/auth.ts';
-import { parseWorkspaceKeys, type WorkspaceKeys } from '../server/workspace-crypto.ts';
-import { migrateWorkspaceEncryption, preflightWorkspaceEncryption, sealPlaintextWrites, type MigrationDatabase, type MigrationRow } from './workspace-encryption.ts';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const deploymentDirectory = path.join(root, '.cloudflare');
@@ -12,7 +10,6 @@ const receiptPath = path.join(deploymentDirectory, 'deployment.json');
 const pendingPath = path.join(deploymentDirectory, 'deployment.pending.json');
 const resolvedConfigPath = path.join(deploymentDirectory, 'wrangler.deploy.json');
 const adminCredentialsPath = path.join(deploymentDirectory, 'admin-credentials.json');
-const workerSecretsPath = path.join(deploymentDirectory, 'worker-secrets.json');
 const apiBase = 'https://api.cloudflare.com/client/v4';
 
 interface CloudflareEnvelope<T> {
@@ -43,7 +40,7 @@ interface Receipt {
 interface QueryResult { success?: boolean; results?: Record<string, unknown>[]; meta?: { changes?: number }; }
 
 /** The Cloudflare token stays in the environment; D1 only receives salted password hashes. */
-class RemoteAuthDatabase implements AuthDatabase, MigrationDatabase {
+class RemoteAuthDatabase implements AuthDatabase {
   constructor(private endpoint: string) {}
   private async query(sql: string, params: unknown[] = []): Promise<QueryResult> {
     const envelope = await api<QueryResult[]>('Configuration du compte administrateur', this.endpoint, 'POST', { sql, params });
@@ -58,29 +55,6 @@ class RemoteAuthDatabase implements AuthDatabase, MigrationDatabase {
   async run(sql: string, params: unknown[] = []): Promise<{ changes: number }> {
     return { changes: (await this.query(sql, params)).meta?.changes ?? 0 };
   }
-  async rows(sql: string, params: unknown[] = []): Promise<MigrationRow[]> {
-    return (await this.query(sql, params)).results as unknown as MigrationRow[] ?? [];
-  }
-}
-
-async function encryptionKeys(receipt: Receipt, db: RemoteAuthDatabase, workerExists: boolean): Promise<WorkspaceKeys> {
-  const filePath = path.join(deploymentDirectory, 'data-encryption-keys.json');
-  try {
-    const saved = JSON.parse(await readFile(filePath, 'utf8'));
-    if (saved.accountId !== receipt.accountId || saved.databaseId !== receipt.databaseId || saved.workerName !== receipt.workerName) throw new Error('La clé privée de chiffrement appartient à une autre cible.');
-    return parseWorkspaceKeys(JSON.stringify(saved.keyring));
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw new Error('La copie privée de la clé de chiffrement est invalide ou appartient à une autre cible. Aucun remplacement de clé n’a été effectué.');
-  }
-  const encrypted = await db.first('SELECT id FROM demo_workspaces WHERE json_extract(data, \'$.format\') = ? LIMIT 1', ['planzone8-aes-gcm']);
-  const secrets = workerExists ? await api<{ name: string }[]>('Vérification de la clé de chiffrement existante', `/accounts/${receipt.accountId}/workers/scripts/${encodeURIComponent(receipt.workerName)}/secrets`).catch(error => {
-    if (error instanceof CloudflareError && error.status === 404) return { success: true, result: [] };
-    throw error;
-  }) : { success: true, result: [] };
-  if (encrypted || secrets.result.some(secret => secret.name === 'PLANZONE_DATA_KEYS')) throw new Error('La copie privée de la clé de chiffrement est manquante. Restaurez .cloudflare/data-encryption-keys.json ; aucune nouvelle clé n’a été créée.');
-  const keyring = { current: 'v1', keys: { v1: Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString('base64') } };
-  await writeFile(filePath, JSON.stringify({ accountId: receipt.accountId, databaseId: receipt.databaseId, workerName: receipt.workerName, keyring }), { mode: 0o600, flag: 'wx' });
-  return parseWorkspaceKeys(JSON.stringify(keyring));
 }
 
 async function provisionAdmin(endpoint: string, receipt: Receipt): Promise<void> {
@@ -121,7 +95,7 @@ function safeMessage(value: string): string {
   return apiToken ? value.split(apiToken).join('[jeton masqué]') : value;
 }
 
-async function api<T>(operation: string, endpoint: string, method = 'GET', body?: unknown, attempt = 0): Promise<CloudflareEnvelope<T>> {
+async function api<T>(operation: string, endpoint: string, method = 'GET', body?: unknown): Promise<CloudflareEnvelope<T>> {
   let response: Response;
   try {
     response = await fetch(`${apiBase}${endpoint}`, {
@@ -141,17 +115,7 @@ async function api<T>(operation: string, endpoint: string, method = 'GET', body?
   try { envelope = await response.json() as CloudflareEnvelope<T>; }
   catch { throw new CloudflareError(operation, response.status, []); }
   if (!response.ok || envelope.success !== true) {
-    const codes = (envelope.errors ?? []).flatMap(error => typeof error.code === 'number' ? [error.code] : []);
-    // Explicit upstream authentication rejections perform no database/script write.
-    // Retry explicit auth rejections only, plus transient D1 failures in these
-    // idempotent schema/reads and revision-guarded migration queries.
-    const authRejected = [400, 401].includes(response.status) && codes.some(code => code === 9106 || code === 10000);
-    const transientD1 = response.status === 500 && codes.includes(7500) && endpoint.endsWith('/query');
-    if (attempt < 4 && (authRejected || transientD1)) {
-      await new Promise(resolve => setTimeout(resolve, 200 * (attempt + 1)));
-      return api<T>(operation, endpoint, method, body, attempt + 1);
-    }
-    throw new CloudflareError(operation, response.status, codes);
+    throw new CloudflareError(operation, response.status, (envelope.errors ?? []).flatMap(error => typeof error.code === 'number' ? [error.code] : []));
   }
   return envelope;
 }
@@ -204,7 +168,7 @@ async function deployWithWrangler(): Promise<void> {
   await mkdir(configHome, { recursive: true });
   await mkdir(logPath.endsWith('.log') ? path.dirname(logPath) : logPath, { recursive: true });
   await new Promise<void>((resolve, reject) => {
-    const child = spawn(process.execPath, [wrangler, 'deploy', '--config', resolvedConfigPath, '--secrets-file', workerSecretsPath], {
+    const child = spawn(process.execPath, [wrangler, 'deploy', '--config', resolvedConfigPath], {
       cwd: root,
       env: {
         ...process.env,
@@ -339,21 +303,10 @@ async function main(): Promise<void> {
     }
   }
   await provisionAdmin(queryEndpoint, nextReceipt);
-  const remoteDb = new RemoteAuthDatabase(queryEndpoint);
-  const dataKeys = await encryptionKeys(nextReceipt, remoteDb, scripts.result.some(script => script.id === config.name));
-  const backupDirectory = path.join(deploymentDirectory, 'encrypted-backups', nextReceipt.deployedAt.replaceAll(':', '-'));
-  await mkdir(backupDirectory, { recursive: true, mode: 0o700 });
-  const backup = async (row: MigrationRow) => {
-    await writeFile(path.join(backupDirectory, `${encodeURIComponent(row.id)}-${row.revision}.json`), JSON.stringify(row), { mode: 0o600 });
-  };
-  const preflight = await preflightWorkspaceEncryption(remoteDb, dataKeys, backup);
-  console.log(`Stockage vérifié : ${preflight.total} espaces, ${preflight.plaintext} à chiffrer. Copies de récupération chiffrées conservées dans .cloudflare.`);
-  // Wrangler installs this as a secret binding atomically with the new Worker version.
-  await writeFile(workerSecretsPath, JSON.stringify({ PLANZONE_DATA_KEYS: JSON.stringify(dataKeys) }), { mode: 0o600 });
   const resolvedConfig: Config = {
     ...config,
     account_id: accountId,
-    vars: { ...(config.vars as Record<string, unknown> | undefined), PLANZONE_DEPLOYMENT_MARKER: nextReceipt.deploymentMarker, PLANZONE_MIGRATE_PLAINTEXT: 'true' },
+    vars: { ...(config.vars as Record<string, unknown> | undefined), PLANZONE_DEPLOYMENT_MARKER: nextReceipt.deploymentMarker },
     main: path.resolve(root, config.main),
     assets: { ...config.assets, directory: path.resolve(root, config.assets.directory) },
     d1_databases: config.d1_databases.map(binding => ({
@@ -373,15 +326,6 @@ async function main(): Promise<void> {
     throw error;
   }
   await saveReceipt(nextReceipt);
-  {
-    console.log('Migration des espaces existants avec conservation des modifications concurrentes…');
-    await sealPlaintextWrites(remoteDb);
-    const migrated = await migrateWorkspaceEncryption(remoteDb, dataKeys, backup);
-    console.log(`${migrated} espaces migrés ; désactivation de la lecture des anciennes données en clair…`);
-    (resolvedConfig.vars as Record<string, unknown>).PLANZONE_MIGRATE_PLAINTEXT = 'false';
-    await writeFile(resolvedConfigPath, `${JSON.stringify(resolvedConfig, null, 2)}\n`, { mode: 0o600 });
-    await deployWithWrangler();
-  }
   console.log('Activation et vérification de l’adresse workers.dev…');
   const subdomainPath = `${accountPath}/workers/scripts/${encodeURIComponent(config.name)}/subdomain`;
   await api('Activation workers.dev', subdomainPath, 'POST', { enabled: true, previews_enabled: false });
