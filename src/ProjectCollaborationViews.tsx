@@ -38,14 +38,8 @@ function documentBytes(item: ProjectDocument): Uint8Array {
   const raw = atob(item.contentBase64 ?? '');
   return Uint8Array.from(raw, character => character.charCodeAt(0));
 }
-async function fetchDocument(item: ProjectDocument, signal?: AbortSignal): Promise<ProjectDocument> {
-  const response = await fetch(`/api/project-documents/${encodeURIComponent(item.id)}/content`, { credentials: 'same-origin', cache: 'no-store', signal });
-  if (!response.ok) throw new Error(response.status === 401 ? 'Reconnectez-vous pour ouvrir ce document.' : 'Ce document est indisponible ou vous n’y avez plus accès.');
-  return await response.json() as ProjectDocument;
-}
-async function downloadDocument(item: ProjectDocument): Promise<void> {
-  const loaded = await fetchDocument(item);
-  const blob = new Blob([documentBytes(loaded) as BlobPart], { type: loaded.mimeType ?? 'application/octet-stream' });
+function downloadDocument(item: ProjectDocument): void {
+  const blob = new Blob([documentBytes(item) as BlobPart], { type: item.mimeType ?? 'application/octet-stream' });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a'); anchor.href = url; anchor.download = item.fileName ?? item.name;
   document.body.append(anchor); anchor.click(); anchor.remove();
@@ -117,7 +111,7 @@ export function GlobalDocumentsView(props: ViewProps) {
         return <article className="pcv-document" key={item.id} data-document-id={item.id}>
           <span className={`pcv-document-icon pcv-document-${item.kind}`} aria-hidden="true">{item.kind === 'link' ? <Link2 size={23} /> : item.mimeType?.startsWith('image/') ? <FileImage size={23} /> : <FileText size={23} />}</span>
           <div className="pcv-document-info"><button type="button" className="pcv-document-name" onClick={() => setPreviewId(item.id)}>{item.name}</button>{item.description && <p>{item.description}</p>}<small>{item.authorName} · {dateLabel(item.createdAt)} · {item.kind === 'file' ? `${((item.sizeBytes ?? 0) / 1024).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} Ko` : 'Lien web'}</small><a className="pcv-document-location" href={projectUrl(item)} aria-label={`Ouvrir le dossier de ${item.name}`}><Folder size={12} />{project.name} / {location(item)}</a>{isLocked(project) && <small className="pcv-global-readonly">Projet en lecture seule</small>}</div>
-          <div className="pcv-document-actions">{item.kind === 'link' ? webUrl && <a className="pcv-icon-action" href={webUrl} target="_blank" rel="noopener noreferrer" aria-label={`Ouvrir ${item.name}`} title="Ouvrir le lien"><ExternalLink size={18} /></a> : <button type="button" className="pcv-icon-action" aria-label={`Télécharger ${item.name}`} title="Télécharger" onClick={() => { void downloadDocument(item).catch(error => notify(failure(error))); }}><Download size={18} /></button>}{canEdit && <button type="button" className="pcv-icon-action" aria-label={`Modifier ${item.name}`} title="Modifier ou déplacer le document" onClick={() => setEditor({ projectId: project.id, kind: item.kind, document: item })}><Pencil size={17} /></button>}</div>
+          <div className="pcv-document-actions">{item.kind === 'link' ? webUrl && <a className="pcv-icon-action" href={webUrl} target="_blank" rel="noopener noreferrer" aria-label={`Ouvrir ${item.name}`} title="Ouvrir le lien"><ExternalLink size={18} /></a> : <button type="button" className="pcv-icon-action" aria-label={`Télécharger ${item.name}`} title="Télécharger" onClick={() => { try { downloadDocument(item); } catch (error) { notify(failure(error)); } }}><Download size={18} /></button>}{canEdit && <button type="button" className="pcv-icon-action" aria-label={`Modifier ${item.name}`} title="Modifier ou déplacer le document" onClick={() => setEditor({ projectId: project.id, kind: item.kind, document: item })}><Pencil size={17} /></button>}</div>
         </article>;
       })}</div> : <div className="pcv-empty"><Folder size={34} /><strong>{allDocuments.length ? 'Aucun document trouvé' : 'Aucun document dans cet espace'}</strong><p>{allDocuments.length ? 'Modifiez la recherche ou les filtres pour retrouver vos documents.' : 'Ajoutez un fichier ou un lien à un projet pour le retrouver ici.'}</p></div>}
     </section>
@@ -196,7 +190,7 @@ export function DocumentsView(props: ViewProps & { initialFolderId?: string }) {
           return <article className="pcv-document" key={item.id}>
             <span className={`pcv-document-icon pcv-document-${item.kind}`} aria-hidden="true">{item.kind === 'link' ? <Link2 size={23} /> : item.mimeType?.startsWith('image/') ? <FileImage size={23} /> : <FileText size={23} />}</span>
             <div className="pcv-document-info"><button type="button" className="pcv-document-name" onClick={() => setPreview(item)}>{item.name}</button>{item.description && <p>{item.description}</p>}<small>{item.authorName} · {dateLabel(item.createdAt)}{item.kind === 'file' && item.sizeBytes !== null ? ` · ${(item.sizeBytes / 1024).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} Ko` : ' · Lien web'}</small>{searching && <button type="button" className="pcv-document-location" onClick={() => navigate(item.folderId ?? null)}><Folder size={12} />{documentLocation(folders, item.folderId)}</button>}</div>
-            <div className="pcv-document-actions">{item.kind === 'link' ? webUrl && <a className="pcv-icon-action" href={webUrl} target="_blank" rel="noopener noreferrer" aria-label={`Ouvrir ${item.name}`} title="Ouvrir le lien"><ExternalLink size={18} /></a> : <button type="button" className="pcv-icon-action" aria-label={`Télécharger ${item.name}`} title="Télécharger" onClick={() => { void downloadDocument(item).catch(error => notify(failure(error))); }}><Download size={18} /></button>}{canEdit && <><button type="button" className="pcv-icon-action" aria-label={`Modifier ${item.name}`} title="Modifier ou déplacer le document" disabled={pendingDelete !== null} onClick={() => setEditor({ kind: item.kind, document: item, folderId: item.folderId ?? null })}><Pencil size={17} /></button><button type="button" className="pcv-icon-action pcv-danger" aria-label={`Supprimer ${item.name}`} title="Supprimer" disabled={pendingDelete !== null} onClick={() => void remove(item)}><Trash2 size={17} /></button></>}</div>
+            <div className="pcv-document-actions">{item.kind === 'link' ? webUrl && <a className="pcv-icon-action" href={webUrl} target="_blank" rel="noopener noreferrer" aria-label={`Ouvrir ${item.name}`} title="Ouvrir le lien"><ExternalLink size={18} /></a> : <button type="button" className="pcv-icon-action" aria-label={`Télécharger ${item.name}`} title="Télécharger" onClick={() => { try { downloadDocument(item); } catch (error) { notify(failure(error)); } }}><Download size={18} /></button>}{canEdit && <><button type="button" className="pcv-icon-action" aria-label={`Modifier ${item.name}`} title="Modifier ou déplacer le document" disabled={pendingDelete !== null} onClick={() => setEditor({ kind: item.kind, document: item, folderId: item.folderId ?? null })}><Pencil size={17} /></button><button type="button" className="pcv-icon-action pcv-danger" aria-label={`Supprimer ${item.name}`} title="Supprimer" disabled={pendingDelete !== null} onClick={() => void remove(item)}><Trash2 size={17} /></button></>}</div>
           </article>;
         })}</div> : shownFolders.length === 0 && <div className="pcv-empty"><Folder size={34} /><strong>{searching ? 'Aucun document ou dossier trouvé' : folderId ? 'Ce dossier est vide' : 'Aucun document dans ce projet'}</strong><p>{searching ? 'Essayez un autre terme de recherche.' : 'Ajoutez un fichier, un lien ou un dossier pour le partager avec l’équipe.'}</p></div>}
       </section>
@@ -276,25 +270,17 @@ function DocumentEditor({ data, project, mutate, notify, kind, item, initialFold
 }
 
 function DocumentPreview({ item, location, notify, onClose }: { item: ProjectDocument; location: string; notify: (message: string) => void; onClose: () => void }) {
-  const [loaded, setLoaded] = useState<ProjectDocument | null>(null);
-  const [loadError, setLoadError] = useState('');
-  useEffect(() => {
-    const abort = new AbortController(); setLoaded(null); setLoadError('');
-    if (item.kind === 'file') void fetchDocument(item, abort.signal).then(setLoaded).catch(error => { if (!abort.signal.aborted) setLoadError(failure(error)); });
-    return () => abort.abort();
-  }, [item.id, item.updatedAt, item.kind]);
   const url = safeWebUrl(item.url);
-  const image = item.kind === 'file' && ['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(item.mimeType ?? '') && loaded?.contentBase64;
+  const image = item.kind === 'file' && ['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(item.mimeType ?? '') && item.contentBase64;
   const text = useMemo(() => {
     if (item.kind !== 'file' || !['text/plain', 'text/csv'].includes(item.mimeType ?? '')) return null;
-    if (!loaded) return null;
-    try { const decoded = new TextDecoder().decode(documentBytes(loaded)); return { body: decoded.slice(0, 20000), truncated: decoded.length > 20000 }; } catch { return null; }
-  }, [item.kind, item.mimeType, loaded]);
+    try { const decoded = new TextDecoder().decode(documentBytes(item)); return { body: decoded.slice(0, 20000), truncated: decoded.length > 20000 }; } catch { return null; }
+  }, [item]);
   return <Modal title={item.name} onClose={onClose} large><div className="modal-body pcv-preview">
     <p className="pcv-preview-meta">Ajouté par {item.authorName} · {dateLabel(item.createdAt)}<span className="pcv-preview-location"><Folder size={13} />{location}</span></p>
     {item.description && <p className="pcv-prewrap">{item.description}</p>}
-    {item.kind === 'file' && loadError ? <p className="form-error" role="alert">{loadError}</p> : item.kind === 'file' && !loaded ? <p role="status">Chargement du document…</p> : image ? <img src={`data:${loaded!.mimeType};base64,${loaded!.contentBase64}`} alt={item.name} /> : text !== null ? <><pre>{text.body}</pre>{text.truncated && <p className="pcv-file-hint">Aperçu limité à 20 000 caractères. Téléchargez le fichier pour le consulter en entier.</p>}</> : item.kind === 'file' ? <div className="pcv-preview-file"><FileText size={42} /><strong>{item.fileName}</strong><p>Téléchargez ce document pour le consulter.</p></div> : url ? <a className="pcv-link" href={url} rel="noopener noreferrer" target="_blank">{url}<ExternalLink size={16} /></a> : <p>Lien indisponible.</p>}
-  </div><div className="modal-footer"><button className="button button-secondary" onClick={onClose}>Fermer</button>{item.kind === 'file' ? <button className="button button-primary" onClick={() => { void downloadDocument(item).catch(error => notify(failure(error))); }}><Download size={16} />Télécharger</button> : url && <a className="button button-primary" href={url} rel="noopener noreferrer" target="_blank"><ExternalLink size={16} />Ouvrir le lien</a>}</div></Modal>;
+    {image ? <img src={`data:${item.mimeType};base64,${item.contentBase64}`} alt={item.name} /> : text !== null ? <><pre>{text.body}</pre>{text.truncated && <p className="pcv-file-hint">Aperçu limité à 20 000 caractères. Téléchargez le fichier pour le consulter en entier.</p>}</> : item.kind === 'file' ? <div className="pcv-preview-file"><FileText size={42} /><strong>{item.fileName}</strong><p>Téléchargez ce document pour le consulter.</p></div> : url ? <a className="pcv-link" href={url} rel="noopener noreferrer" target="_blank">{url}<ExternalLink size={16} /></a> : <p>Lien indisponible.</p>}
+  </div><div className="modal-footer"><button className="button button-secondary" onClick={onClose}>Fermer</button>{item.kind === 'file' ? <button className="button button-primary" onClick={() => { try { downloadDocument(item); } catch (error) { notify(failure(error)); } }}><Download size={16} />Télécharger</button> : url && <a className="button button-primary" href={url} rel="noopener noreferrer" target="_blank"><ExternalLink size={16} />Ouvrir le lien</a>}</div></Modal>;
 }
 
 type DiscussionContext = { data: AppData; project: Project; task: Task | null; mutate: Mutation; notify: (message: string) => void };

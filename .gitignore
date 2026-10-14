@@ -10,5 +10,3 @@ test-results/
 .DS_Store
 .wrangler/
 .cloudflare/
-.dev.vars
-.dev.vars.*

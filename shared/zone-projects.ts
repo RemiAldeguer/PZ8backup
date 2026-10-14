@@ -1,4 +1,3 @@
-import { projectTimeEntries } from './planzone-preferences';
 import { isLate, taskMetrics } from './domain';
 import { associatedResourceProjectIds } from './resources';
 import type { AppData, Project, Resource } from './types';
@@ -25,7 +24,7 @@ function precise(value: number): number {
 export function projectZoneMetrics(data: AppData, projects: Project[]): ZoneProjectMetrics {
   const scopedProjects = new Map(projects.map(project => [project.id, project]));
   const tasks = data.tasks.filter(task => scopedProjects.has(task.projectId));
-  const metrics = taskMetrics(tasks, projectTimeEntries(data), data.today);
+  const metrics = taskMetrics(tasks, data.timeEntries, data.today);
   const work = tasks.filter(task => task.kind === 'task');
   let realizedPercent = 0;
   let latePercent = 0;
@@ -46,7 +45,7 @@ export function projectZoneMetrics(data: AppData, projects: Project[]): ZoneProj
     openPercent = Math.max(0, 100 - realizedPercent - latePercent);
   }
 
-  const weatherValues = [...scopedProjects.values()].map(project => project.weather).filter(weather => weather > 0);
+  const weatherValues = [...scopedProjects.values()].map(project => project.weather);
   return {
     allocatedHours: precise(metrics.allocatedHours),
     spentHours: precise(metrics.spentHours),

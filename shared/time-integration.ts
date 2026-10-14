@@ -21,7 +21,7 @@ export function timeIntegrationIndex(data: Pick<AppData, 'projects' | 'resources
   }
   function entryCovered(entry: TimeEntry) { return covers(entry.date, entry.resourceId, taskProjects.get(entry.taskId)); }
   function decorate(entry: TimeEntry): TimeEntry {
-    return entryCovered(entry) ? { ...entry, validated: true, integrationValidated: true, manuallyValidated: entry.validated } : entry;
+    return entryCovered(entry) ? { ...entry, validated: true, integrationValidated: true } : entry;
   }
   return { cutoff, covers, entryCovered, decorate };
 }

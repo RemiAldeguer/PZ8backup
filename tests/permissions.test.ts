@@ -57,6 +57,17 @@ for (const backend of ['sqlite', 'memory'] as const) {
     } finally { f.close(); }
   });
 
+  test(`${backend}: moving records cannot bypass destination project permissions`, () => {
+    const f = fixture(); try {
+      const manager = f.api(f.manager);
+      f.denied(() => manager.mutate('tasks', 'PATCH', { projectId: 'project-mobile' }, f.own.id));
+      const expense = manager.mutate('expenses', 'POST', { projectId: 'project-nova', label: 'Interne', amount: 10, plannedDate: '2026-10-06' }).value!;
+      f.denied(() => manager.mutate('expenses', 'PATCH', { projectId: 'project-mobile' }, expense.id));
+      const folder = manager.mutate('document-folders', 'POST', { projectId: 'project-nova', name: 'Interne', parentId: null }).value!;
+      f.denied(() => manager.mutate('document-folders', 'PATCH', { projectId: 'project-mobile' }, folder.id));
+    } finally { f.close(); }
+  });
+
   test(`${backend}: conditional collaborator actions are configurable and financial mutation responses stay redacted`, () => {
     const f = fixture(); try {
       const api = f.api(f.collaborator);

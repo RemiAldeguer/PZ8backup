@@ -38,18 +38,3 @@ test('Finish-start constraints reject self links, cross-project links, chain cyc
   const tasks = [task('a'), task('b', { dependsOnId: 'a' }), task('c', { dependsOnId: 'b' }), task('foreign', { projectId: 'elsewhere' }), task('started', { status: 'in_progress' }), task('done', { status: 'done', progress: 100 })];
   assert.equal(dependencyProblem(tasks, 'a', 'c'), null); assert.match(dependencyProblem(tasks, 'a', 'a')!, /elle-même/); assert.match(dependencyProblem(tasks, 'c', 'a')!, /cycle/); assert.match(dependencyProblem(tasks, 'foreign', 'a')!, /même projet/); assert.match(dependencyProblem(tasks, 'a', 'started')!, /déjà démarré/); assert.equal(dependencyProblem(tasks, 'done', 'started'), null);
 });
-
-test('multi-project Gantt keeps legacy lists with identical names independently folded and identifies every row project', () => {
-  const other = { ...project, id: 'other', name: 'Second projet' };
-  const tasks = [task('alpha', { phase: 'Préparation' }), task('beta', { phase: 'Préparation', projectId: other.id })];
-  const data = { tasks, taskLists: [] };
-  const first = projectGanttRows(project, buildProjectTaskListTree(data, project.id), new Set(), true, true);
-  const second = projectGanttRows(other, buildProjectTaskListTree(data, other.id), new Set(), true, true);
-  const firstList = first.find(row => row.kind === 'list')!;
-  assert.notEqual(firstList.id, second.find(row => row.kind === 'list')!.id);
-  const collapsed = new Set([firstList.id]);
-  assert.ok(!projectGanttRows(project, buildProjectTaskListTree(data, project.id), collapsed, true, true).some(row => row.task));
-  assert.ok(projectGanttRows(other, buildProjectTaskListTree(data, other.id), collapsed, true, true).some(row => row.task?.id === 'beta'));
-  assert.ok(first.every(row => row.projectId === project.id));
-  assert.ok(second.every(row => row.projectId === other.id));
-});

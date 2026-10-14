@@ -468,6 +468,17 @@ test('login creates an HttpOnly session without exposing a token, and uses a gen
   assert.match(cookie, /Path=\//i);
 });
 
+test('a loopback HTTPS proxy produces a secure host-only session cookie', async t => {
+  const api = await fixture(t);
+  const login = await api.rawRequest('POST', '/api/auth/login', { username: testAdmin.username, password: testAdmin.password }, { 'X-Forwarded-Proto': 'https' });
+  assert.equal(login.status, 200);
+  const cookie = login.headers.get('set-cookie') ?? '';
+  assert.match(cookie, /^__Host-planzone8-session=/);
+  assert.match(cookie, /; Secure/);
+  const session = await api.rawRequest('GET', '/api/auth/session', undefined, { Cookie: cookie.split(';', 1)[0]!, 'X-Forwarded-Proto': 'https' });
+  assert.equal((await session.json() as { authenticated: boolean }).authenticated, true);
+});
+
 test('logout invalidates the server session, including when the old cookie is replayed after restart', async t => {
   const api = await fixture(t);
   const previousCookie = api.cookie;

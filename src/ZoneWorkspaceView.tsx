@@ -1,19 +1,16 @@
 import { useMemo, useState } from 'react';
 import { CalendarDays, ChevronLeft, ChevronRight, ChevronsDown, ChevronsUp, Flag, Folder, FolderOpen, List, ListTree, Minus, Plus, Search } from 'lucide-react';
-import { STATUS_LABELS, TASK_STATUSES, type Project, type TaskStatus, type ViewProps, type Zone } from '../shared/types';
-import { isAdmin } from '../shared/permissions';
-import { ZoneActions } from './ZoneActions';
+import { STATUS_LABELS, TASK_STATUSES, type Project, type TaskStatus, type ViewProps } from '../shared/types';
 import { formatHours, isLate } from '../shared/domain';
 import { projectStatusLabel } from '../shared/customization';
 import { buildZoneElementTree, flattenZoneElements, type ZoneElementRow } from '../shared/zone-elements';
 import { isCivilDate } from '../shared/time-integration';
 import { ProjectsView } from './ZoneProjectsView';
 import { TaskCheck } from './TaskCheck';
-import { ProjectGanttView } from './ProjectGanttView';
 import './zone-workspace.css';
 
 export type ZoneView = 'projects' | 'list' | 'gantt';
-type Props = ViewProps & { zoneId: string | null; view: ZoneView; createProject: () => void; editProject: (project: Project) => void; onZoneChange: (id: string | null) => void; onEditZone: (zone: Zone) => void; onDeleteZone: (zone: Zone) => void };
+type Props = ViewProps & { zoneId: string | null; view: ZoneView; createProject: () => void; editProject: (project: Project) => void; onZoneChange: (id: string | null) => void };
 export function zoneViewHash(zoneId: string | null, view: ZoneView) { return zoneId ? `#zones/${encodeURIComponent(zoneId)}/${view}` : view === 'projects' ? '#projects' : `#projects/${view}`; }
 const DAY = 86_400_000;
 const stamp = (value: string | null) => value && isCivilDate(value) ? Date.parse(value + 'T00:00:00Z') : null;
@@ -22,27 +19,11 @@ const dateLabel = (value: string | null) => value ? value.split('-').reverse().j
 const tickLabel = (value: number) => new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: '2-digit', timeZone: 'UTC' }).format(new Date(value));
 
 export function ZoneWorkspaceView(props: Props) {
-  const zone = props.data.zones.find(item => item.id === props.zoneId);
   return <div className="zv-workspace"><nav className="zv-tabs" aria-label="Vues de la zone">{([
     ['projects', 'Projets', Folder], ['list', 'Liste', List], ['gantt', 'Gantt', CalendarDays],
-  ] as const).map(([id, label, Icon]) => <a key={id} href={zoneViewHash(props.zoneId, id)} aria-current={props.view === id ? 'page' : undefined}><Icon size={17} />{label}</a>)}{zone && isAdmin(props.data) && <div className="zv-zone-actions"><ZoneActions zone={zone} onEdit={props.onEditZone} onDelete={props.onDeleteZone} /></div>}</nav>
-    {props.view === 'projects' ? <ProjectsView {...props} /> : props.view === 'gantt' ? <ZoneGanttView {...props} /> : <ZoneElementsView {...props} />}
+  ] as const).map(([id, label, Icon]) => <a key={id} href={zoneViewHash(props.zoneId, id)} aria-current={props.view === id ? 'page' : undefined}><Icon size={17} />{label}</a>)}</nav>
+    {props.view === 'projects' ? <ProjectsView {...props} /> : <ZoneElementsView {...props} />}
   </div>;
-}
-
-function ZoneGanttView(props: Props) {
-  const { data, zoneId } = props;
-  const [projectId, setProjectId] = useState('');
-  const zone = data.zones.find(item => item.id === zoneId);
-  const scopedProjects = data.projects.filter(item => !zoneId || item.zoneId === zoneId);
-  const projects = scopedProjects.filter(item => !projectId || item.id === projectId);
-  const title = zoneId ? 'Planning Gantt de la zone' : 'Planning Gantt global';
-  return <section className="zv-elements" aria-label={title}>
-    <header className="zv-heading"><div><span className="zv-context"><FolderOpen size={19} />{zone?.name ?? 'Toutes les zones'}</span><h1>{zoneId ? 'Gantt de la zone' : 'Gantt global'}</h1><p>Les mêmes outils de planning que dans les projets, avec leurs listes, tâches et jalons.</p></div><button type="button" className="button button-primary" onClick={props.createProject}><Plus size={16} />Projet</button></header>
-    <div className="zv-toolbar"><label>Zone<select aria-label="Choisir une zone" value={zoneId ?? ''} onChange={event => props.onZoneChange(event.target.value || null)}><option value="">Toutes les zones</option>{data.zones.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label><label>Projet<select aria-label="Filtrer les éléments par projet" value={projectId} onChange={event => setProjectId(event.target.value)}><option value="">Tous les projets</option>{scopedProjects.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label></div>
-    {projects.length ? <ProjectGanttView {...props} project={projects[0]} scope={{ projects, key: zoneId ? `zone:${zoneId}` : 'global', title: zoneId ? 'Gantt des projets de la zone' : 'Gantt de tous les projets' }} /> : <div className="zv-empty"><FolderOpen size={31} /><h2>{scopedProjects.length ? 'Aucun projet ne correspond au filtre' : 'Aucun projet dans cette zone'}</h2><p>Créez un projet pour organiser ses listes, tâches et jalons.</p>{projectId && <button type="button" className="button button-secondary" onClick={() => setProjectId('')}>Tous les projets</button>}</div>}
-    <p className="zv-note">Chaque modification s’applique au projet de l’élément. Les projets verrouillés restent en lecture seule ; les contraintes relient des éléments du même projet.</p>
-  </section>;
 }
 
 function ZoneElementsView(props: Props) {

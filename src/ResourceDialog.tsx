@@ -27,9 +27,9 @@ function ResourceAvatar({ resource, small = false }: { resource: Pick<Resource, 
 
 export function ResourceDialog(props: Parameters<typeof AdminResourceDialog>[0]) { return isAdmin(props.data) ? <AdminResourceDialog {...props} /> : <ResourceProfileDialog {...props} />; }
 
-function AdminResourceDialog({ resource, data, initialProjectId, mutate, onClose, notify, openProject, onAccountCreated }: {
+function AdminResourceDialog({ resource, data, initialProjectId, mutate, onClose, notify, openProject }: {
   resource: Resource | null; data: AppData; mutate: Mutation;
-  initialProjectId?: string; onAccountCreated?: () => Promise<void>;
+  initialProjectId?: string;
   onClose: () => void; notify: (message: string) => void; openProject?: (project: Project) => void;
 }) {
   const [draft, setDraft] = useState(() => normalizeResource(resource ?? { ...resourceDefaults, projectIds: data.projects.some(project => project.id === initialProjectId) ? [initialProjectId!] : [] }));
@@ -123,7 +123,7 @@ function AdminResourceDialog({ resource, data, initialProjectId, mutate, onClose
           <label className="rd-field">Fonction dans l’organisation<input aria-label="Fonction dans l’organisation" maxLength={200} value={draft.jobTitle} placeholder="Ex. : Chef de projet" onChange={event => field('jobTitle', event.target.value)} /></label>
           {draft.type === 'human' && <div className="rd-field-pair"><label className="rd-field">Rôle<select disabled={resource?.id === 'resource-claire'} value={draft.role} onChange={event => field('role', event.target.value as ResourceRole)}>{Object.entries(RESOURCE_ROLE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><label className="rd-field">Adresse e-mail<input type="email" maxLength={254} value={draft.email} placeholder="nom@exemple.fr" onChange={event => field('email', event.target.value)} /></label></div>}
           {draft.type === 'human' && <p className="rd-hint">{GLOBAL_ROLE_DESCRIPTIONS[draft.role]}</p>}
-          {resource && <MemberAccess data={data} resource={resource} onCreated={onAccountCreated} />}
+          {resource && <MemberAccess />}
           {!resource && draft.type === 'human' && <p className="rd-hint">Le membre pourra être affecté aux tâches et associé aux projets de cette Planzone.</p>}
           <label className="rd-field">Responsable<select aria-label="Responsable de la ressource" value={draft.managerId ?? ''} onChange={event => field('managerId', event.target.value || null)}><option value="">Aucun responsable</option>{data.resources.filter(item => !excludedManagers.has(item.id) && item.type !== 'material').map(item => <option key={item.id} value={item.id}>{item.name}{item.active ? '' : ' (inactive)'}</option>)}</select></label>
           <label className="rd-field">Description <span className="rd-optional">(optionnelle)</span><textarea rows={4} maxLength={10000} value={draft.description} placeholder="Responsabilités, compétences et informations utiles…" onChange={event => field('description', event.target.value)} /></label>

@@ -2,6 +2,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import type { Records, StoreLike, Table } from './contracts.ts';
+import { migrateDomainSchema } from './sqlite-domain-schema.ts';
 export type { Records, StoreLike, Table } from './contracts.ts';
 
 /** JSON keeps the public contract readable; generated references are enforced by SQLite. */
@@ -65,8 +66,6 @@ export class Store implements StoreLike {
       CREATE TABLE IF NOT EXISTS reportTemplates (id TEXT PRIMARY KEY, data TEXT NOT NULL CHECK(json_valid(data)));
       CREATE TABLE IF NOT EXISTS projectStatusDefinitions (id TEXT PRIMARY KEY, data TEXT NOT NULL CHECK(json_valid(data)));
       CREATE TABLE IF NOT EXISTS permissionPolicies (id TEXT PRIMARY KEY, data TEXT NOT NULL CHECK(json_valid(data)));
-      CREATE TABLE IF NOT EXISTS capacityPlans (id TEXT PRIMARY KEY, data TEXT NOT NULL CHECK(json_valid(data)));
-      CREATE TABLE IF NOT EXISTS planzonePreferences (id TEXT PRIMARY KEY CHECK(id = 'planzone-preferences'), data TEXT NOT NULL CHECK(json_valid(data)));
       CREATE TABLE IF NOT EXISTS strategicAxes (id TEXT PRIMARY KEY, data TEXT NOT NULL CHECK(json_valid(data)));
       CREATE TABLE IF NOT EXISTS projectReports (
         id TEXT PRIMARY KEY, data TEXT NOT NULL CHECK(json_valid(data)),
@@ -84,7 +83,6 @@ export class Store implements StoreLike {
       );
       CREATE TABLE IF NOT EXISTS organizationUnits (id TEXT PRIMARY KEY, data TEXT NOT NULL CHECK(json_valid(data)),
         parentId TEXT GENERATED ALWAYS AS (json_extract(data, '$.parentId')) STORED REFERENCES organizationUnits(id));
-      PRAGMA user_version = 1;
     `);
     // SQLite allows additive virtual generated columns: legacy document JSON stays byte-for-byte intact.
     const documentColumns = this.db.prepare('PRAGMA table_xinfo(projectDocuments)').all() as { name: string }[];
@@ -95,6 +93,7 @@ export class Store implements StoreLike {
     if (!taskColumns.some(column => column.name === 'listId')) {
       this.db.exec("ALTER TABLE tasks ADD COLUMN listId TEXT GENERATED ALWAYS AS (json_extract(data, '$.listId')) VIRTUAL REFERENCES taskLists(id)");
     }
+    migrateDomainSchema(this.db);
   }
   all<K extends Table>(table: K): Records[K][] {
     return (this.db.prepare(`SELECT data FROM ${table} ORDER BY rowid`).all() as { data: string }[]).map(row => JSON.parse(row.data) as Records[K]);

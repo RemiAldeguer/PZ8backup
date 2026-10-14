@@ -13,10 +13,6 @@ import { AuthManager, readSessionToken } from '../server/auth.ts';
 import { D1AuthDatabase } from '../cloudflare/auth-d1.ts';
 import { MemoryStore } from '../server/memory-store.ts';
 import { seed } from '../server/seed.ts';
-import { encryptWorkspace, isEncryptedWorkspace } from '../server/workspace-crypto.ts';
-import { TEST_DATA_KEYS, TEST_KEYS, plaintextRow } from './storage-fixture.ts';
-import { DEFAULT_PLANZONE_PREFERENCES } from '../shared/planzone-preferences.ts';
-import { DEFAULT_TASK_CONSTRAINT } from '../shared/task-constraints.ts';
 
 const ADMIN_PASSWORD = 'Worker-test-administrator-2026!';
 
@@ -61,13 +57,12 @@ before(async () => {
 async function fixture(t: TestContext) {
   const directory = await mkdtemp(join(tmpdir(), 'planzone8-d1-tests-'));
   const databaseId = randomUUID();
-  const encryption = { PLANZONE_DATA_KEYS: TEST_DATA_KEYS, PLANZONE_MIGRATE_PLAINTEXT: 'true' };
   function runtime() {
     return new Miniflare(convertV4MiniflareOptions({
       modules: true, script: bundledScript, compatibilityDate: '2026-10-06',
       host: '127.0.0.1', port: 0, cf: false, log: new Log(LogLevel.ERROR),
       resourcePersistencePath: directory,
-      d1Databases: { DB: databaseId }, bindings: { DEMO_TODAY: '2026-10-06', ...encryption },
+      d1Databases: { DB: databaseId }, bindings: { DEMO_TODAY: '2026-10-06' },
       serviceBindings: {
         ASSETS: (request: MiniflareRequest) => new MiniflareResponse(`<html><body>Asset: ${new URL(request.url).pathname}</body></html>`, {
           headers: { 'Content-Type': 'text/html; charset=utf-8', 'X-Test-Asset': 'yes' },
@@ -117,9 +112,9 @@ async function fixture(t: TestContext) {
     const result = await (await db()).prepare('SELECT data, revision FROM demo_workspaces WHERE id = ?')
       .bind(principal.workspaceId).first<{ data: string; revision: number }>();
     assert.ok(result);
-    return plaintextRow(result, principal.workspaceId);
+    return result;
   }
-  async function restart(settings: Partial<typeof encryption> = {}) { Object.assign(encryption, settings); await instance.dispose(); instance = runtime(); await instance.ready; }
+  async function restart() { await instance.dispose(); instance = runtime(); await instance.ready; }
   async function succeeds(method: string, path: string, body: unknown, cookie: string) {
     const response = await request(method, path, body, cookie);
     assert.ok(response.ok, `${method} ${path}: ${response.status} ${await response.clone().text()}`);
@@ -127,54 +122,6 @@ async function fixture(t: TestContext) {
   }
   return { request, raw, state, db, row, restart, succeeds, auth, login, adminWorkspaceId };
 }
-
-test('Planzone preferences persist encrypted in D1 and reject stale or anonymous writes', async t => {
-  const api = await fixture(t);
-  const { id, version, ...options } = DEFAULT_PLANZONE_PREFERENCES;
-  const body = { ...options, expectedVersion: 0, allocationInDays: true, criticalDailyWorkHours: 9, viewRoles: { calendar: ['administrator'], profiles: ['administrator', 'user'] } };
-  assert.equal((await api.request('POST', '/api/planzone-preferences', body)).status, 401);
-  const current = await api.state();
-  await api.succeeds('POST', '/api/planzone-preferences', body, current.cookie);
-  const before = await (await api.db()).prepare('SELECT data, revision FROM demo_workspaces WHERE id = ?').bind(api.adminWorkspaceId).first<{ data: string; revision: number }>();
-  assert.ok(before && isEncryptedWorkspace(before.data)); assert.ok(!before.data.includes('criticalDailyWorkHours'));
-  assert.equal((await api.request('POST', '/api/planzone-preferences', body, current.cookie)).status, 409);
-  assert.deepEqual(await (await api.db()).prepare('SELECT data, revision FROM demo_workspaces WHERE id = ?').bind(api.adminWorkspaceId).first(), before);
-  await api.restart();
-  const restored = (await api.state(current.cookie)).data.planzonePreferences![0];
-  assert.equal(restored.version, 1); assert.equal(restored.allocationInDays, true); assert.equal(restored.criticalDailyWorkHours, 9);
-  assert.deepEqual(restored.viewRoles, body.viewRoles);
-});
-
-test('Automatic task constraints persist one atomic encrypted cascade in D1 and survive restart', async t => {
-  const api = await fixture(t), current = await api.state();
-  const projectId = current.data.projects[0].id;
-  const a = await (await api.succeeds('POST', '/api/tasks', { projectId, title: 'Source automatique', startDate: '2026-10-05', endDate: '2026-10-06' }, current.cookie)).json() as Task;
-  const b = await (await api.succeeds('POST', '/api/tasks', { projectId, title: 'Suite automatique', startDate: '2026-10-09', endDate: '2026-10-11', dependsOnId: a.id, dependencyConstraint: { ...DEFAULT_TASK_CONSTRAINT, offset: 2 } }, current.cookie)).json() as Task;
-  const stored = async () => (await api.db()).prepare('SELECT data, revision FROM demo_workspaces WHERE id = ?').bind(api.adminWorkspaceId).first<{ data: string; revision: number }>();
-  const before = await stored(); assert.ok(before);
-  await api.succeeds('PATCH', '/api/tasks/' + a.id, { endDate: '2026-10-08' }, current.cookie);
-  const after = await stored(); assert.ok(after && isEncryptedWorkspace(after.data)); assert.equal(after.revision, before.revision + 1);
-  assert.equal((await api.request('PATCH', '/api/tasks/' + a.id, { dependsOnId: b.id, dependencyConstraint: DEFAULT_TASK_CONSTRAINT }, current.cookie)).status, 409);
-  assert.deepEqual(await stored(), after);
-  await api.restart(); const restored = (await api.state(current.cookie)).data.tasks.find(task => task.id === b.id)!;
-  assert.equal(restored.startDate, '2026-10-11'); assert.equal(restored.endDate, '2026-10-13'); assert.equal(restored.dependencyConstraint?.offset, 2);
-});
-
-test('CapaPlan commands persist in encrypted D1 and reject anonymous mutations', async t => {
-  const api = await fixture(t);
-  const denied = await api.request('POST', '/api/capacity-plan', {action:'domain',value:{name:'Denied'}});
-  assert.equal(denied.status, 401);
-  const current = await api.state();
-  const created = await api.succeeds('POST','/api/capacity-plan',{action:'domain',value:{name:'D1 capacity',resourceIds:[current.data.currentUser.id]}},current.cookie);
-  const plan = await created.json() as import('../shared/capaplan.ts').CapacityPlan;
-  assert.equal(plan.domains[0].name,'D1 capacity');
-  assert.equal(plan.audit[0].actorId,current.data.currentUser.id);
-  const raw = await (await api.db()).prepare('SELECT data FROM demo_workspaces WHERE id = ?').bind(api.adminWorkspaceId).first<{data:string}>();
-  assert.ok(raw && isEncryptedWorkspace(raw.data));
-  assert.ok(!raw.data.includes('D1 capacity'));
-  await api.restart();
-  assert.equal((await api.state(current.cookie)).data.capacityPlans![0].domains[0].name,'D1 capacity');
-});
 
 test('the bundled Worker serves health and delegates non-API paths to assets without creating a workspace', async t => {
   const api = await fixture(t);
@@ -334,7 +281,7 @@ test('verified administrator login preserves the existing browser workspace and 
   const preserved = await api.state(signedIn.cookie);
   assert.equal(preserved.data.projects.find(project => project.id === 'project-nova')?.name, 'Projet déjà modifié avant authentification');
   assert.equal((await api.row(signedIn.cookie)).data, legacy.data);
-  assert.equal((await api.row(signedIn.cookie)).revision, 5);
+  assert.equal((await api.row(signedIn.cookie)).revision, 4);
   const otherBrowser = await api.state();
   assert.deepEqual(otherBrowser.data, preserved.data);
   assert.deepEqual((await api.state(pristine.cookie)).data, preserved.data);
@@ -365,9 +312,8 @@ test('a mutation racing legacy workspace adoption cannot commit an edit to the a
   assert.equal(response.status, 409, await response.clone().text());
   assert.match((await response.json() as { error: string }).error, /espace de travail a changé/);
   const fallbackAfter = await (await api.db()).prepare('SELECT data, revision FROM demo_workspaces WHERE id = ?')
-    .bind(api.adminWorkspaceId).first<{ data: string; revision: number }>();
-  assert.ok(fallbackAfter);
-  assert.deepEqual(await plaintextRow(fallbackAfter, api.adminWorkspaceId), fallbackBefore);
+    .bind(api.adminWorkspaceId).first();
+  assert.deepEqual(fallbackAfter, fallbackBefore);
   assert.deepEqual(await api.row(signedIn.cookie), { data: legacy.data, revision: 4 });
   assert.equal((await api.state(signedIn.cookie)).data.projects.find(project => project.id === 'project-nova')?.name, 'Projet historique conservé pendant la course');
 });
@@ -479,7 +425,7 @@ test('a workspace reaching its byte quota refuses a valid mutation without repla
   }
   assert.ok(bytes(snapshot) < 1_000_000 && bytes(snapshot) > 995000);
   await (await api.db()).prepare('UPDATE demo_workspaces SET data = ? WHERE id = ?')
-    .bind(await encryptWorkspace(JSON.stringify(snapshot), api.adminWorkspaceId, TEST_KEYS), api.adminWorkspaceId).run();
+    .bind(JSON.stringify(snapshot), api.adminWorkspaceId).run();
   const before = await api.row(visitor.cookie);
   const response = await api.request('POST', '/api/comments', { taskId: 'task-ateliers', body: 'q'.repeat(10000) }, visitor.cookie);
   assert.equal(response.status, 413);
@@ -554,7 +500,7 @@ test('calendar records upgrade a deployed legacy D1 snapshot only on mutation an
   delete legacy.unavailabilities;
   const legacyData = JSON.stringify(legacy);
   await (await api.db()).prepare('UPDATE demo_workspaces SET data = ? WHERE id = ?')
-    .bind(await encryptWorkspace(legacyData, api.adminWorkspaceId, TEST_KEYS), api.adminWorkspaceId).run();
+    .bind(legacyData, api.adminWorkspaceId).run();
   const before = await api.row(visitor.cookie);
   assert.equal(before.data, legacyData);
   assert.equal(before.revision, persisted.revision);
@@ -595,54 +541,4 @@ test('calendar records upgrade a deployed legacy D1 snapshot only on mutation an
   assert.deepEqual(restored.data, saved.data);
   assert.deepEqual(await api.row(visitor.cookie), savedRow);
   assert.equal(restored.setCookie, null);
-});
-
-test('D1 stores authenticated ciphertext and strict mode rejects plaintext, tampering and missing server keys without exposing records', async t => {
-  const api = await fixture(t); const signed = await api.state();
-  const rawRow = async () => (await api.db()).prepare('SELECT data, revision FROM demo_workspaces WHERE id=?').bind(api.adminWorkspaceId).first<{ data: string; revision: number }>();
-  const initial = (await rawRow())!; assert.ok(isEncryptedWorkspace(initial.data)); assert.ok(!initial.data.includes('project-nova'));
-  await api.restart({ PLANZONE_MIGRATE_PLAINTEXT: 'false' }); assert.deepEqual((await api.state(signed.cookie)).data, signed.data);
-  await api.succeeds('PATCH', '/api/projects/project-nova', { description: 'Texte confidentiel chiffré' }, signed.cookie);
-  const saved = (await rawRow())!; assert.ok(isEncryptedWorkspace(saved.data)); assert.ok(!saved.data.includes('confidentiel'));
-  const plaintext = (await api.row(signed.cookie)).data;
-  for (const invalid of [plaintext, JSON.stringify({ ...JSON.parse(saved.data), iv: 'AAAAAAAAAAAAAAAA' })]) {
-    await (await api.db()).prepare('UPDATE demo_workspaces SET data=? WHERE id=?').bind(invalid, api.adminWorkspaceId).run();
-    const blocked = await api.request('GET', '/api/state', undefined, signed.cookie); assert.equal(blocked.status, 500); assert.ok(!JSON.stringify(await blocked.json()).includes('confidentiel'));
-    assert.equal((await rawRow())!.data, invalid, 'A failed read must not replace stored data');
-  }
-  await (await api.db()).prepare('UPDATE demo_workspaces SET data=? WHERE id=?').bind(saved.data, api.adminWorkspaceId).run();
-  await api.restart({ PLANZONE_DATA_KEYS: '' }); assert.equal((await api.request('GET', '/api/state', undefined, signed.cookie)).status, 500);
-  await api.restart({ PLANZONE_DATA_KEYS: TEST_DATA_KEYS }); assert.equal((await api.state(signed.cookie)).data.projects.find(project => project.id === 'project-nova')!.description, 'Texte confidentiel chiffré');
-});
-
-test('document bytes are fetched only on demand with sessions, project visibility and observer reads preserved', async t => {
-  const api = await fixture(t); const signed = await api.state(); const content = Buffer.from('Contenu privé de la pièce jointe').toString('base64');
-  const document = await (await api.succeeds('POST', '/api/project-documents', { projectId: 'project-nova', name: 'Pièce privée', kind: 'file', fileName: 'note.txt', mimeType: 'text/plain', contentBase64: content }, signed.cookie)).json() as { id: string; contentBase64: string | null };
-  assert.equal(document.contentBase64, null); assert.equal((await api.state(signed.cookie)).data.projectDocuments!.find(item => item.id === document.id)!.contentBase64, null);
-  const path = `/api/project-documents/${document.id}/content`;
-  assert.equal((await api.request('GET', path)).status, 401);
-  const allowed = await api.request('GET', path, undefined, signed.cookie); assert.equal(allowed.status, 200); assert.equal((await allowed.json() as { contentBase64: string }).contentBase64, content); assert.equal(allowed.headers.get('cache-control'), 'no-store');
-  await api.succeeds('PATCH', '/api/resources/resource-lucas', { role: 'visitor' }, signed.cookie);
-  await api.succeeds('PATCH', '/api/projects/project-nova', { projectRoles: { 'resource-lucas': 'observer' } }, signed.cookie);
-  await api.succeeds('POST', '/api/auth/members', { resourceId: 'resource-lucas', username: 'reader', password: 'Reader-test-password-2026!' }, signed.cookie);
-  const login = await api.request('POST', '/api/auth/login', { username: 'reader', password: 'Reader-test-password-2026!' }); assert.equal(login.status, 200); const reader = login.headers.get('set-cookie')!.split(';')[0];
-  assert.equal((await api.request('GET', path, undefined, reader)).status, 200);
-  for (const task of signed.data.tasks.filter(item => item.projectId === 'project-nova' && item.assigneeId === 'resource-lucas')) await api.succeeds('PATCH', `/api/tasks/${task.id}`, { assigneeId: null }, signed.cookie);
-  // Historical task assignments can also confer visibility; a separate private project has none.
-  const privateProject = await (await api.succeeds('POST', '/api/projects', { name: 'Projet privé', zoneId: signed.data.zones[0].id, startDate: '2026-10-01', endDate: '2026-10-31' }, signed.cookie)).json() as { id: string };
-  const hidden = await (await api.succeeds('POST', '/api/project-documents', { projectId: privateProject.id, name: 'Document privé', kind: 'file', fileName: 'secret.txt', mimeType: 'text/plain', contentBase64: content }, signed.cookie)).json() as { id: string };
-  assert.equal((await api.request('GET', `/api/project-documents/${hidden.id}/content`, undefined, reader)).status, 404);
-  assert.equal((await api.request('GET', '/api/project-documents/unknown/content', undefined, reader)).status, 404);
-  await api.request('POST', '/api/auth/logout', {}, reader); assert.equal((await api.request('GET', path, undefined, reader)).status, 401);
-});
-
-test('D1 cutover guards block late plaintext writers while authenticated encrypted mutations remain usable', async t => {
-  const api = await fixture(t); const signed = await api.state(); const database = await api.db();
-  const { sealPlaintextWrites } = await import('../scripts/workspace-encryption.ts');
-  await sealPlaintextWrites({ rows: async () => [], run: async (sql, params = []) => { const result = await database.prepare(sql).bind(...params).run(); return { changes: result.meta.changes }; } });
-  const raw = (await api.row(signed.cookie)).data;
-  await assert.rejects(database.prepare('INSERT OR IGNORE INTO demo_workspaces(id,data,revision,updated_at) VALUES(?,?,0,?)').bind(randomUUID(), raw, 'old-worker').run(), /Encrypted workspace writes required/);
-  await assert.rejects(database.prepare('UPDATE demo_workspaces SET data=? WHERE id=?').bind(raw, api.adminWorkspaceId).run(), /Encrypted workspace writes required/);
-  await api.succeeds('PATCH', '/api/projects/project-nova', { description: 'Écriture chiffrée autorisée' }, signed.cookie);
-  assert.equal((await api.state(signed.cookie)).data.projects.find(project => project.id === 'project-nova')!.description, 'Écriture chiffrée autorisée');
 });

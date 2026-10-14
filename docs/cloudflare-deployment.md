@@ -1,6 +1,8 @@
-# Déployer la démonstration Planzone 8 sur Cloudflare
+# Archive : ancien déploiement Planzone 8 avec API/D1
 
-Le dépôt fournit un Worker Cloudflare, les fichiers React compilés et une base D1. Une publication réussie crée une adresse HTTPS `https://<worker>.<sous-domaine-du-compte>.workers.dev`. Cette adresse n’est confirmée qu’après les vérifications du script ; lancer l’application dans l’environnement cloud ne crée pas à lui seul une adresse publique.
+> **Historique, ne plus exécuter cette procédure.** Le déploiement actuel publie uniquement les assets statiques de `dist/` via `npm run deploy:cloudflare`, sans Worker applicatif ni liaison D1. Voir [SQLite dans le navigateur](browser-sqlite.md). Les instructions ci-dessous décrivent l’ancienne architecture et ne correspondent plus à `wrangler.jsonc`.
+
+Le dépôt fournissait un Worker Cloudflare, les fichiers React compilés et une base D1. Une publication réussie crée une adresse HTTPS `https://<worker>.<sous-domaine-du-compte>.workers.dev`. Cette adresse n’est confirmée qu’après les vérifications du script ; lancer l’application dans l’environnement cloud ne crée pas à lui seul une adresse publique.
 
 La cible par défaut est le Worker `planzone8-demo` et une base D1 du même nom. L’interface de connexion est publique ; les données et leurs mutations exigent une session du compte administrateur. La session est transmise par un cookie opaque `HttpOnly`, `Secure`, `SameSite=Lax`, expire après sept jours et est révoquée côté serveur à la déconnexion. Les sessions du même compte retrouvent le même workspace D1. La création de comptes supplémentaires, le SSO et les droits par zone/projet restent à développer.
 
@@ -108,9 +110,3 @@ Wrangler **4.147.0** prend en charge le protocole d’assets et l’envoi multip
 Le dépôt passe par Wrangler pour cette étape, ce qui évite de maintenir les détails du hash, des JWT et du multipart dans le script de publication.
 
 Sources : [limites Workers](https://developers.cloudflare.com/workers/platform/limits/), [limites D1](https://developers.cloudflare.com/d1/platform/limits/), [tarifs D1](https://developers.cloudflare.com/d1/platform/pricing/), [API Cloudflare](https://developers.cloudflare.com/api/), [source Wrangler](https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler). Le code distribué de Wrangler 4.147.0 et du SDK Cloudflare 5.2.0 a servi à vérifier les contrats REST.
-
-## Chiffrement des espaces métier
-
-Le déploiement configure automatiquement `PLANZONE_DATA_KEYS` comme secret du Worker, à partir de la copie privée `.cloudflare/data-encryption-keys.json`. Il vérifie et sauvegarde sous forme chiffrée tous les espaces, migre les anciennes lignes avec comparaison de révision, puis désactive la transition `PLANZONE_MIGRATE_PLAINTEXT`. Conserver la clé dans une sauvegarde privée ; elle ne figure ni dans Git ni dans l’archive de l’application. Un redéploiement réutilise cette clé et conserve les mots de passe existants. Voir [Stockage et accès aux données](backend-storage.md).
-
-Pour le développement D1, renseigner un trousseau local distinct dans `.dev.vars` ; les tests D1 le font automatiquement dans un dossier temporaire. Un secret manquant entraîne un refus des accès métier, sans retour à un stockage en clair.

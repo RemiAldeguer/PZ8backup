@@ -4,7 +4,8 @@ import { dirname, resolve } from 'node:path';
 
 const port = Number(process.env.PORT ?? 3001);
 if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('PORT doit être un numéro de port valide.');
-const dbPath = process.env.DB_PATH ?? resolve('data/planzone.sqlite');
+const storage = process.env.STORAGE_BACKEND === 'legacy' ? 'legacy' : 'pz7';
+const dbPath = process.env.DB_PATH ?? resolve(storage === 'legacy' ? 'data/planzone.sqlite' : 'data/pz7-runtime-active.sqlite');
 const credentialsPath = resolve(dbPath === ':memory:' ? 'data' : dirname(dbPath), 'admin-credentials.json');
 let saveCredentials = false;
 let admin = {
@@ -24,7 +25,7 @@ if (!admin.password) {
   }
 }
 const { app, close, ready } = createApp({
-  dbPath, today: process.env.DEMO_TODAY,
+  dbPath, storage, today: process.env.DEMO_TODAY,
   allowedOrigins: process.env.APP_ORIGIN ? [new URL(process.env.APP_ORIGIN).origin] : [],
   admin,
 });
